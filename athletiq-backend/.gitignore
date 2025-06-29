@@ -30,3 +30,6 @@ pnpm-debug.log*
 *.sln
 *.sw?
 .DS_Store
+
+# Secret Keys
+athletiq-backend/keys/google-translation-key.json

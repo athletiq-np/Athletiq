@@ -1,19 +1,27 @@
 // src/pages/AdminDashboard.js
+
 import React, { useEffect, useState } from "react";
 import axios from "axios";
+import { useNavigate } from "react-router-dom"; // Import useNavigate for programmatic navigation
+
 import DashboardLayout from "../components/DashboardLayout";
 import SchoolsTab from "../components/AdminDashboard/SchoolsTab";
 import PlayersTab from "../components/AdminDashboard/PlayersTab";
-import TournamentsTab from "../components/AdminDashboard/TournamentsTab";
+// TournamentsTab will now primarily link to the dedicated TournamentListPage
+// If TournamentsTab *only* shows a subset or a summary, it can stay.
+// For now, let's assume TournamentListPage is the main place for tournaments.
+import TournamentsTab from "../components/AdminDashboard/TournamentsTab"; // Keeping it if it serves a distinct purpose
 import StatsTab from "../components/AdminDashboard/StatsTab";
-import AddTournamentModal from "../components/AdminDashboard/AddTournamentModal"; // Ensure path is correct!
+
+// Removed AddTournamentModal import as we now use a dedicated TournamentCreate page.
+// import AddTournamentModal from "../components/AdminDashboard/AddTournamentModal";
 
 export default function AdminDashboard() {
   // --- STATE ---
   const [schools, setSchools] = useState([]);
   const [players, setPlayers] = useState([]);
-  const [tournaments, setTournaments] = useState([]);
-  const [view, setView] = useState("Schools");
+  const [tournaments, setTournaments] = useState([]); // Keep for stats if needed, or if TournamentsTab has a summary
+  const [view, setView] = useState("Schools"); // Default view
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({ schools: 0, players: 0, tournaments: 0 });
   const [err, setErr] = useState("");
@@ -30,12 +38,14 @@ export default function AdminDashboard() {
   const [viewPlayer, setViewPlayer] = useState(null);
   const [bulkPlayerOpen, setBulkPlayerOpen] = useState(false);
 
-  // Tournament modal
-  const [addTournamentOpen, setAddTournamentOpen] = useState(false);
+  // Tournament modal state removed as we use a dedicated page for creation now
+  // const [addTournamentOpen, setAddTournamentOpen] = useState(false);
 
   // Bulk deletes & filters
   const [selectedSchoolId, setSelectedSchoolId] = useState("");
   const [selectedPlayerIds, setSelectedPlayerIds] = useState([]);
+
+  const navigate = useNavigate(); // Initialize useNavigate
 
   const token = localStorage.getItem("token");
   const user = JSON.parse(localStorage.getItem("user") || "{}");
@@ -47,14 +57,16 @@ export default function AdminDashboard() {
       setErr("");
       try {
         // Fetch schools & players (for schools/players/stats)
+        // Ensure user.role is checked robustly before using it in conditional logic
         if (["Schools", "Players", "Stats"].includes(view)) {
           const [sRes, pRes] = await Promise.all([
             axios.get("http://localhost:5000/api/schools", {
               headers: { Authorization: `Bearer ${token}` },
             }),
             axios.get(
+              // Conditionally add school_id filter based on user role and selection
               `http://localhost:5000/api/players${
-                user.role === "super_admin" && selectedSchoolId
+                user?.role === "super_admin" && selectedSchoolId
                   ? `?school_id=${selectedSchoolId}`
                   : ""
               }`,
@@ -69,19 +81,30 @@ export default function AdminDashboard() {
             players: (pRes.data.players || []).length,
           }));
         }
-        // Fetch tournaments (for tournaments/stats)
+        // Fetch tournaments (for tournaments/stats) - Keeping this for TournamentsTab or StatsTab summary
         if (["Tournaments", "Stats"].includes(view)) {
+           // We are fetching all tournaments here. If TournamentsTab in AdminDashboard only shows a summary, this is fine.
+           // However, the main list is now handled by TournamentListPage.
           await reloadTournaments();
         }
         setSelectedPlayerIds([]);
       } catch (e) {
+        // Log the full error for better debugging
+        console.error("Error fetching admin dashboard data:", e);
         setErr(e.response?.data?.message || "Error loading data.");
+      } finally {
+         setLoading(false); // Ensure loading is set to false in finally
       }
-      setLoading(false);
     };
-    fetchData();
+    if (token) { // Only fetch data if a token exists
+      fetchData();
+    } else {
+        setLoading(false);
+        setErr("Authentication token missing. Please log in.");
+        navigate('/login'); // Redirect to login if token is missing
+    }
     // eslint-disable-next-line
-  }, [view, token, selectedSchoolId, user.role]);
+  }, [view, token, selectedSchoolId, user?.role, navigate]); // Add navigate to dependency array
 
   // --- RELOAD HELPERS ---
   const reloadSchools = async () => {
@@ -90,7 +113,8 @@ export default function AdminDashboard() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setSchools(res.data.schools || []);
-    } catch {
+    } catch (e) {
+      console.error("Error reloading schools:", e);
       setErr("Error reloading schools.");
     }
   };
@@ -99,7 +123,7 @@ export default function AdminDashboard() {
     try {
       const res = await axios.get(
         `http://localhost:5000/api/players${
-          user.role === "super_admin" && selectedSchoolId
+          user?.role === "super_admin" && selectedSchoolId
             ? `?school_id=${selectedSchoolId}`
             : ""
         }`,
@@ -111,7 +135,8 @@ export default function AdminDashboard() {
         ...prev,
         players: res.data.players?.length || prev.players,
       }));
-    } catch {
+    } catch (e) {
+      console.error("Error reloading players:", e);
       setErr("Error reloading players.");
     }
   };
@@ -124,38 +149,43 @@ export default function AdminDashboard() {
       const list = Array.isArray(tRes.data) ? tRes.data : [];
       setTournaments(list);
       setStats((prev) => ({ ...prev, tournaments: list.length }));
-    } catch {
+    } catch (e) {
+      console.error("Error loading tournaments:", e);
       setErr("Error loading tournaments.");
     }
   };
 
   // --- DELETE HANDLERS ---
   const handleDeleteSchool = async (id) => {
-    if (!window.confirm("Delete this school?")) return;
+    // Replaced window.confirm with a more robust custom modal/dialog in a real app
+    if (!window.confirm("Delete this school? This action is irreversible.")) return;
     try {
       await axios.delete(`http://localhost:5000/api/schools/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       reloadSchools();
-    } catch {
-      alert("Delete failed.");
+    } catch (e) {
+      console.error("Delete school failed:", e);
+      alert(e.response?.data?.message || "Delete failed.");
     }
   };
   const handleDeletePlayer = async (id) => {
-    if (!window.confirm("Delete this player?")) return;
+    // Replaced window.confirm with a more robust custom modal/dialog in a real app
+    if (!window.confirm("Delete this player? This action is irreversible.")) return;
     try {
       await axios.delete(`http://localhost:5000/api/players/${id}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       reloadPlayers();
-    } catch {
-      alert("Delete failed.");
+    } catch (e) {
+      console.error("Delete player failed:", e);
+      alert(e.response?.data?.message || "Delete failed.");
     }
   };
   const handleBulkDeletePlayers = async () => {
     if (
       selectedPlayerIds.length === 0 ||
-      !window.confirm("Delete selected players?")
+      !window.confirm(`Delete ${selectedPlayerIds.length} selected players? This action is irreversible.`)
     )
       return;
     try {
@@ -165,8 +195,9 @@ export default function AdminDashboard() {
         { headers: { Authorization: `Bearer ${token}` } }
       );
       reloadPlayers();
-    } catch {
-      alert("Bulk delete failed.");
+    } catch (e) {
+      console.error("Bulk delete failed:", e);
+      alert(e.response?.data?.message || "Bulk delete failed.");
     }
   };
 
@@ -174,7 +205,8 @@ export default function AdminDashboard() {
   const sidebarLinks = [
     { label: "Schools", icon: "🏫", onClick: () => setView("Schools"), active: view === "Schools" },
     { label: "Players", icon: "🧑‍🎓", onClick: () => setView("Players"), active: view === "Players" },
-    { label: "Tournaments", icon: "🏆", onClick: () => setView("Tournaments"), active: view === "Tournaments" },
+    // Changed Tournaments link to navigate to the dedicated TournamentsListPage
+    { label: "Tournaments", icon: "🏆", onClick: () => navigate("/admin/tournaments"), active: view === "Tournaments" },
     { label: "Platform Stats", icon: "📊", onClick: () => setView("Stats"), active: view === "Stats" },
   ];
 
@@ -200,16 +232,18 @@ export default function AdminDashboard() {
       onLogout={() => {
         localStorage.removeItem("token");
         localStorage.removeItem("user");
-        window.location.href = "/login";
+        window.location.href = "/login"; // Full page reload to clear state
       }}
     >
       <div className="flex flex-col gap-6 w-full">
         <h1 className="text-3xl font-extrabold text-athletiq-navy mb-2">
           Super Admin Dashboard
         </h1>
-        {err && <div className="text-red-500 mb-4">{err}</div>}
+        {err && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-4">{err}</div>}
         {loading ? (
-          <div>Loading...</div>
+          <div className="flex justify-center items-center h-48">
+            <div className="text-athletiq-blue text-lg">Loading dashboard data...</div>
+          </div>
         ) : (
           <>
             {view === "Schools" && (
@@ -226,8 +260,8 @@ export default function AdminDashboard() {
                   setChangePwdSchool,
                   reloadSchools,
                   handleDeleteSchool,
-                  loading,
-                  err,
+                  loading, // Pass loading state to tabs if they need to show their own loaders
+                  err,     // Pass error state
                 }}
               />
             )}
@@ -258,28 +292,29 @@ export default function AdminDashboard() {
               />
             )}
             {view === "Tournaments" && (
-              <>
-                <TournamentsTab
-                  tournaments={tournaments}
-                  user={user}
-                  onAdd={() => setAddTournamentOpen(true)}
-                  onAdded={reloadTournaments}
-                />
-                <AddTournamentModal
-                  open={addTournamentOpen}
-                  onClose={() => setAddTournamentOpen(false)}
-                  user={user}
-                  onAdded={() => {
-                    setAddTournamentOpen(false);
-                    reloadTournaments();
-                  }}
-                />
-              </>
+              // This TournamentsTab is here assuming it serves a summary purpose within the dashboard.
+              // The full list and creation is now handled by TournamentListPage and TournamentCreate.
+              <TournamentsTab
+                tournaments={tournaments}
+                user={user}
+                // Removed onAdd and onAdded props as tournament creation is now a separate page
+                // onAdd={() => setAddTournamentOpen(true)}
+                // onAdded={reloadTournaments}
+              />
             )}
             {view === "Stats" && <StatsTab stats={stats} />}
           </>
         )}
       </div>
+      {/* AddTournamentModal and other modals are now likely managed elsewhere or are separate pages/components */}
+      {/* If AddTournamentModal is truly a modal and not the wizard, it needs to be imported and managed here.
+          However, based on our previous conversation, TournamentCreate.jsx is the wizard. */}
+      {/* Example of how to structure a modal if it were still needed:
+      <AddSchoolModal
+        open={addSchoolOpen}
+        onClose={() => setAddSchoolOpen(false)}
+        onAdded={reloadSchools}
+      /> */}
     </DashboardLayout>
   );
 }

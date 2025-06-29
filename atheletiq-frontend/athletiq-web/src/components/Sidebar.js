@@ -1,16 +1,22 @@
 // src/components/Sidebar.js
 
 import React from "react";
+import { useNavigate } from "react-router-dom"; // Import useNavigate hook
+import Topbar from "./Topbar"; // Ensure Topbar is correctly imported
+// Assuming Sidebar is at src/components/Sidebar.js
+// and other dashboard components like DashboardLayout, Topbar are also in src/components/
 
 /**
  * Sidebar navigation for dashboard.
  * Props:
- *  - user: current user object
- *  - school: school object (for logo/school name), optional
- *  - links: [{label, icon, onClick, active}]
- *  - onLogout: logout handler
+ * - user: current user object
+ * - school: school object (for logo/school name), optional
+ * - links: [{label, icon, onClick, active}]
+ * - onLogout: logout handler
  */
 export default function Sidebar({ user, school, links = [], onLogout }) {
+  const navigate = useNavigate(); // Initialize useNavigate hook
+
   return (
     <aside className="w-64 min-h-screen bg-athletiq-navy flex flex-col justify-between shadow-xl">
       {/* Top: Logo and School/User Info */}
@@ -23,7 +29,6 @@ export default function Sidebar({ user, school, links = [], onLogout }) {
             className="h-12 w-40 object-contain rounded bg-white"
           />
           <div>
-        
             {school && (
               <div className="text-sm text-athletiq-green font-semibold flex items-center gap-2">
                 {school.logo_url && (
@@ -58,11 +63,11 @@ export default function Sidebar({ user, school, links = [], onLogout }) {
               <span>{link.label}</span>
             </button>
           ))}
-          {/* Add Tournament Button */}
+          {/* Add Tournament Button - FIXED: Using useNavigate for client-side routing */}
           <button
             className="flex items-center gap-2 px-6 py-2 text-base rounded-lg font-semibold text-left transition
               hover:bg-athletiq-blue/40 bg-athletiq-navy text-white"
-            onClick={() => window.location.href = '/admin/tournaments'}
+            onClick={() => navigate('/admin/tournaments')} // Use navigate instead of window.location.href
           >
             <span>🏆</span>
             <span>Add Tournament</span>

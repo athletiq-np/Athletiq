@@ -1,0 +1,13 @@
+{
+  "type": "service_account",
+  "project_id": "athletiq-463321",
+  "private_key_id": "298aa6f8d88f96296e3cd7af2f0b23b486cb43ae",
+  "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQCWnmtIwEVyGA4q\ngzZKYInj3q89iSrABlt0n3XfM0gNLX3ps3Dr4Nzc4LONqxrcowzINiEGyMwgVY3z\nIpClX/EAPqdy+dPDaMj9zRY8RkiD+4bh8FE4UAmMnZs4BfKhF4EMsVOoxGcPDjc0\n4LLAyJi3nXFscAcgHBKD6nYj8TA5esdy3asvvTcDnxXLnujFQtX0pEIMvHtYwIiv\nkedcTD1aDtn4GvYChe3ruQTQqen7S+/LfM9e/po3Vc62af+E9Q1IT93pjj2NHOEC\nWS0D7030fonERdvwhv1W59YmeYYHjRabWf9i7wyiVKvK1IDIWcWlBmvmkpHdG5dL\n7PFlHiL7AgMBAAECggEABIzPweJLiACi4Os0hLIl0ha1VsP6m/r6G3Wx5rCD8L34\nkyNbefkGm6jO3aLvvXT3qew8E0G9GJb25xc4QrnDNe7MJh05Q1vX+LPBBCsMJTjd\nkbBLaV5bw335YDzZJQ4j6LA2iVpgUd9iGrejyJ2EQuz6kHc+YHojs1vLdI0L0xin\nkwSBdAO5ezdbHa93zcggg4RWtXwjEA9frmNc0AEWqP9jDUV62QigMR7FoItb1Ghl\nngHp1NOf6RPr1LqhqUwbKnkXXx07Tugqcjo2yaDorFH0VottmHF26umIJ+DbgV7s\nNg7IPWi0FIwHn4mJEX+TIBmD0HcFA74IQ/1stpaNNQKBgQDTHxxSI74Nz5O+85p+\nXYx8Lo/uj61vUfF5GnXFTUdJVY1lCoafnUVGrDSvjCtiwhmo7X2JZDtmJorZbSos\nvM5zVmv427efTmVUFKEyHXMaylY9YxBWy7cVxRot2nhOP+I52UMjvhvXKbLXGIkA\nUOwC7KtqPi0eLBwFryeKftnGDwKBgQC2otmcfzhBPKY0Sf6A+LFN6zBzYVFcD6UG\neOutXiRpsHsavKSmPWo7DWGDUGl+GQjgPaZAoIhpz4PqpM1tU3Z3mBbPvKGQLXK4\nI+/HRy9rBRhLM3/96/wLqqvddUGoKqj7ViKOdB53T16VvGUiqnsfbfT0rhy4YOCn\nYKoJmpqgVQKBgQCbGELE8O8A1Fp0sB7x8CVxYP9pwPEnU2pyjgawsCnLbOcXsFjf\nzziCR6XYxL9mqLMTD4zmrtSYIX5lZjXScc20m2tsgXTuujfkQdd9qnbR2ozqQelR\n6gwRGSA3SUSSL4ow9zPEgTeQpFh2fda/fbM0Hst6nDym6r6XSmpg6vlu7wKBgCEo\nK42n4xSk6B+yF0xe2gGlYyRvVI/8Hx+vsEnHP6EYcyEFgnbTy4dxBHUMkjpcXSoo\nxxgQjPN4wyBETy876dQIfou0WTiNp7gafhuVptwtDp4IeYIl55pOn+kSsprPM+J9\nXsSx/B35ANj6XPoQLU4lbkVFnt0yaVa5y+T2doAJAoGBAMqBvzukE3PcxapfP3+p\n3elXh4Jn1G1/mBktI/Js66NULmCFwE5yWRsZiJgThs8RyEwi9kYn4WcAKomwCFbM\nLJ2K6Go+2JmHXfcV03qVwGN8RnE3uKX0rcB6ht3PcyBllGjO+nhW3glQHEmYkgIV\nmJIQsFenAD8FyrJb9XXJDQSd\n-----END PRIVATE KEY-----\n",
+  "client_email": "translation-service@athletiq-463321.iam.gserviceaccount.com",
+  "client_id": "111019063622963231618",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/translation-service%40athletiq-463321.iam.gserviceaccount.com",
+  "universe_domain": "googleapis.com"
+}
