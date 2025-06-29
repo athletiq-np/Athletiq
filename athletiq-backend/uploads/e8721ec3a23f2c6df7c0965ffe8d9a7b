@@ -1,0 +1,21 @@
+full_name,full_name_nep,dob,gender,class,section,roll_no,address,address_nep,contact_no,email,father_name,father_name_nep,mother_name,mother_name_nep,guardian_name,guardian_relation,guardian_contact
+Sagar Basnet,सागर बस्नेत,2011-07-11,Male,8,A,1,Koteshwor,कोटेश्वर,9811121001,sagar01@school.com,Ram Basnet,राम बस्नेत,Sita Basnet,सीता बस्नेत,Ram Basnet,Father,9811121001
+Kiran Thapa,किरण थापा,2012-03-22,Male,7,A,2,Baneshwor,बानेश्वर,9811121002,kiran02@school.com,Krishna Thapa,कृष्ण थापा,Sunita Thapa,सुनिता थापा,Krishna Thapa,Father,9811121002
+Bishal Shrestha,बिशाल श्रेष्ठ,2011-09-10,Male,8,B,3,Balkumari,बलकुमारी,9811121003,bishal03@school.com,Bipin Shrestha,बिपिन श्रेष्ठ,Anita Shrestha,अनिता श्रेष्ठ,Bipin Shrestha,Father,9811121003
+Saroj Lama,सरोज लामा,2013-01-19,Male,7,B,4,Sankhamul,शंखमूल,9811121004,saroj04@school.com,Dipak Lama,दिपक लामा,Manju Lama,मञ्जु लामा,Dipak Lama,Father,9811121004
+Sunil KC,सुनिल केसी,2012-11-25,Male,7,C,5,Kalanki,कलंकी,9811121005,sunil05@school.com,Hem KC,हेम केसी,Saraswati KC,सरस्वती केसी,Hem KC,Father,9811121005
+Prabin Pandey,प्रबिन पाण्डे,2013-06-15,Male,6,A,6,Battisputali,बत्तीसपुतली,9811121006,prabin06@school.com,Santosh Pandey,सन्तोष पाण्डे,Maya Pandey,माया पाण्डे,Santosh Pandey,Father,9811121006
+Arjun Chaudhary,अर्जुन चौधरी,2012-02-27,Male,8,A,7,Tilganga,तीलगंङ्गा,9811121007,arjun07@school.com,Ram Chaudhary,राम चौधरी,Sita Chaudhary,सीता चौधरी,Ram Chaudhary,Father,9811121007
+Bibek Sharma,बिबेक शर्मा,2011-05-23,Male,8,C,8,Dhobighat,धोबीघाट,9811121008,bibek08@school.com,Surya Sharma,सूर्य शर्मा,Kalpana Sharma,कल्पना शर्मा,Surya Sharma,Father,9811121008
+Suman Rai,सुमन राई,2013-04-18,Male,7,C,9,Maitidevi,मैतीदेवी,9811121009,suman09@school.com,Birendra Rai,बिरेन्द्र राई,Pabitra Rai,पवित्रा राई,Birendra Rai,Father,9811121009
+Sunil Singh,सुनिल सिंह,2012-10-30,Male,7,D,10,Putalisadak,पुतलीसडक,9811121010,sunil10@school.com,Dinesh Singh,दिनेश सिंह,Laxmi Singh,लक्ष्मी सिंह,Dinesh Singh,Father,9811121010
+Aakash Jha,आकाश झा,2011-12-12,Male,8,B,11,Kalopul,कालोपुल,9811121011,aakash11@school.com,Raju Jha,राजु झा,Rekha Jha,रेखा झा,Raju Jha,Father,9811121011
+Prakash Yadav,प्रकाश यादव,2012-05-03,Male,8,A,12,Gausala,गौशाला,9811121012,prakash12@school.com,Suresh Yadav,सुरेश यादव,Kamala Yadav,कमला यादव,Suresh Yadav,Father,9811121012
+Rajesh Maharjan,राजेश महार्जन,2013-08-21,Male,6,B,13,Kirtipur,कीर्तिपुर,9811121013,rajesh13@school.com,Ganesh Maharjan,गणेश महार्जन,Sunita Maharjan,सुनिता महार्जन,Ganesh Maharjan,Father,9811121013
+Shyam Shrestha,श्याम श्रेष्ठ,2012-06-13,Male,7,B,14,Balkhu,बल्खु,9811121014,shyam14@school.com,Prem Shrestha,प्रेम श्रेष्ठ,Sarita Shrestha,सरिता श्रेष्ठ,Prem Shrestha,Father,9811121014
+Rabin Karki,रबिन कार्की,2013-03-09,Male,6,C,15,Sukedhara,सुकेधारा,9811121015,rabin15@school.com,Shankar Karki,शंकर कार्की,Manju Karki,मञ्जु कार्की,Shankar Karki,Father,9811121015
+Binod Bhandari,बिनोद भण्डारी,2012-04-27,Male,7,A,16,Naxal,नक्साल,9811121016,binod16@school.com,Prabin Bhandari,प्रबिन भण्डारी,Rama Bhandari,रमा भण्डारी,Prabin Bhandari,Father,9811121016
+Rakesh Khadka,राकेश खड्का,2013-07-06,Male,6,A,17,Budhanilkantha,बुढानीलकण्ठ,9811121017,rakesh17@school.com,Ramesh Khadka,रमेश खड्का,Sarmila Khadka,सर्मिला खड्का,Ramesh Khadka,Father,9811121017
+Rajiv Mishra,राजिव मिश्र,2011-11-14,Male,8,C,18,Kuleshwor,कुलेश्वर,9811121018,rajiv18@school.com,Binay Mishra,बिनय मिश्र,Meena Mishra,मीना मिश्र,Binay Mishra,Father,9811121018
+Laxman Pathak,लक्ष्मण पाठक,2013-02-04,Male,6,D,19,Sinamangal,सिनामंगल,9811121019,laxman19@school.com,Ram Pathak,राम पाठक,Sunita Pathak,सुनिता पाठक,Ram Pathak,Father,9811121019
+Manish Shah,मनीष शाह,2012-08-09,Male,7,D,20,Sinamangal,सिनामंगल,9811121020,manish20@school.com,Ram Shah,राम शाह,Sunita Shah,सुनिता शाह,Ram Shah,Father,9811121020
