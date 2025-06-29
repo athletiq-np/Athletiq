@@ -1,0 +1,32 @@
+# Dependencies
+/node_modules
+/bower_components
+
+# Build artifacts
+/dist
+/build
+/.next
+/.nuxt
+/.svelte-kit
+
+# Log files
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# IDE and OS files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.DS_Store
