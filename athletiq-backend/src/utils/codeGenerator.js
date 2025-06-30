@@ -1,34 +1,34 @@
 // src/utils/codeGenerator.js
 
-const ALPHANUM = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+function generateRandomCode(prefix = "", length = 5) {
+  const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+  let code = "";
+  for (let i = 0; i < length; i++) {
+    code += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return `${prefix}-${code}`;
+}
 
 /**
- * Generate a unique short code with a prefix.
- * @param {string} prefix - Prefix string (e.g., 'NP', 'EDU')
- * @param {number} length - Total length of the code including prefix
- * @param {Function} existsFn - Async function that returns true if code exists in DB
- * @returns {Promise<string>} Unique code
+ * Generates a unique code by calling the existsFn(code) to check DB.
+ * If the code exists, it retries until it's unique.
  */
-async function generateShortCode(prefix, length, existsFn) {
-  if (prefix.length >= length) {
-    throw new Error("Prefix length must be less than total length");
+async function generateShortCode(prefix, existsFn) {
+  if (typeof existsFn !== "function") {
+    throw new Error("generateShortCode: existsFn must be a function");
   }
 
   let code;
+  let exists = true;
   let attempts = 0;
-  do {
-    attempts++;
-    let randomPart = '';
-    const randomLength = length - prefix.length;
-    for (let i = 0; i < randomLength; i++) {
-      randomPart += ALPHANUM.charAt(Math.floor(Math.random() * ALPHANUM.length));
-    }
-    code = prefix.toUpperCase() + randomPart;
 
-    if (attempts > 10) {
-      throw new Error('Failed to generate unique code after 10 attempts');
-    }
-  } while (await existsFn(code));
+  while (exists && attempts < 10) {
+    code = generateRandomCode(prefix);
+    exists = await existsFn(code);
+    attempts++;
+  }
+
+  if (exists) throw new Error("Failed to generate unique code after 10 attempts");
 
   return code;
 }
