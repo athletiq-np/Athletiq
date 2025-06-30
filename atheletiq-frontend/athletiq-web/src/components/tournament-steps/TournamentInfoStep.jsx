@@ -1,42 +1,25 @@
 //
-// 🧠 ATHLETIQ - Tournament Info Step Component (Simplified)
+// 🧠 ATHLETIQ - Tournament Info Step Component (Complete Version)
 //
-// This is the first step in the tournament creation wizard. This simplified version
-// collects only the most essential details: the tournament's name, logo, and organizer.
+// This is the first step in the tournament creation wizard. It collects
+// core tournament metadata like name, dates, level, description, etc.
 //
 
-// --- MODULE IMPORTS ---
 import React from 'react';
 
-// --- COMPONENT DEFINITION ---
-
-/**
- * Renders the simplified form fields for the first step of tournament creation.
- * @param {object} props - The props passed from the parent component.
- * @param {object} props.form - The current state of the form data.
- * @param {function} props.updateForm - The function to update the form state in the parent.
- */
 export default function TournamentInfoStep({ form, updateForm }) {
-  
-  /**
-   * Handles changes in any of the input fields.
-   * It calls the parent's updateForm function with the new value.
-   * @param {React.ChangeEvent<HTMLInputElement>} e - The event object from the input field.
-   */
   const handleChange = (e) => {
     updateForm({ [e.target.name]: e.target.value });
   };
 
-  // --- RENDER ---
-  // The UI is now focused on just three fields to keep it simple.
   return (
     <div className="space-y-6">
       <h2 className="text-xl font-semibold text-gray-700">1. Tournament Details</h2>
-      
-      {/* Tournament Name Input */}
+
+      {/* Tournament Name */}
       <div>
         <label htmlFor="name" className="block text-sm font-medium text-gray-600 mb-1">
-          Tournament Name
+          Tournament Name <span className="text-red-500">*</span>
         </label>
         <input
           type="text"
@@ -44,13 +27,13 @@ export default function TournamentInfoStep({ form, updateForm }) {
           name="name"
           value={form.name || ''}
           onChange={handleChange}
-          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-athletiq-blue focus:border-athletiq-blue"
-          placeholder="e.g., Annual Inter-School Football Cup"
           required
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-athletiq-blue focus:border-athletiq-blue"
+          placeholder="e.g., Inter-Province School Football Cup"
         />
       </div>
 
-      {/* Hosted By (Organized By) Input */}
+      {/* Hosted By */}
       <div>
         <label htmlFor="hosted_by" className="block text-sm font-medium text-gray-600 mb-1">
           Organized By
@@ -62,11 +45,11 @@ export default function TournamentInfoStep({ form, updateForm }) {
           value={form.hosted_by || ''}
           onChange={handleChange}
           className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-athletiq-blue focus:border-athletiq-blue"
-          placeholder="e.g., St. Xavier's School"
+          placeholder="e.g., Koshi Province Sports Federation"
         />
       </div>
-      
-      {/* Logo URL Input */}
+
+      {/* Logo URL */}
       <div>
         <label htmlFor="logo_url" className="block text-sm font-medium text-gray-600 mb-1">
           Logo URL (Optional)
@@ -82,6 +65,66 @@ export default function TournamentInfoStep({ form, updateForm }) {
         />
       </div>
 
+      {/* Description */}
+      <div>
+        <label htmlFor="description" className="block text-sm font-medium text-gray-600 mb-1">
+          Description (Optional)
+        </label>
+        <textarea
+          id="description"
+          name="description"
+          value={form.description || ''}
+          onChange={handleChange}
+          rows={3}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-athletiq-blue focus:border-athletiq-blue"
+          placeholder="Brief overview of the tournament"
+        ></textarea>
+      </div>
+
+      {/* Level */}
+      <div>
+        <label htmlFor="level" className="block text-sm font-medium text-gray-600 mb-1">
+          Tournament Level (e.g., Province, National, School)
+        </label>
+        <input
+          type="text"
+          id="level"
+          name="level"
+          value={form.level || ''}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-athletiq-blue focus:border-athletiq-blue"
+        />
+      </div>
+
+      {/* Start Date */}
+      <div>
+        <label htmlFor="start_date" className="block text-sm font-medium text-gray-600 mb-1">
+          Start Date
+        </label>
+        <input
+          type="date"
+          id="start_date"
+          name="start_date"
+          value={form.start_date || ''}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-athletiq-blue focus:border-athletiq-blue"
+        />
+      </div>
+
+      {/* End Date */}
+      <div>
+        <label htmlFor="end_date" className="block text-sm font-medium text-gray-600 mb-1">
+          End Date
+        </label>
+        <input
+          type="date"
+          id="end_date"
+          name="end_date"
+          value={form.end_date || ''}
+          onChange={handleChange}
+          className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-athletiq-blue focus:border-athletiq-blue"
+        />
+      </div>
     </div>
   );
 }

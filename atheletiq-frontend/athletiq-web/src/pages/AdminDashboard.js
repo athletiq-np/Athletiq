@@ -12,6 +12,7 @@ import PlayersTab from "../components/AdminDashboard/PlayersTab";
 // For now, let's assume TournamentListPage is the main place for tournaments.
 import TournamentsTab from "../components/AdminDashboard/TournamentsTab"; // Keeping it if it serves a distinct purpose
 import StatsTab from "../components/AdminDashboard/StatsTab";
+import TournamentsList from "../components/AdminDashboard/TournamentsList";
 
 // Removed AddTournamentModal import as we now use a dedicated TournamentCreate page.
 // import AddTournamentModal from "../components/AdminDashboard/AddTournamentModal";
@@ -206,7 +207,7 @@ export default function AdminDashboard() {
     { label: "Schools", icon: "🏫", onClick: () => setView("Schools"), active: view === "Schools" },
     { label: "Players", icon: "🧑‍🎓", onClick: () => setView("Players"), active: view === "Players" },
     // Changed Tournaments link to navigate to the dedicated TournamentsListPage
-    { label: "Tournaments", icon: "🏆", onClick: () => navigate("/admin/tournaments"), active: view === "Tournaments" },
+    { label: "Tournaments", icon: "🏆", onClick: () => setView("Tournaments"), active: view === "Tournaments" },
     { label: "Platform Stats", icon: "📊", onClick: () => setView("Stats"), active: view === "Stats" },
   ];
 
@@ -291,17 +292,10 @@ export default function AdminDashboard() {
                 }}
               />
             )}
-            {view === "Tournaments" && (
-              // This TournamentsTab is here assuming it serves a summary purpose within the dashboard.
-              // The full list and creation is now handled by TournamentListPage and TournamentCreate.
-              <TournamentsTab
-                tournaments={tournaments}
-                user={user}
-                // Removed onAdd and onAdded props as tournament creation is now a separate page
-                // onAdd={() => setAddTournamentOpen(true)}
-                // onAdded={reloadTournaments}
-              />
-            )}
+           {view === "Tournaments" && (
+  <TournamentsList user={user} token={token} />
+)}
+
             {view === "Stats" && <StatsTab stats={stats} />}
           </>
         )}

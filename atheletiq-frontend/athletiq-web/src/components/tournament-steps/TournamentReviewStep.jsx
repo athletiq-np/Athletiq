@@ -1,51 +1,30 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { createTournament } from "../../api/tournamentApi";
+// src/components/tournament-steps/TournamentReviewStep.jsx
 
-const TournamentReviewStep = ({ tournamentData = {}, token }) => {
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
-  const navigate = useNavigate();
+import React from "react";
 
-  const handleSubmit = async () => {
-    setLoading(true);
-    setError("");
-
-    try {
-      const cleanedData = {
-        ...tournamentData,
-        sports_config: Array.isArray(tournamentData?.sports_config)
-          ? tournamentData.sports_config
-          : [],
-      };
-
-      console.log("📤 Submitting:", cleanedData);
-      await createTournament(cleanedData, token);
-      navigate("/admin/tournaments");
-    } catch (err) {
-      console.error("❌ Submit error:", err);
-      setError("Failed to create tournament. Please check your form.");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+/**
+ * Final review + submit step for the tournament creation wizard.
+ * @param {Object} props
+ * @param {Object} props.form - Full tournament form data from parent
+ * @param {Function} props.onConfirm - Function to call when "Submit" is clicked
+ * @param {Boolean} props.isLoading - Flag to show loading state
+ */
+const TournamentReviewStep = ({ form, onConfirm, isLoading }) => {
   return (
-    <div className="p-4">
-      <h2 className="text-xl font-bold mb-2">Review & Submit</h2>
+    <div className="p-4 space-y-4">
+      <h2 className="text-xl font-bold">Review Tournament Details</h2>
 
-      <pre className="bg-gray-100 p-2 rounded text-sm mb-4 overflow-auto">
-        {JSON.stringify(tournamentData, null, 2)}
+      {/* Show all form data */}
+      <pre className="bg-gray-100 p-3 rounded-md text-sm overflow-x-auto max-h-[400px]">
+        {JSON.stringify(form, null, 2)}
       </pre>
 
-      {error && <p className="text-red-500 mb-2">{error}</p>}
-
       <button
-        onClick={handleSubmit}
-        disabled={loading}
-        className="bg-green-600 text-white px-4 py-2 rounded"
+        onClick={onConfirm}
+        disabled={isLoading}
+        className="bg-green-600 text-white px-6 py-2 rounded-md hover:bg-green-700 transition"
       >
-        {loading ? "Submitting..." : "Submit Tournament"}
+        {isLoading ? "Submitting..." : "Submit Tournament"}
       </button>
     </div>
   );

@@ -1,148 +1,123 @@
 // src/pages/admin/tournaments/TournamentListPage.jsx
 
-// 🧠 ATHLETIQ - Tournament List Page
-// This component displays a list of all tournaments for the Super Admin.
-// It also provides navigation to create new tournaments or manage existing ones.
-
-// --- MODULE IMPORTS ---
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { Link } from "react-router-dom";
 
-export default function TournamentListPage() { // Renamed from TournamentList to TournamentListPage
+export default function TournamentListPage() {
   const [tournaments, setTournaments] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [err, setErr] = useState("");
-  const navigate = useNavigate();
-  const token = localStorage.getItem("token"); // Get token from localStorage
+  const [filtered, setFiltered] = useState([]);
+  const [filters, setFilters] = useState({
+    name: "",
+    level: "",
+    status: "",
+  });
 
+  const token = localStorage.getItem("token");
+
+  // Fetch tournaments on mount
   useEffect(() => {
-    // Only fetch if token exists, otherwise set error and potentially redirect
-    if (token) {
-      fetchTournaments();
-    } else {
-      setLoading(false);
-      setErr("Authentication required. Please log in.");
-      // If a global Axios interceptor handles 401s, this might be redundant.
-      // If not, consider adding explicit logout/redirect here:
-      // localStorage.removeItem('token');
-      // localStorage.removeItem('user');
-      // navigate('/login');
-    }
-  }, [token]); // Dependency array includes token
+    fetchTournaments();
+  }, []);
 
-  async function fetchTournaments() {
-    setLoading(true);
-    setErr(""); // Clear previous errors
+  const fetchTournaments = async () => {
     try {
       const res = await axios.get("http://localhost:5000/api/tournaments", {
         headers: { Authorization: `Bearer ${token}` },
       });
-      // Assuming backend returns an array of tournament objects directly, or a { data: [...] } structure
-      setTournaments(Array.isArray(res.data) ? res.data : res.data.tournaments || []); // Adjusted to handle { tournaments: [...] } or direct array
-    } catch (error) {
-      // --- DEBUGGING LOGS ---
-      console.error("TournamentListPage: Error fetching tournaments:", error);
-      if (error.response) {
-        console.error("  Status:", error.response.status);
-        console.error("  Data:", error.response.data);
-        console.error("  Headers:", error.response.headers);
-        if (error.response.status === 401 || error.response.status === 403) {
-            setErr("Session expired or unauthorized. Please log in again.");
-        }
-      } else if (error.request) {
-        console.error("  No response received (network error or backend not running):", error.request);
-        setErr("Network error or backend not reachable. Please try again.");
-      } else {
-        console.error("  Error setting up request:", error.message);
-        setErr("An unexpected error occurred. Please try again.");
-      }
-      // --- END DEBUGGING ---
-      
-      setErr(error?.response?.data?.message || "Failed to load tournaments");
-    } finally {
-      setLoading(false); // Ensure loading is set to false in finally
+      setTournaments(res.data);
+      setFiltered(res.data);
+    } catch (err) {
+      console.error("❌ Failed to fetch tournaments:", err);
     }
-  }
+  };
 
-  // --- Navigation Handlers ---
-  function handleAddTournament() {
-    navigate("/admin/tournaments/create"); // Navigate to the creation wizard
-  }
+  // Update filtered list
+  useEffect(() => {
+    let result = tournaments;
 
-  function handleEdit(tournamentId) {
-    navigate(`/admin/tournaments/${tournamentId}/setup`); // Navigate to specific tournament setup page
-  }
+    if (filters.name) {
+      result = result.filter(t => t.name.toLowerCase().includes(filters.name.toLowerCase()));
+    }
+    if (filters.level) {
+      result = result.filter(t => t.level?.toLowerCase() === filters.level.toLowerCase());
+    }
+    if (filters.status) {
+      result = result.filter(t => t.status === filters.status);
+    }
+
+    setFiltered(result);
+  }, [filters, tournaments]);
+
+  const handleChange = (e) => {
+    setFilters({ ...filters, [e.target.name]: e.target.value });
+  };
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-white rounded-xl shadow p-6 w-full"
-    >
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-bold text-athletiq-navy">Tournaments</h2>
-        <button
-          onClick={handleAddTournament}
-          className="px-4 py-2 bg-athletiq-green text-white rounded hover:bg-green-700"
-        >
-          + Add Tournament
-        </button>
+    <div className="max-w-6xl mx-auto p-6">
+      <h1 className="text-2xl font-bold mb-4">🏆 Tournament List</h1>
+
+      {/* Filters */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+        <input
+          type="text"
+          name="name"
+          placeholder="Search by Name"
+          className="px-3 py-2 border rounded"
+          value={filters.name}
+          onChange={handleChange}
+        />
+        <select name="level" className="px-3 py-2 border rounded" value={filters.level} onChange={handleChange}>
+          <option value="">All Levels</option>
+          <option value="District">District</option>
+          <option value="Province">Province</option>
+          <option value="National">National</option>
+        </select>
+        <select name="status" className="px-3 py-2 border rounded" value={filters.status} onChange={handleChange}>
+          <option value="">All Status</option>
+          <option value="draft">Draft</option>
+          <option value="published">Published</option>
+          <option value="completed">Completed</option>
+        </select>
       </div>
 
-      {err && <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-md mb-2">{err}</div>}
-
-      {loading ? (
-        <div className="flex justify-center items-center h-48">
-            <div className="text-athletiq-blue text-lg">Loading tournaments...</div>
-        </div>
-      ) : tournaments.length === 0 ? (
-        <div className="text-gray-600 text-center p-4">No tournaments found. Click "+ Add Tournament" to create one!</div>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full text-sm">
-            <thead>
-              <tr className="bg-athletiq-blue text-white">
-                <th className="p-2 text-left">Name</th>
-                <th className="p-2 text-left">Sport(s)</th>
-                <th className="p-2 text-left">Level</th>
-                <th className="p-2 text-left">Start Date</th>
-                <th className="p-2 text-left">Status</th>
-                <th className="p-2 text-left">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {tournaments.map((t) => (
-                <motion.tr
-                  key={t.id}
-                  whileHover={{ scale: 1.01 }}
-                  className="border-b last:border-none"
+      {/* Table */}
+      <table className="w-full border-collapse bg-white shadow-md rounded">
+        <thead>
+          <tr className="bg-gray-100 text-left text-sm">
+            <th className="p-3 border-b">🏷 Name</th>
+            <th className="p-3 border-b">🎯 Level</th>
+            <th className="p-3 border-b">📅 Start</th>
+            <th className="p-3 border-b">📍 Status</th>
+            <th className="p-3 border-b">⚙️ Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {filtered.map(t => (
+            <tr key={t.id} className="text-sm hover:bg-gray-50">
+              <td className="p-3 border-b">{t.name}</td>
+              <td className="p-3 border-b">{t.level || "-"}</td>
+              <td className="p-3 border-b">{t.start_date || "-"}</td>
+              <td className="p-3 border-b capitalize">{t.status}</td>
+              <td className="p-3 border-b">
+                <Link
+                  to={`/admin/tournaments/${t.id}/setup`}
+                  className="text-blue-600 hover:underline text-sm"
                 >
-                  <td className="p-2 font-semibold">{t.name}</td>
-                  <td className="p-2">
-                    {/* Assuming t.sports_config is an array of objects from the backend */}
-                    {Array.isArray(t.sports_config)
-                      ? t.sports_config.map((s) => s.name || s.id).join(", ")
-                      : "-"}
-                  </td>
-                  <td className="p-2">{t.level || '-'}</td>
-                  <td className="p-2">{t.start_date ? t.start_date.slice(0, 10) : '-'}</td>
-                  <td className="p-2">{t.status || "draft"}</td>
-                  <td className="p-2">
-                    <button
-                      onClick={() => handleEdit(t.id)}
-                      className="bg-athletiq-blue text-white px-3 py-1 rounded hover:bg-athletiq-navy"
-                    >
-                      Manage
-                    </button>
-                  </td>
-                </motion.tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </motion.div>
+                  View
+                </Link>
+              </td>
+            </tr>
+          ))}
+          {filtered.length === 0 && (
+            <tr>
+              <td colSpan="5" className="text-center p-4 text-gray-500">
+                No tournaments found.
+              </td>
+            </tr>
+          )}
+        </tbody>
+      </table>
+    </div>
   );
 }

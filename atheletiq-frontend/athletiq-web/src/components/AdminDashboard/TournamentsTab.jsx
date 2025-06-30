@@ -1,64 +1,84 @@
-// src/pages/TournamentsTab.jsx
+// src/components/AdminDashboard/TournamentsTab.jsx
 
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { Button } from "../ui/button";
+import React, { useState, useEffect } from "react";
+import ViewTournamentModal from "../ViewTournamentModal";
 
-export default function TournamentsTab({ tournaments = [], onAdd }) {
-  const navigate = useNavigate();
+export default function TournamentsTab({ tournaments = [] }) {
+  const [searchText, setSearchText] = useState("");
+  const [selectedSport, setSelectedSport] = useState("");
+  const [filtered, setFiltered] = useState([]);
+  const [viewTournament, setViewTournament] = useState(null);
+
+  // Filter tournaments
+  useEffect(() => {
+    const filteredList = tournaments.filter((t) => {
+      const matchesSearch = t.name.toLowerCase().includes(searchText.toLowerCase());
+      const matchesSport = selectedSport ? t.sports.includes(selectedSport) : true;
+      return matchesSearch && matchesSport;
+    });
+
+    setFiltered(filteredList);
+  }, [tournaments, searchText, selectedSport]);
+
+  const allSports = Array.from(new Set(tournaments.flatMap((t) => t.sports)));
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-extrabold text-athletiq-navy">
-          🏆 Manage Tournaments
-        </h2>
-        <Button
-          className="bg-athletiq-green text-white px-4 py-2 rounded-lg hover:bg-green-600"
-          onClick={onAdd}
-        >
-          + Create New Tournament
-        </Button>
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <h2 className="text-2xl font-bold text-athletiq-navy">🏆 Tournaments</h2>
+
+        <div className="flex gap-3 flex-wrap">
+          <input
+            type="text"
+            placeholder="Search by name..."
+            className="border rounded px-4 py-2 text-sm"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+          />
+          <select
+            className="border rounded px-4 py-2 text-sm"
+            value={selectedSport}
+            onChange={(e) => setSelectedSport(e.target.value)}
+          >
+            <option value="">All Sports</option>
+            {allSports.map((sport) => (
+              <option key={sport} value={sport}>{sport}</option>
+            ))}
+          </select>
+          <span className="text-sm text-gray-500 self-center">{filtered.length} shown</span>
+        </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {tournaments.map((tournament) => (
+      {/* Card Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        {filtered.map((tournament) => (
           <div
             key={tournament.id}
-            className="bg-white rounded-2xl shadow hover:shadow-xl transition-all duration-200 p-4 border border-athletiq-blue/10 cursor-pointer hover:scale-[1.02]"
-            onClick={() => navigate(`/admin/tournament/${tournament.id}`)}
+            onClick={() => setViewTournament(tournament)}
+            className="bg-white shadow-md rounded-xl p-4 cursor-pointer hover:shadow-lg transition border border-gray-100"
           >
-            <div className="flex items-center gap-4 mb-4">
-              <img
-                src={tournament.logo_url || "/logo-placeholder.png"}
-                alt={tournament.name}
-                className="w-14 h-14 object-contain rounded-full border border-athletiq-cream"
-              />
-              <div>
-                <h3 className="text-lg font-bold text-athletiq-navy">
-                  {tournament.name || "Unnamed"}
-                </h3>
-                <p className="text-sm text-athletiq-blue">
-                  {tournament.location || "Unknown location"}
-                  {tournament.start_date && tournament.end_date && (
-                    <span className="block text-xs text-athletiq-navy/80">
-                      {new Date(tournament.start_date).toLocaleDateString()} - {new Date(tournament.end_date).toLocaleDateString()}
-                    </span>
-                  )}
-                </p>
-              </div>
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="font-semibold text-athletiq-blue text-lg">{tournament.name}</h3>
+              <span className="text-xs capitalize px-2 py-1 bg-athletiq-green text-white rounded">
+                {tournament.status || "upcoming"}
+              </span>
             </div>
-            <div className="flex justify-end">
-              <Button
-                variant="outline"
-                className="text-athletiq-blue border-athletiq-blue"
-              >
-                Manage
-              </Button>
+            <div className="text-sm text-gray-700 space-y-1">
+              <p><strong>📍 Location:</strong> {tournament.location || "N/A"}</p>
+              <p><strong>🏅 Sports:</strong> {tournament.sports?.join(", ")}</p>
+              <p><strong>🗓 Start:</strong> {tournament.start_date?.slice(0, 10) || "N/A"}</p>
+              <p><strong>🏁 End:</strong> {tournament.end_date?.slice(0, 10) || "N/A"}</p>
             </div>
           </div>
         ))}
       </div>
+
+      {/* View Modal */}
+      <ViewTournamentModal
+        open={!!viewTournament}
+        tournament={viewTournament}
+        onClose={() => setViewTournament(null)}
+      />
     </div>
   );
 }
