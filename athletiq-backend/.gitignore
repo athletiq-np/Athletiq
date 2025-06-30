@@ -33,3 +33,12 @@ pnpm-debug.log*
 
 # Secret Keys
 athletiq-backend/keys/google-translation-key.json
+
+# Dependencies
+node_modules/
+
+# Caching
+.cache/
+
+# Environment variables
+.env
