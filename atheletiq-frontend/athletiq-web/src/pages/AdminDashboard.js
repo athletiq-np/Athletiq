@@ -5,14 +5,14 @@ import axios from "axios";
 import { useNavigate } from "react-router-dom"; // Import useNavigate for programmatic navigation
 
 import DashboardLayout from "../components/DashboardLayout";
-import SchoolsTab from "../components/AdminDashboard/SchoolsTab";
-import PlayersTab from "../components/AdminDashboard/PlayersTab";
+import SchoolsTab from "../components/features/admin/SchoolsTab";
+import PlayersTab from "../components/features/admin/PlayersTab";
 // TournamentsTab will now primarily link to the dedicated TournamentListPage
 // If TournamentsTab *only* shows a subset or a summary, it can stay.
 // For now, let's assume TournamentListPage is the main place for tournaments.
-import TournamentsTab from "../components/AdminDashboard/TournamentsTab"; // Keeping it if it serves a distinct purpose
+import TournamentsTab from "../components/features/admin/TournamentsTab"; // Keeping it if it serves a distinct purpose
 import StatsTab from "../components/AdminDashboard/StatsTab";
-import TournamentsList from "../components/AdminDashboard/TournamentsList";
+import TournamentsList from "../components/features/tournament/TournamentsList";
 
 // Removed AddTournamentModal import as we now use a dedicated TournamentCreate page.
 // import AddTournamentModal from "../components/AdminDashboard/AddTournamentModal";

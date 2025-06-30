@@ -3,10 +3,10 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import DashboardLayout from "../components/DashboardLayout";
-import EditSchoolModal from "../components/EditSchoolModal";
-import AddPlayerModal from "../components/modals/AddPlayerModal";
-import EditPlayerModal from "../components/EditPlayerModal";
-import ViewPlayerModal from "../components/ViewPlayerModal";
+import EditSchoolModal from "../components/features/school/EditSchoolModal";
+import AddPlayerModal from "../components/features/player/AddPlayerModal";
+import EditPlayerModal from "../components/features/player/EditPlayerModal";
+import ViewPlayerModal from "../components/features/player/ViewPlayerModal";
 
 export default function SchoolDashboard() {
   const user = JSON.parse(localStorage.getItem("user") || "{}");

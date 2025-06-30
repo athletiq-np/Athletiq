@@ -1,7 +1,7 @@
 // src/components/AdminDashboard/TournamentsTab.jsx
 
 import React, { useState, useEffect } from "react";
-import ViewTournamentModal from "../ViewTournamentModal";
+import ViewTournamentModal from "../tournament/ViewTournamentModal";
 
 export default function TournamentsTab({ tournaments = [] }) {
   const [searchText, setSearchText] = useState("");

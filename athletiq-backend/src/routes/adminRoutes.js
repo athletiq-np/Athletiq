@@ -1,15 +1,20 @@
-// File: src/routes/adminRoutes.js
-
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcrypt');
 const pool = require('../config/db');
 const authMiddleware = require('../middlewares/authMiddleware');
+const adminController = require('../controllers/adminController'); // Import the new controller
+
+/*
+=================================================================
+SUPER ADMIN MANAGEMENT
+=================================================================
+*/
 
 /**
- * 1. Register a new super admin
- *    POST /api/admin/register-superadmin
- *    Protected: only existing super_admin via JWT
+ * @desc    Register a new super admin
+ * @route   POST /api/admin/register-superadmin
+ * @access  Protected: only existing super_admin
  */
 router.post(
   '/register-superadmin',
@@ -52,9 +57,9 @@ router.post(
 );
 
 /**
- * 2. Get all users
- *    GET /api/admin/all-users
- *    Protected: only super_admin
+ * @desc    Get all users
+ * @route   GET /api/admin/all-users
+ * @access  Protected: only super_admin
  */
 router.get(
   '/all-users',
@@ -75,5 +80,23 @@ router.get(
     }
   }
 );
+
+/*
+=================================================================
+SCHOOL MANAGEMENT (BY SUPER ADMIN)
+=================================================================
+*/
+
+/**
+ * @desc    A SuperAdmin changes the password for a school's primary admin user.
+ * @route   PUT /api/admin/schools/:schoolId/change-password
+ * @access  Private (SuperAdmin only)
+ */
+router.put(
+  '/schools/:schoolId/change-password',
+  authMiddleware, // Use the same middleware for protection
+  adminController.changeSchoolPassword // Handle logic in the controller
+);
+
 
 module.exports = router;

@@ -54,6 +54,7 @@ app.use('/api/matches', require('./src/routes/matchRoutes'));
 app.use('/api/brackets', require('./src/routes/bracketRoutes'));
 app.use('/api/ocr', require('./src/routes/ocr'));
 app.use('/api/location', require('./src/routes/location'));
+app.use('/api/admin', require('./src/routes/adminRoutes'));
 // Future route (if needed)
 // app.use('/api/scorecards', require('./src/routes/scorecardRoutes'));
 

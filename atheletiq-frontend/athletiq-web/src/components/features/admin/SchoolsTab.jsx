@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import AddSchoolModal from "../AddSchoolModal";
-import EditSchoolModal from "../EditSchoolModal";
-import BulkSchoolUploadModal from "../BulkSchoolUploadModal";
-import ChangeAdminPasswordModal from "../ChangeAdminPasswordModal";
-import ViewSchoolModal from "../ViewSchoolModal";
+import AddSchoolModal from "../school/AddSchoolModal";
+import EditSchoolModal from "../school/EditSchoolModal";
+import BulkSchoolUploadModal from "../../modals/BulkSchoolUploadModal";
+import ChangeAdminPasswordModal from "../../ChangeAdminPasswordModal";
+import ViewSchoolModal from "../school/ViewSchoolModal";
 
 export default function SchoolsTab({
   schools, loading, err,
