@@ -84,11 +84,34 @@ export default function SchoolsTab({
       </div>
 
       {/* Modals */}
-      <AddSchoolModal open={addSchoolOpen} onClose={() => setAddSchoolOpen(false)} onAdded={reloadSchools} />
-      <EditSchoolModal open={!!editSchool} school={editSchool} onClose={() => setEditSchool(null)} onUpdated={reloadSchools} />
-      <BulkSchoolUploadModal open={bulkSchoolOpen} onClose={() => setBulkSchoolOpen(false)} onUploaded={reloadSchools} />
-      <ChangeAdminPasswordModal open={!!changePwdSchool} school={changePwdSchool} onClose={() => setChangePwdSchool(null)} onChanged={reloadSchools} />
-      <ViewSchoolModal open={!!viewSchool} school={viewSchool} onClose={() => setViewSchool(null)} />
+      <AddSchoolModal
+        open={addSchoolOpen}
+        onClose={() => setAddSchoolOpen(false)}
+        onAdded={reloadSchools}
+      />
+      <EditSchoolModal
+        open={!!editSchool}
+        school={editSchool}
+        onClose={() => setEditSchool(null)}
+        onUpdated={reloadSchools}
+      />
+      <BulkSchoolUploadModal
+        open={bulkSchoolOpen}
+        onClose={() => setBulkSchoolOpen(false)}
+        onUploaded={reloadSchools}
+      />
+      <ChangeAdminPasswordModal
+        open={!!changePwdSchool}
+        school={changePwdSchool}
+        onClose={() => setChangePwdSchool(null)}
+        onChanged={reloadSchools}
+      />
+      <ViewSchoolModal
+        open={!!viewSchool}
+        school={viewSchool}
+        onClose={() => setViewSchool(null)}
+        onChangePassword={(school) => setChangePwdSchool(school)} /* ✅ FIXED */
+      />
     </div>
   );
 }

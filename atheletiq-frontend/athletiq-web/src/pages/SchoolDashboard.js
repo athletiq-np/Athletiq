@@ -4,7 +4,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import DashboardLayout from "../components/DashboardLayout";
 import EditSchoolModal from "../components/EditSchoolModal";
-import AddPlayerModal from "../components/AddPlayerModal";
+import AddPlayerModal from "../components/modals/AddPlayerModal";
 import EditPlayerModal from "../components/EditPlayerModal";
 import ViewPlayerModal from "../components/ViewPlayerModal";
 

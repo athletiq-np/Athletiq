@@ -2,7 +2,7 @@
 
 import React from "react";
 
-export default function ViewSchoolModal({ open, onClose, school }) {
+export default function ViewSchoolModal({ open, onClose, school, onChangePassword }) {
   if (!open || !school) return null;
 
   return (
@@ -30,9 +30,7 @@ export default function ViewSchoolModal({ open, onClose, school }) {
                 No Logo
               </div>
             )}
-            <h2 className="text-lg font-semibold text-athletiq-navy mt-4">
-              {school.name}
-            </h2>
+            <h2 className="text-lg font-semibold text-athletiq-navy mt-4">{school.name}</h2>
             {school.name_nep && (
               <h3 className="text-sm text-gray-500">{school.name_nep}</h3>
             )}
@@ -40,40 +38,32 @@ export default function ViewSchoolModal({ open, onClose, school }) {
 
           {/* School Details */}
           <div className="text-sm space-y-3">
-            <div>
-              <span className="font-medium text-gray-700">📍 Address: </span>
-              <span>{school.address || "N/A"}</span>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">🏙️ District: </span>
-              <span>{school.district || "N/A"}</span>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">🌐 Province: </span>
-              <span>{school.province || "N/A"}</span>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">📧 Email: </span>
-              <span>{school.email || "N/A"}</span>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">📞 Phone: </span>
-              <span>{school.phone || school.contact || "N/A"}</span>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">🆔 School Code: </span>
-              <span>{school.code || "N/A"}</span>
-            </div>
-            <div>
-              <span className="font-medium text-gray-700">🎓 Principal: </span>
-              <span>{school.principal || "N/A"}</span>
-            </div>
+            <div><span className="font-medium text-gray-700">📍 Address: </span>{school.address || "N/A"}</div>
+            <div><span className="font-medium text-gray-700">🏙️ District: </span>{school.district || "N/A"}</div>
+            <div><span className="font-medium text-gray-700">🌐 Province: </span>{school.province || "N/A"}</div>
+            <div><span className="font-medium text-gray-700">📧 Email: </span>{school.email || "N/A"}</div>
+            <div><span className="font-medium text-gray-700">📞 Phone: </span>{school.phone || school.contact || "N/A"}</div>
+            <div><span className="font-medium text-gray-700">🆔 School Code: </span>{school.code || "N/A"}</div>
+            <div><span className="font-medium text-gray-700">🎓 Principal: </span>{school.principal || "N/A"}</div>
             <div>
               <span className="font-medium text-gray-700">🟢 Status: </span>
               <span className={school.is_active ? "text-green-600 font-semibold" : "text-red-600"}>
                 {school.is_active ? "Active" : "Inactive"}
               </span>
             </div>
+          </div>
+
+          {/* Change Password Button */}
+          <div className="mt-6 text-center">
+            <button
+              className="px-4 py-2 text-sm rounded bg-athletiq-blue text-white hover:bg-blue-700"
+              onClick={() => {
+                onClose();
+                onChangePassword(school);
+              }}
+            >
+              Change Password
+            </button>
           </div>
         </div>
       </div>

@@ -1,11 +1,19 @@
+// src/components/modals/AddPlayerModal.jsx
+
 import React, { useState, useEffect } from "react";
 import axios from "axios";
 
-export default function AddPlayerModal({ open, onClose, onAdded, schools }) {
+export default function AddPlayerModal({
+  open,
+  onClose,
+  onAdded,
+  schools,
+  defaultSchoolId
+}) {
   const [form, setForm] = useState({
     full_name: "",
     dob: "",
-    school_id: schools && schools.length ? schools[0].id : "",
+    school_id: defaultSchoolId || (schools?.[0]?.id || ""),
   });
   const [photoFile, setPhotoFile] = useState(null);
   const [birthCertFile, setBirthCertFile] = useState(null);
@@ -18,13 +26,13 @@ export default function AddPlayerModal({ open, onClose, onAdded, schools }) {
       setForm({
         full_name: "",
         dob: "",
-        school_id: schools && schools.length ? schools[0].id : "",
+        school_id: defaultSchoolId || (schools?.[0]?.id || ""),
       });
       setPhotoFile(null);
       setBirthCertFile(null);
       setErr("");
     }
-  }, [open, schools]);
+  }, [open, schools, defaultSchoolId]);
 
   if (!open) return null;
 
@@ -41,22 +49,20 @@ export default function AddPlayerModal({ open, onClose, onAdded, schools }) {
       data.append("full_name", form.full_name);
       data.append("dob", form.dob);
       data.append("school_id", form.school_id);
-      // Optional uploads
       if (photoFile) data.append("photo", photoFile);
       if (birthCertFile) data.append("birth_cert", birthCertFile);
 
       const token = localStorage.getItem("token");
-      await axios.post(
-        "http://localhost:5000/api/players/register",
-        data,
-        { headers: { Authorization: `Bearer ${token}` } }
-      );
+      await axios.post("http://localhost:5000/api/players/register", data, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       onAdded && onAdded();
       onClose();
     } catch (error) {
       setErr(
         error?.response?.data?.message ||
-        "Failed to add player. Please check required fields."
+          "Failed to add player. Please check required fields."
       );
     }
     setLoading(false);
@@ -73,6 +79,7 @@ export default function AddPlayerModal({ open, onClose, onAdded, schools }) {
           &times;
         </button>
         <h2 className="text-xl font-bold mb-4">Add Player</h2>
+
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
             <label className="block text-sm mb-1">Full Name</label>
@@ -84,6 +91,7 @@ export default function AddPlayerModal({ open, onClose, onAdded, schools }) {
               required
             />
           </div>
+
           <div>
             <label className="block text-sm mb-1">Date of Birth</label>
             <input
@@ -95,6 +103,7 @@ export default function AddPlayerModal({ open, onClose, onAdded, schools }) {
               required
             />
           </div>
+
           <div>
             <label className="block text-sm mb-1">School</label>
             <select
@@ -103,17 +112,20 @@ export default function AddPlayerModal({ open, onClose, onAdded, schools }) {
               value={form.school_id || ""}
               onChange={handleChange}
               required
-              disabled={schools && schools.length === 1} // For school_admin, can't change
+              disabled={schools?.length === 1} // Lock for school admins
             >
               <option value="">Select school...</option>
-              {schools && schools.map(
-                (s) => s && s.id && (
-                  <option value={s.id} key={s.id}>{s.name}</option>
-                )
+              {schools?.map(
+                (s) =>
+                  s?.id && (
+                    <option key={s.id} value={s.id}>
+                      {s.name}
+                    </option>
+                  )
               )}
             </select>
           </div>
-          {/* Optional file uploads */}
+
           <div className="flex gap-4 items-center">
             <div>
               <label className="block text-sm mb-1">Photo</label>
@@ -132,10 +144,12 @@ export default function AddPlayerModal({ open, onClose, onAdded, schools }) {
               />
             </div>
           </div>
+
           {err && <div className="text-red-500">{err}</div>}
+
           <button
             type="submit"
-            className="w-full bg-blue-600 text-white rounded py-2 mt-2"
+            className="w-full bg-athletiq-navy text-white rounded py-2 mt-2"
             disabled={loading}
           >
             {loading ? "Adding..." : "Add Player"}

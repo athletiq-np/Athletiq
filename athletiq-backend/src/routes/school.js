@@ -6,7 +6,6 @@ const jwt = require('jsonwebtoken');
 const authMiddleware = require('../middlewares/authMiddleware');
 const multer = require('multer');
 const { generateShortCode } = require("../utils/codeGenerator");
-const COUNTRY_CODE = process.env.COUNTRY_CODE || 'NP';
 
 // Multer setup for logo/registration_doc uploads
 const storage = multer.diskStorage({
@@ -15,19 +14,17 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-// Utility: Generate short unique school code (e.g., EDUxxxx)
+// Generate school code
 async function generateSchoolCode() {
   const existsFn = async (code) => {
     const result = await pool.query('SELECT 1 FROM schools WHERE school_code=$1', [code]);
     return result.rows.length > 0;
   };
-  // EDU + 4 random alphanumeric (global, collision-resistant, 7 chars)
   return await generateShortCode("EDU", 7, existsFn);
 }
 
-// 1. School + Admin Registration (POST /api/school/register)
+// 1. Register school and admin
 router.post('/register', async (req, res) => {
-  console.log("Registering new school...");
   try {
     const {
       name, address, country, province, district, state, city, postal_code, ward,
@@ -42,31 +39,25 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'Missing required fields.' });
     }
 
-    // Check duplicate admin email
     const userExists = await pool.query('SELECT 1 FROM users WHERE email=$1', [admin_email]);
     if (userExists.rows.length)
       return res.status(409).json({ message: 'Admin email already registered.' });
 
-    // Check duplicate school (by name + address)
     const schoolExists = await pool.query(
       'SELECT 1 FROM schools WHERE LOWER(name)=LOWER($1) AND address=$2',
       [typeof name === 'string' ? name : name.en, address]
     );
     if (schoolExists.rows.length)
-      return res.status(409).json({ message: 'School name/address already registered.' });
+      return res.status(409).json({ message: 'School already exists.' });
 
-    // 1. Create admin user (school_id to be set after school is created)
     const hashed = await bcrypt.hash(password, 10);
     const userRes = await pool.query(
-      'INSERT INTO users (full_name, email, password, role, created_at) VALUES ($1, $2, $3, $4, NOW()) RETURNING id',
-      [admin_name, admin_email, hashed, 'school_admin']
+      'INSERT INTO users (full_name, email, password, role, phone, created_at) VALUES ($1, $2, $3, $4, $5, NOW()) RETURNING id',
+      [admin_name, admin_email, hashed, 'school_admin', principal_phone]
     );
     const user_id = userRes.rows[0].id;
 
-    // 2. Generate modern school code (EDUxxxx)
     const school_code = await generateSchoolCode();
-
-    // 3. Create school
     const schoolRes = await pool.query(
       `INSERT INTO schools
         (school_code, name, name_en, name_ne, address, country, province, district, state, city, postal_code, ward,
@@ -74,17 +65,17 @@ router.post('/register', async (req, res) => {
          principal_name, principal_phone, principal_email, admin_email,
          logo_url, registration_doc_url, location_lat, location_lng, place_id,
          created_by, onboarding_status, is_active, created_at, updated_at)
-      VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
-              $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,
-              $24,$25,$26,$27,
-              NULL,NULL,$28,$29,$30,
-              $31,'pending',TRUE,NOW(),NOW())
-      RETURNING id`,
+       VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,
+               $13,$14,$15,$16,$17,$18,$19,$20,$21,$22,$23,
+               $24,$25,$26,$27,
+               NULL,NULL,$28,$29,$30,
+               $31,'pending',TRUE,NOW(),NOW())
+       RETURNING id`,
       [
         school_code,
-        typeof name === 'string' ? name : name.en,       // name
-        typeof name === 'object' ? name.en : null,       // name_en
-        typeof name === 'object' ? name.ne : null,       // name_ne
+        typeof name === 'string' ? name : name.en,
+        typeof name === 'object' ? name.en : null,
+        typeof name === 'object' ? name.ne : null,
         address, country, province, district, state, city, postal_code, ward,
         phone, mobile, landline, email, website, facebook_url,
         type, registration_no, pan_number, estd_year, association,
@@ -93,25 +84,19 @@ router.post('/register', async (req, res) => {
         user_id
       ]
     );
+
     const school_id = schoolRes.rows[0].id;
+    await pool.query('UPDATE users SET school_id=$1 WHERE id=$2', [school_id, user_id]);
 
-    // 4. Update the user’s school_id to point to the new school
-    await pool.query(
-      'UPDATE users SET school_id=$1 WHERE id=$2',
-      [school_id, user_id]
-    );
-
-    console.log("School registration successful, school_id:", school_id);
     res.status(201).json({ message: "School admin registered!", school_id, school_code });
   } catch (err) {
     console.error("Register school admin error:", err);
-    res.status(500).json({ message: "Server error during school admin registration." });
+    res.status(500).json({ message: "Server error during registration." });
   }
 });
 
-// 2. School Admin Login (POST /api/school/login)
+// 2. Admin login
 router.post('/login', async (req, res) => {
-  console.log("School admin login...");
   try {
     const { email, password } = req.body;
     if (!email || !password)
@@ -127,51 +112,38 @@ router.post('/login', async (req, res) => {
     const match = await bcrypt.compare(password, user.password);
     if (!match) return res.status(401).json({ message: 'Incorrect password.' });
 
-    // Find the school for this admin (by created_by or admin_email)
     const schoolRes = await pool.query(
       'SELECT id FROM schools WHERE admin_email = $1 OR created_by = $2 LIMIT 1',
       [user.email, user.id]
     );
     const school_id = schoolRes.rows[0]?.id || null;
 
-    // Generate JWT with school_id
     const token = jwt.sign(
-      {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        full_name: user.full_name,
-        school_id // Include school_id in JWT payload!
-      },
+      { id: user.id, email: user.email, role: user.role, full_name: user.full_name, school_id },
       process.env.JWT_SECRET,
       { expiresIn: '7d' }
     );
 
-    console.log("Login successful, token generated.");
     res.json({
       message: "Login successful.",
       token,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.role,
-        full_name: user.full_name,
-        school_id
-      }
+      user: { id: user.id, email: user.email, role: user.role, full_name: user.full_name, school_id }
     });
   } catch (err) {
-    console.error("School admin login error:", err);
+    console.error("Login error:", err);
     res.status(500).json({ message: "Server error during login." });
   }
 });
 
-// 3. Super Admin: View all schools (GET /api/schools)
+// 3. Get all schools (Super Admin)
 router.get('/', authMiddleware, async (req, res) => {
-  console.log("Fetching all schools...");
   try {
-    console.log("Before DB query");
-    const result = await pool.query('SELECT * FROM schools ORDER BY id DESC');
-    console.log("After DB query");
+    const result = await pool.query(`
+      SELECT s.*, u.phone AS admin_phone
+      FROM schools s
+      LEFT JOIN users u ON s.admin_email = u.email
+      ORDER BY s.id DESC
+    `);
     res.json({ schools: result.rows });
   } catch (err) {
     console.error('Fetch schools error:', err);
@@ -179,30 +151,67 @@ router.get('/', authMiddleware, async (req, res) => {
   }
 });
 
-router.get('/test', (req, res) => {
-  console.log("Test route hit");
-  res.json({ message: "Test route working" });
+// 4. Get my school (School Admin)
+router.get('/me', authMiddleware, async (req, res) => {
+  try {
+    if (req.user.role !== 'school_admin') return res.status(403).json({ message: 'Access denied' });
+
+    const result = await pool.query(`
+      SELECT s.*, u.phone AS admin_phone
+      FROM schools s
+      LEFT JOIN users u ON s.admin_email = u.email
+      WHERE s.id = $1
+    `, [req.user.school_id]);
+
+    if (!result.rows.length) return res.status(404).json({ message: 'School not found' });
+
+    res.json({ school: result.rows[0] });
+  } catch (err) {
+    console.error('Fetch school error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
 });
 
-// 4. School Admin: View my school (GET /api/schools/me)
-router.get('/me', authMiddleware, async (req, res) => {
-  console.log("Fetching school for admin...");
-  if (req.user.role !== 'school_admin')
-    return res.status(403).json({ message: 'Access denied' });
+// 5. Super Admin: Change School Admin Password
+router.put('/:id/admin-password', authMiddleware, async (req, res) => {
+  const { id } = req.params;
+  const { newPassword } = req.body;
 
-  let school;
-  if (req.user.school_id) {
-    const r = await pool.query('SELECT * FROM schools WHERE id=$1 LIMIT 1', [req.user.school_id]);
-    school = r.rows[0];
-  } else {
-    const r = await pool.query('SELECT * FROM schools WHERE created_by=$1 LIMIT 1', [req.user.id]);
-    school = r.rows[0];
+  if (req.user.role !== 'super_admin') {
+    return res.status(403).json({ message: 'Only super admin can change admin passwords.' });
   }
-  if (!school)
-    return res.status(404).json({ message: 'School not found' });
 
-  console.log("School found:", school);
-  res.json({ school });
+  if (!newPassword || newPassword.length < 6) {
+    return res.status(400).json({ message: 'New password must be at least 6 characters.' });
+  }
+
+  try {
+    const schoolRes = await pool.query(
+      'SELECT admin_email FROM schools WHERE id = $1',
+      [id]
+    );
+
+    if (schoolRes.rows.length === 0) {
+      return res.status(404).json({ message: 'School not found.' });
+    }
+
+    const adminEmail = schoolRes.rows[0].admin_email;
+    const hashedPassword = await bcrypt.hash(newPassword, 10);
+
+    const updateRes = await pool.query(
+      'UPDATE users SET password = $1 WHERE email = $2 AND role = $3',
+      [hashedPassword, adminEmail, 'school_admin']
+    );
+
+    if (updateRes.rowCount === 0) {
+      return res.status(404).json({ message: 'Admin user not found.' });
+    }
+
+    res.status(200).json({ message: 'Admin password updated successfully.' });
+  } catch (err) {
+    console.error("Change password error:", err);
+    res.status(500).json({ message: 'Server error while changing password.' });
+  }
 });
 
 module.exports = router;

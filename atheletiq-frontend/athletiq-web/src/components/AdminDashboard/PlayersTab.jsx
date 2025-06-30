@@ -1,5 +1,5 @@
 import React from "react";
-import AddPlayerModal from "../AddPlayerModal";
+import AddPlayerModal from "../modals/AddPlayerModal";
 import EditPlayerModal from "../EditPlayerModal";
 import ViewPlayerModal from "../ViewPlayerModal";
 import BulkPlayerUploadModal from "../BulkPlayerUploadModal";
