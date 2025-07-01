@@ -1,123 +1,123 @@
 const pool = require('../config/db');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
+const { generateSchoolCode } = require('../utils/codeGenerator'); // Assuming you have this utility
 
-// Register a new school admin + school, return school_id
-exports.registerSchoolAdmin = async (req, res) => {
-  try {
-    const { email, password, school_name } = req.body;
-    if (!email || !password || !school_name)
-      return res.status(400).json({ message: 'Email, password, and school name required.' });
+/**
+ * @desc    Register a new school and its primary admin user
+ * @route   POST /api/schools/register
+ * @access  Public
+ */
+exports.registerSchool = async (req, res) => {
+  const {
+    name, address, country, province, district, city, ward,
+    phone, email: schoolEmail, website,
+    principal_name,
+    admin_name, admin_email, password
+  } = req.body;
 
-    // Duplicate check (user)
-    const userExists = await pool.query('SELECT * FROM users WHERE email=$1', [email]);
-    if (userExists.rows.length)
-      return res.status(409).json({ message: 'Email already registered.' });
-
-    // Duplicate check (school)
-    const schoolExists = await pool.query('SELECT * FROM schools WHERE LOWER(name)=LOWER($1)', [school_name]);
-    if (schoolExists.rows.length)
-      return res.status(409).json({ message: 'School name already registered.' });
-
-    // Hash password
-    const hashed = await bcrypt.hash(password, 10);
-
-    // Create user (role: school_admin)
-    const userRes = await pool.query(
-      'INSERT INTO users (email, password, role, is_active, created_at) VALUES ($1, $2, $3, TRUE, NOW()) RETURNING id',
-      [email, hashed, 'school_admin']
-    );
-    const user_id = userRes.rows[0].id;
-
-    // Create school, set created_by=user_id
-    const schoolRes = await pool.query(
-      "INSERT INTO schools (name, created_by, onboarding_status, is_active, created_at, updated_at) VALUES ($1, $2, 'pending', TRUE, NOW(), NOW()) RETURNING id",
-      [school_name, user_id]
-    );
-    const school_id = schoolRes.rows[0].id;
-
-    // Return school_id for onboarding
-    res.status(201).json({ message: "School admin registered!", school_id });
-  } catch (err) {
-    console.error("Register school admin error:", err);
-    res.status(500).json({ message: "Server error during school admin registration." });
+  // Basic validation
+  if (!name || !address || !admin_name || !admin_email || !password) {
+    return res.status(400).json({ message: 'Missing required fields for school and admin.' });
   }
-};
 
-// PATCH /api/schools/:id — update onboarding info
-exports.updateSchool = async (req, res) => {
+  const client = await pool.connect();
+
   try {
-    const { id } = req.params;
-    const user = req.user;
+    // --- Start Transaction ---
+    await client.query('BEGIN');
 
-    // Get current school data
-    const { rows } = await pool.query("SELECT * FROM schools WHERE id=$1", [id]);
-    if (!rows.length) return res.status(404).json({ message: "School not found." });
-    const school = rows[0];
+    // Check for duplicate admin email
+    const userExists = await client.query('SELECT 1 FROM users WHERE email=$1', [admin_email]);
+    if (userExists.rows.length) {
+      throw new Error('This administrator email is already registered.');
+    }
 
-    // Only creator or super_admin can update
-    if (user.role !== "super_admin" && school.created_by !== user.id)
-      return res.status(403).json({ message: "Not authorized." });
+    // Check for duplicate school name
+    const schoolExists = await client.query('SELECT 1 FROM schools WHERE LOWER(name)=LOWER($1)', [name]);
+    if (schoolExists.rows.length) {
+      throw new Error('A school with this name is already registered.');
+    }
 
-    // Prepare updatable fields
-    const updatable = [
-      "name", "address", "province", "district", "municipality", "ward",
-      "phone", "email", "location_lat", "location_lng", "onboarding_status", "is_active"
-    ];
-    const fields = [];
-    const values = [];
-    let idx = 1;
+    // 1. Create the admin user
+    const salt = await bcrypt.genSalt(10);
+    const passwordHash = await bcrypt.hash(password, salt);
+    const userRes = await client.query(
+      `INSERT INTO users (full_name, email, password_hash, role) 
+       VALUES ($1, $2, $3, 'SchoolAdmin') RETURNING user_id`,
+      [admin_name, admin_email, passwordHash]
+    );
+    const adminUserId = userRes.rows[0].user_id;
 
-    updatable.forEach(field => {
-      if (req.body[field] !== undefined) {
-        fields.push(`${field}=$${idx++}`);
-        values.push(req.body[field]);
-      }
+    // 2. Generate a unique school code
+    const school_code = await generateSchoolCode();
+
+    // 3. Create the school, linking the new admin user to it
+    const schoolRes = await client.query(
+      `INSERT INTO schools (school_code, name, address, country, province, district, city, ward, phone, email, website, principal_name, admin_user_id, onboarding_status) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, 'pending') 
+       RETURNING school_id, school_code`,
+      [school_code, name, address, country, province, district, city, ward, phone, schoolEmail, website, principal_name, adminUserId]
+    );
+    const { school_id, school_code: new_school_code } = schoolRes.rows[0];
+    
+    // --- Commit Transaction ---
+    await client.query('COMMIT');
+
+    res.status(201).json({ 
+      message: "School and admin registered successfully!", 
+      school_id: school_id, 
+      school_code: new_school_code 
     });
 
-    // Handle logo and registration_doc uploads
-    let logo_url = school.logo_url;
-    let registration_doc_url = school.registration_doc_url;
-    if (req.files && req.files.logo) logo_url = req.files.logo[0].filename;
-    if (req.files && req.files.registration_doc) registration_doc_url = req.files.registration_doc[0].filename;
-
-    if (logo_url !== school.logo_url) {
-      fields.push(`logo_url=$${idx++}`);
-      values.push(logo_url);
-    }
-    if (registration_doc_url !== school.registration_doc_url) {
-      fields.push(`registration_doc_url=$${idx++}`);
-      values.push(registration_doc_url);
-    }
-
-    // Always update updated_at
-    fields.push(`updated_at=NOW()`);
-
-    if (!fields.length)
-      return res.status(400).json({ message: "No fields provided to update." });
-
-    const query = `
-      UPDATE schools SET ${fields.join(", ")}
-      WHERE id = $${idx}
-      RETURNING *`;
-    values.push(id);
-
-    const updated = await pool.query(query, values);
-    res.json({ message: "School updated", school: updated.rows[0] });
   } catch (err) {
-    console.error("Update school error:", err);
-    res.status(500).json({ message: "Server error during school update." });
+    await client.query('ROLLBACK');
+    console.error("Register school error:", err);
+    res.status(500).json({ message: err.message || "Server error during registration." });
+  } finally {
+    client.release();
   }
 };
 
-// GET /api/schools/:id — fetch onboarding/profile
-exports.getSchoolProfile = async (req, res) => {
+
+/**
+ * @desc    Get a list of all schools (for SuperAdmin)
+ * @route   GET /api/schools
+ * @access  Private (SuperAdmin)
+ */
+exports.getAllSchools = async (req, res) => {
+  // This check ensures only SuperAdmins can get the full list
+  if (req.user.role !== 'SuperAdmin') {
+    return res.status(403).json({ message: 'Access denied.' });
+  }
   try {
-    const { id } = req.params;
-    const { rows } = await pool.query("SELECT * FROM schools WHERE id=$1", [id]);
-    if (!rows.length) return res.status(404).json({ message: "School not found." });
-    res.json(rows[0]);
+    const result = await pool.query('SELECT * FROM schools ORDER BY created_at DESC');
+    res.status(200).json({ schools: result.rows });
+  } catch (error) {
+    console.error('Error fetching all schools:', error);
+    res.status(500).json({ message: 'Server error while fetching schools.' });
+  }
+};
+
+
+/**
+ * @desc    Get the profile for the currently logged-in admin's school
+ * @route   GET /api/schools/me
+ * @access  Private (SchoolAdmin)
+ */
+exports.getMySchoolProfile = async (req, res) => {
+  try {
+    // The school_id is securely taken from the user's token, not a URL parameter
+    const schoolId = req.user.school_id;
+    if (!schoolId) {
+        return res.status(404).json({ message: "No school associated with this user." });
+    }
+    const { rows } = await pool.query("SELECT * FROM schools WHERE school_id=$1", [schoolId]);
+    if (!rows.length) {
+      return res.status(404).json({ message: "Associated school not found." });
+    }
+    res.status(200).json({ school: rows[0] });
   } catch (err) {
-    console.error("Get school error:", err);
-    res.status(500).json({ message: "Server error during school fetch." });
+    console.error("Get my school error:", err);
+    res.status(500).json({ message: "Server error while fetching school profile." });
   }
 };

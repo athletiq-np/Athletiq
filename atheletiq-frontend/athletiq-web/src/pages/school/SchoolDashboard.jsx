@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import EditSchoolModal from "../../components/SchoolDashboard/EditSchoolModal";
+import EditSchoolModal from '@/components/features/school/EditSchoolModal';
 
 export default function SchoolDashboard() {
   const [school, setSchool] = useState(null);

@@ -4,13 +4,10 @@ import React from "react";
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 
 // Import dashboards and general pages
-import Login from "./pages/Login";
-import SchoolDashboard from "./pages/SchoolDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import PlayerDashboard from "./pages/PlayerDashboard";
-import CoachDashboard from "./pages/CoachDashboard";
-import RefereeDashboard from "./pages/RefereeDashboard";
-import OrgDashboard from "./pages/OrgDashboard";
+import Login from "./pages/auth/Login";
+import SchoolDashboard from '@/pages/school/SchoolDashboard';
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import PlayerDashboard from "./pages/player/PlayerDashboard";
 
 // Tournament specific pages - based on your provided file structure
 import TournamentListPage from "./pages/admin/tournaments/TournamentListPage";
@@ -134,36 +131,7 @@ function App() {
           }
         />
 
-        {/* Coach Dashboard */}
-        <Route
-          path="/coach-dashboard"
-          element={
-            <PrivateRoute allowedRoles={["coach"]}>
-              <CoachDashboard />
-            </PrivateRoute>
-          }
-        />
-
-        {/* Referee Dashboard */}
-        <Route
-          path="/referee-dashboard"
-          element={
-            <PrivateRoute allowedRoles={["referee"]}>
-              <RefereeDashboard />
-            </PrivateRoute>
-          }
-        />
-
-        {/* Organization Dashboard */}
-        <Route
-          path="/org-dashboard"
-          element={
-            <PrivateRoute allowedRoles={["organization"]}>
-              <OrgDashboard />
-            </PrivateRoute>
-          }
-        />
-
+      
         {/* Catch-all route: Redirects any unmatched paths to the login page */}
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>

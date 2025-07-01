@@ -2,8 +2,7 @@ import React from "react";
 import AddPlayerModal from "../player/AddPlayerModal";
 import EditPlayerModal from "../player/EditPlayerModal";
 import ViewPlayerModal from "../player/ViewPlayerModal";
-import BulkPlayerUploadModal from "../../modals/BulkPlayerUploadModal";
-
+import BulkPlayerUploadModal from '@/components/features/player/BulkPlayerUploadModal';
 export default function PlayersTab({
   players, schools, user,
   selectedSchoolId, setSelectedSchoolId,

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import AddSchoolModal from "../school/AddSchoolModal";
 import EditSchoolModal from "../school/EditSchoolModal";
-import BulkSchoolUploadModal from "../../modals/BulkSchoolUploadModal";
+import BulkSchoolUploadModal from '@/components/features/school/BulkSchoolUploadModal';
 import ChangeAdminPasswordModal from "../../ChangeAdminPasswordModal";
 import ViewSchoolModal from "../school/ViewSchoolModal";
 
