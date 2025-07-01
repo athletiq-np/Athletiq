@@ -47,7 +47,7 @@ app.use('/uploads', express.static(uploadDir));
 app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/players', require('./src/routes/playerRoutes'));
 app.use('/api/registrations', require('./src/routes/registrationRoutes'));
-app.use('/api/schools', require('./src/routes/school'));
+app.use('/api/schools', require('./src/routes/schoolRoutes'));
 app.use('/api/tournaments', require('./src/routes/tournamentRoutes'));
 app.use('/api/tournaments', require('./src/routes/tournamentSportsRoutes'));
 app.use('/api/matches', require('./src/routes/matchRoutes'));

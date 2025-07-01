@@ -8,7 +8,7 @@
  */
 
 import React, { useState } from "react";
-import { registerPlayer, extractCertificateOCR } from "../api/playerApi";
+import { registerPlayer, extractCertificateOCR } from "../../../api/playerApi";
 
 const initialFields = {
   full_name_eng: "",
