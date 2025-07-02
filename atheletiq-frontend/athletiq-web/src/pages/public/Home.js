@@ -1,95 +1,96 @@
-import React from "react";
-import { useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
+//
+// 🧠 ATHLETIQ - Smart Homepage
+//
+// This component serves as the main landing page for new users.
+// It also intelligently redirects already logged-in users to their
+// appropriate dashboard by checking the central user store.
+//
+
+import React, { useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import useUserStore from '@/store/userStore'; // Import our global user store
+import { FaArrowRight, FaShieldAlt, FaTrophy, FaUsers } from 'react-icons/fa';
 
 export default function Home() {
-  const { t, i18n } = useTranslation();
+  // Get the user object from our Zustand store
+  const { user } = useUserStore();
   const navigate = useNavigate();
 
-  // Animations
-  const container = {
-    hidden: { opacity: 0, y: 40 },
-    show: { opacity: 1, y: 0, transition: { staggerChildren: 0.15 } }
-  };
-  const fadeIn = { hidden: { opacity: 0, y: 32 }, show: { opacity: 1, y: 0 } };
+  // This effect runs whenever the 'user' object changes.
+  useEffect(() => {
+    // If a user is logged in, redirect them to their dashboard.
+    if (user) {
+      switch (user.role) {
+        case 'SuperAdmin':
+          navigate('/admin/dashboard');
+          break;
+        case 'SchoolAdmin':
+          navigate('/school/dashboard');
+          break;
+        // Add cases for other roles as they are built
+        // case 'Player':
+        //   navigate('/player/dashboard');
+        //   break;
+        default:
+          // Default redirect for any other logged-in role
+          navigate('/dashboard'); 
+      }
+    }
+    // The dependency array [user, navigate] ensures this effect re-runs
+    // if the user logs in or out.
+  }, [user, navigate]);
 
+  // If no user is logged in, we render the public landing page.
   return (
-    <motion.div
-      className="min-h-screen flex flex-col items-center justify-center bg-gradient-to-br from-blue-100 to-green-100"
-      initial="hidden"
-      animate="show"
-      variants={container}
-      style={{
-        background:
-          "linear-gradient(120deg, #dbeafe 0%, #67e8f9 45%, #bbf7d0 100%)"
-      }}
-    >
-      <motion.h1
-        className="text-4xl md:text-5xl font-extrabold mb-3 text-blue-800 text-center drop-shadow"
-        variants={fadeIn}
-      >
-        ATHLETIQ
-      </motion.h1>
-      <motion.h2
-        className="text-lg md:text-2xl font-medium mb-7 text-blue-900 text-center max-w-xl"
-        variants={fadeIn}
-      >
-        {t("welcome") ||
-          "Welcome to ATHLETIQ: A new era of youth sports data, registration & tournaments—powered by technology, built for every school in the world."}
-      </motion.h2>
-      <motion.p
-        className="mb-9 text-base md:text-lg text-blue-700 text-center max-w-xl"
-        variants={fadeIn}
-      >
-        {t("athletiq_mission") ||
-          "Digitally connecting every school, athlete, coach, and tournament in Nepal and beyond."}
-      </motion.p>
-      <motion.div
-        className="flex flex-col md:flex-row gap-5 mb-9"
-        variants={fadeIn}
-      >
-        <button
-          onClick={() => navigate("/register")}
-          className="px-7 py-2 rounded-xl bg-blue-600 text-white text-lg font-semibold shadow-lg hover:bg-blue-700 transition"
+    <div className="bg-gray-50 min-h-screen">
+      {/* Header */}
+      <header className="bg-white shadow-sm">
+        <nav className="container mx-auto px-6 py-4 flex justify-between items-center">
+          <div className="text-2xl font-bold text-athletiq-navy">ATHLETIQ</div>
+          <div>
+            <Link to="/login" className="px-6 py-2 font-semibold text-white bg-athletiq-green rounded-lg hover:bg-green-700">
+              Login
+            </Link>
+          </div>
+        </nav>
+      </header>
+
+      {/* Hero Section */}
+      <main className="container mx-auto px-6 py-16 text-center">
+        <h1 className="text-4xl md:text-6xl font-extrabold text-athletiq-navy leading-tight">
+          The Future of Youth Sports is Here.
+        </h1>
+        <p className="mt-4 text-lg text-gray-600 max-w-2xl mx-auto">
+          Athletiq provides a unified platform to give every young athlete a verified digital identity, track their performance, and manage tournaments with ease.
+        </p>
+        <Link
+          to="/register"
+          className="mt-8 inline-block px-8 py-4 text-lg font-bold text-white bg-athletiq-green rounded-lg shadow-lg hover:bg-green-700 transform hover:scale-105 transition-transform"
         >
-          {t("start_registration") || "Register"}
-        </button>
-        <button
-          onClick={() => navigate("/login")}
-          className="px-7 py-2 rounded-xl bg-white text-blue-700 border border-blue-400 text-lg font-semibold shadow-lg hover:bg-blue-100 transition"
-        >
-          {t("login") || "Login"}
-        </button>
-      </motion.div>
-      <motion.div className="flex gap-2" variants={fadeIn}>
-        <button
-          onClick={() => i18n.changeLanguage("en")}
-          className={`px-3 py-1 rounded ${
-            i18n.language === "en"
-              ? "bg-blue-600 text-white"
-              : "bg-blue-100 text-blue-600"
-          }`}
-        >
-          EN
-        </button>
-        <button
-          onClick={() => i18n.changeLanguage("np")}
-          className={`px-3 py-1 rounded ${
-            i18n.language === "np"
-              ? "bg-green-600 text-white"
-              : "bg-green-100 text-green-600"
-          }`}
-        >
-          ने
-        </button>
-      </motion.div>
-      <motion.div
-        className="absolute bottom-6 text-xs text-blue-400"
-        variants={fadeIn}
-      >
-        Powered by ATHLETIQ &nbsp;|&nbsp; © {new Date().getFullYear()}
-      </motion.div>
-    </motion.div>
+          Register Your School Today <FaArrowRight className="inline ml-2" />
+        </Link>
+      </main>
+
+      {/* Features Section */}
+      <section className="py-16 bg-white">
+        <div className="container mx-auto px-6 grid md:grid-cols-3 gap-12 text-center">
+          <div className="flex flex-col items-center">
+            <FaUsers className="text-4xl text-athletiq-green mb-4" />
+            <h3 className="text-xl font-bold text-athletiq-navy mb-2">Digital Identity</h3>
+            <p className="text-gray-600">Provide every athlete with a permanent, verified digital profile to track their entire career.</p>
+          </div>
+          <div className="flex flex-col items-center">
+            <FaTrophy className="text-4xl text-athletiq-green mb-4" />
+            <h3 className="text-xl font-bold text-athletiq-navy mb-2">Tournament Management</h3>
+            <p className="text-gray-600">Effortlessly create, manage, and share multi-sport tournaments with automated fixtures and live results.</p>
+          </div>
+          <div className="flex flex-col items-center">
+            <FaShieldAlt className="text-4xl text-athletiq-green mb-4" />
+            <h3 className="text-xl font-bold text-athletiq-navy mb-2">Verified Data</h3>
+            <p className="text-gray-600">Ensure data integrity with AI-powered document verification for age and identity validation.</p>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

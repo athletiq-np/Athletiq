@@ -1,70 +1,65 @@
-// src/components/ViewSchoolModal.jsx
+//
+// 🧠 ATHLETIQ - View School Details Modal
+//
+// This component displays detailed information about a single school in a modal.
+// It is a "dumb" component that simply receives data and functions as props.
+//
 
-import React from "react";
+import React from 'react';
+import { FaTimes, FaBuilding, FaMapMarkerAlt, FaEnvelope, FaUserTie } from 'react-icons/fa';
 
-export default function ViewSchoolModal({ open, onClose, school, onChangePassword }) {
-  if (!open || !school) return null;
+export default function ViewSchoolModal({ isOpen, onClose, school }) {
+  // --- Guard Clause ---
+  // If the modal isn't open or there's no school data, render nothing.
+  // This prevents errors if the component is rendered with null props.
+  if (!isOpen || !school) {
+    return null;
+  }
+
+  // --- Data Display Helper ---
+  // A small component to render each detail item consistently.
+  const DetailItem = ({ icon, label, value }) => (
+    <div>
+      <dt className="text-sm font-medium text-gray-500 flex items-center gap-2">
+        {icon}
+        {label}
+      </dt>
+      <dd className="mt-1 text-sm text-gray-900">{value || 'Not Provided'}</dd>
+    </div>
+  );
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg relative">
-        {/* Close Button */}
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-500 hover:text-black text-xl"
-        >
-          ✕
-        </button>
+    // Modal backdrop
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 backdrop-blur-sm animate-fade-in">
+      {/* Modal panel */}
+      <div className="bg-white rounded-lg shadow-2xl p-6 w-full max-w-2xl m-4 animate-fade-in-up">
+        {/* Modal Header */}
+        <div className="flex justify-between items-center pb-4 border-b">
+          <h2 className="text-2xl font-bold text-athletiq-navy">{school.name}</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-700">
+            <FaTimes size={22} />
+          </button>
+        </div>
 
-        <div className="p-6">
-          {/* Logo + Name */}
-          <div className="flex flex-col items-center text-center mb-6">
-            {school.logo_url ? (
-              <img
-                src={`http://localhost:5000/uploads/${school.logo_url}`}
-                alt="School Logo"
-                className="w-24 h-24 object-contain rounded-full border"
-              />
-            ) : (
-              <div className="w-24 h-24 rounded-full bg-gray-100 flex items-center justify-center text-gray-400">
-                No Logo
-              </div>
-            )}
-            <h2 className="text-lg font-semibold text-athletiq-navy mt-4">{school.name}</h2>
-            {school.name_nep && (
-              <h3 className="text-sm text-gray-500">{school.name_nep}</h3>
-            )}
-          </div>
+        {/* Modal Content */}
+        <div className="mt-6">
+          <dl className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-6">
+            <DetailItem icon={<FaBuilding />} label="School Code" value={school.school_code} />
+            <DetailItem icon={<FaMapMarkerAlt />} label="Full Address" value={school.address} />
+            <DetailItem icon={<FaEnvelope />} label="School Email" value={school.email} />
+            <DetailItem icon={<FaUserTie />} label="Principal Name" value={school.principal_name} />
+            {/* You can add more details from your database schema here */}
+          </dl>
+        </div>
 
-          {/* School Details */}
-          <div className="text-sm space-y-3">
-            <div><span className="font-medium text-gray-700">📍 Address: </span>{school.address || "N/A"}</div>
-            <div><span className="font-medium text-gray-700">🏙️ District: </span>{school.district || "N/A"}</div>
-            <div><span className="font-medium text-gray-700">🌐 Province: </span>{school.province || "N/A"}</div>
-            <div><span className="font-medium text-gray-700">📧 Email: </span>{school.email || "N/A"}</div>
-            <div><span className="font-medium text-gray-700">📞 Phone: </span>{school.phone || school.contact || "N/A"}</div>
-            <div><span className="font-medium text-gray-700">🆔 School Code: </span>{school.code || "N/A"}</div>
-            <div><span className="font-medium text-gray-700">🎓 Principal: </span>{school.principal || "N/A"}</div>
-            <div>
-              <span className="font-medium text-gray-700">🟢 Status: </span>
-              <span className={school.is_active ? "text-green-600 font-semibold" : "text-red-600"}>
-                {school.is_active ? "Active" : "Inactive"}
-              </span>
-            </div>
-          </div>
-
-          {/* Change Password Button */}
-          <div className="mt-6 text-center">
-            <button
-              className="px-4 py-2 text-sm rounded bg-athletiq-blue text-white hover:bg-blue-700"
-              onClick={() => {
-                onClose();
-                onChangePassword(school);
-              }}
-            >
-              Change Password
-            </button>
-          </div>
+        {/* Modal Footer with Actions */}
+        <div className="mt-8 pt-4 border-t flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-2 bg-gray-200 text-gray-800 font-semibold rounded-lg hover:bg-gray-300"
+          >
+            Close
+          </button>
         </div>
       </div>
     </div>

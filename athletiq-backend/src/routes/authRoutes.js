@@ -1,35 +1,29 @@
-//
-// 🧠 ATHLETIQ - Admin Routes (Upgraded with Clean Middleware)
-//
-// This file defines all API endpoints that are exclusive to the SuperAdmin role.
-// It uses our 'protect' and 'checkRole' middleware for security.
-//
-
 const express = require('express');
 const router = express.Router();
+const authController = require('../controllers/authController');
+const { protect } = require('../middlewares/authMiddleware');
 
-// Import the controller functions
-const {
-  registerSuperAdmin,
-  getDashboardStats,
-  changeSchoolPassword
-} = require('../controllers/adminController');
+// @route   POST /api/auth/register
+// @desc    Register a new School Admin and their School
+// @access  Public
+router.post('/register', authController.register);
 
-// Import our security middleware
-const { protect, checkRole } = require('../middlewares/authMiddleware');
+// @route   POST /api/auth/login
+// @desc    Authenticate a user and set a secure cookie
+// @access  Public
+router.post('/login', authController.login);
 
-// Define a constant for the required role to keep the code clean
-const SUPER_ADMIN_ONLY = checkRole(['SuperAdmin']);
+// @route   GET /api/auth/logout
+// @desc    Log user out by clearing the authentication cookie
+// @access  Private (must be logged in to log out)
+router.get('/logout', protect, authController.logout);
 
-// --- Route Definitions ---
+// @route   GET /api/auth/me
+// @desc    Get the profile of the currently logged-in user
+// @access  Private
+router.get('/me', protect, authController.getMe);
 
-// @route  POST /api/admin/register-superadmin
-router.post('/register-superadmin', protect, SUPER_ADMIN_ONLY, registerSuperAdmin);
-
-// @route  GET /api/admin/dashboard-stats
-router.get('/dashboard-stats', protect, SUPER_ADMIN_ONLY, getDashboardStats);
-
-// @route  PUT /api/admin/schools/:schoolId/change-password
-router.put('/schools/:schoolId/change-password', protect, SUPER_ADMIN_ONLY, changeSchoolPassword);
+// Add this temporary line for testing
+router.get('/test', (req, res) => res.send('Auth route is working!'));
 
 module.exports = router;
