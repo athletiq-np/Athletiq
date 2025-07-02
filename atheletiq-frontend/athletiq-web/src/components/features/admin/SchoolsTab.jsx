@@ -1,116 +1,148 @@
-import React, { useState, useEffect } from "react";
-import AddSchoolModal from "../school/AddSchoolModal";
-import EditSchoolModal from "../school/EditSchoolModal";
+//
+// 🧠 ATHLETIQ - Admin Schools Tab (Upgraded)
+//
+// This component is now more self-contained and robust. It manages its own state
+// for modals and displays the school data in a clean, functional table.
+//
+
+import React, { useState, useEffect } from 'react';
+import apiClient from '@/api/apiClient';
+
+// --- All modal components are now imported via the clean '@' alias ---
+import AddSchoolModal from '@/components/features/school/AddSchoolModal';
+import EditSchoolModal from '@/components/features/school/EditSchoolModal';
 import BulkSchoolUploadModal from '@/components/features/school/BulkSchoolUploadModal';
-import ChangeAdminPasswordModal from "../../ChangeAdminPasswordModal";
-import ViewSchoolModal from "../school/ViewSchoolModal";
+import ChangeAdminPasswordModal from '@/components/features/admin/ChangeAdminPasswordModal';
+import ViewSchoolModal from '@/components/features/school/ViewSchoolModal';
 
-export default function SchoolsTab({
-  schools, loading, err,
-  addSchoolOpen, setAddSchoolOpen,
-  bulkSchoolOpen, setBulkSchoolOpen,
-  editSchool, setEditSchool,
-  changePwdSchool, setChangePwdSchool,
-  reloadSchools, handleDeleteSchool
-}) {
-  const [searchText, setSearchText] = useState("");
+// This component now only needs the list of schools and a function to refetch them.
+export default function SchoolsTab({ schools, refetchSchools }) {
+  // --- STATE MANAGEMENT ---
+  // All state related to this tab is now managed here, not in the parent dashboard.
   const [filteredSchools, setFilteredSchools] = useState([]);
-  const [viewSchool, setViewSchool] = useState(null);
+  const [searchText, setSearchText] = useState('');
 
+  // State for controlling modals
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isBulkModalOpen, setIsBulkModalOpen] = useState(false);
+  const [schoolToEdit, setSchoolToEdit] = useState(null);
+  const [schoolToView, setSchoolToView] = useState(null);
+  const [schoolForPwdChange, setSchoolForPwdChange] = useState(null);
+
+
+  // --- DATA HANDLING ---
+  // Effect to filter schools whenever the search text or the main schools list changes.
   useEffect(() => {
-    const filtered = schools.filter(s =>
-      s.name.toLowerCase().includes(searchText.toLowerCase()) ||
-      s.email?.toLowerCase().includes(searchText.toLowerCase())
-    );
-    setFilteredSchools(filtered);
+    if (!searchText) {
+      setFilteredSchools(schools);
+    } else {
+      const lowercasedSearch = searchText.toLowerCase();
+      const filtered = schools.filter(s =>
+        s.name.toLowerCase().includes(lowercasedSearch) ||
+        s.school_code.toLowerCase().includes(lowercasedSearch) ||
+        s.email?.toLowerCase().includes(lowercasedSearch)
+      );
+      setFilteredSchools(filtered);
+    }
   }, [schools, searchText]);
 
+  // --- EVENT HANDLERS ---
+  const handleDeleteSchool = async (schoolId) => {
+    if (!window.confirm("Are you sure you want to delete this school? This action is permanent and will delete all associated players and teams.")) return;
+    try {
+      await apiClient.delete(`/schools/${schoolId}`); // Assuming a delete endpoint exists
+      alert('School deleted successfully.');
+      refetchSchools(); // Call the refetch function passed from the parent
+    } catch (err) {
+      alert(err.response?.data?.message || "Failed to delete school.");
+    }
+  };
+
+
+  // --- RENDER ---
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-        <h2 className="text-lg font-semibold text-athletiq-navy">🏫 Schools</h2>
+    <div className="space-y-6 animate-fade-in">
+      {/* Header with search and action buttons */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <input
+          type="text"
+          placeholder="Search by name, code, or email..."
+          value={searchText}
+          onChange={(e) => setSearchText(e.target.value)}
+          className="w-full sm:w-1/2 px-4 py-2 text-sm border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-athletiq-green"
+        />
         <div className="flex gap-2">
-          <button onClick={() => setAddSchoolOpen(true)} className="px-3 py-1 text-sm bg-athletiq-green text-white rounded">
-            + Add School
+          <button onClick={() => setIsAddModalOpen(true)} className="px-4 py-2 text-sm font-semibold bg-athletiq-green text-white rounded-lg hover:bg-green-700">
+            + Add New School
           </button>
-          <button onClick={() => setBulkSchoolOpen(true)} className="px-3 py-1 text-sm bg-athletiq-blue text-white rounded">
+          <button onClick={() => setIsBulkModalOpen(true)} className="px-4 py-2 text-sm font-semibold bg-athletiq-navy text-white rounded-lg hover:bg-navy-700">
             Bulk Upload
           </button>
         </div>
       </div>
 
-      {/* Search Bar */}
-      <div className="flex justify-between items-center">
-        <input
-          type="text"
-          placeholder="Search school..."
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          className="w-full md:w-1/2 px-3 py-1.5 text-sm border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-athletiq-blue"
-        />
-        <span className="text-xs text-gray-500 ml-4">{filteredSchools.length} shown</span>
+      {/* Schools Table - A more professional way to display data */}
+      <div className="overflow-x-auto bg-white rounded-lg shadow">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">School Name</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Address</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {filteredSchools.map((school) => (
+              <tr key={school.id} className="hover:bg-gray-50">
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <div className="text-sm font-semibold text-athletiq-navy">{school.name}</div>
+                  <div className="text-xs text-gray-500">{school.school_code}</div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700">{school.address}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${school.is_active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}`}>
+                    {school.is_active ? 'Active' : 'Inactive'}
+                  </span>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium space-x-2">
+                  <button onClick={() => setSchoolToView(school)} className="text-blue-600 hover:text-blue-900">View</button>
+                  <button onClick={() => setSchoolToEdit(school)} className="text-green-600 hover:text-green-900">Edit</button>
+                  <button onClick={() => setSchoolForPwdChange(school)} className="text-yellow-600 hover:text-yellow-900">Password</button>
+                  <button onClick={() => handleDeleteSchool(school.id)} className="text-red-600 hover:text-red-900">Delete</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
 
-      {/* School Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4">
-        {filteredSchools.map((s) => (
-          <button
-            key={s.id}
-            onClick={() => setViewSchool(s)}
-            className="w-full bg-white rounded-md shadow-sm border p-3 flex flex-col items-center text-center hover:shadow-md transition cursor-pointer hover:ring-2 hover:ring-athletiq-blue focus:outline-none"
-          >
-            {s.logo_url ? (
-              <img
-                src={`http://localhost:5000/uploads/${s.logo_url}`}
-                alt={s.name}
-                className="w-16 h-16 object-contain rounded-full bg-white border mb-2"
-              />
-            ) : (
-              <div className="w-16 h-16 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-2 text-xs">
-                No Logo
-              </div>
-            )}
-            <h3 className="text-sm font-semibold text-athletiq-navy">{s.name}</h3>
-            <p className="text-xs text-gray-600">{s.address}</p>
-            <p className="text-xs text-gray-500">{s.email}</p>
-            <p className="text-xs mt-1">
-              <span className={s.is_active ? "text-green-600 font-medium" : "text-red-500"}>
-                {s.is_active ? "Active" : "Inactive"}
-              </span>
-            </p>
-          </button>
-        ))}
-      </div>
-
-      {/* Modals */}
+      {/* All modals are rendered here but are invisible until their state is triggered */}
       <AddSchoolModal
-        open={addSchoolOpen}
-        onClose={() => setAddSchoolOpen(false)}
-        onAdded={reloadSchools}
+        isOpen={isAddModalOpen}
+        onClose={() => setIsAddModalOpen(false)}
+        onSuccess={refetchSchools}
       />
       <EditSchoolModal
-        open={!!editSchool}
-        school={editSchool}
-        onClose={() => setEditSchool(null)}
-        onUpdated={reloadSchools}
+        isOpen={!!schoolToEdit}
+        onClose={() => setSchoolToEdit(null)}
+        school={schoolToEdit}
+        onSuccess={refetchSchools}
       />
       <BulkSchoolUploadModal
-        open={bulkSchoolOpen}
-        onClose={() => setBulkSchoolOpen(false)}
-        onUploaded={reloadSchools}
+        isOpen={isBulkModalOpen}
+        onClose={() => setIsBulkModalOpen(false)}
+        onSuccess={refetchSchools}
       />
       <ChangeAdminPasswordModal
-        open={!!changePwdSchool}
-        school={changePwdSchool}
-        onClose={() => setChangePwdSchool(null)}
-        onChanged={reloadSchools}
+        isOpen={!!schoolForPwdChange}
+        onClose={() => setSchoolForPwdChange(null)}
+        school={schoolForPwdChange}
       />
       <ViewSchoolModal
-        open={!!viewSchool}
-        school={viewSchool}
-        onClose={() => setViewSchool(null)}
-        onChangePassword={(school) => setChangePwdSchool(school)} /* ✅ FIXED */
+        isOpen={!!schoolToView}
+        onClose={() => setSchoolToView(null)}
+        school={schoolToView}
       />
     </div>
   );

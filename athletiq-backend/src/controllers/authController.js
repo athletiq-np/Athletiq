@@ -1,183 +1,132 @@
-//
-// 🧠 ATHLETIQ - Authentication Controller
-//
-// This file contains the core logic for user registration and login.
-// It interacts directly with the 'users' and 'schools' tables in the database.
-//
+const pool = require('../config/db');
+const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken');
 
-// --- MODULE IMPORTS ---
-const pool = require('../config/db'); // Imports the database connection pool
-const bcrypt = require('bcryptjs');   // For hashing passwords securely
-const jwt = require('jsonwebtoken');  // For creating JSON Web Tokens (JWT) for authentication
+// Helper function to generate and set the cookie
+const sendTokenResponse = (user, statusCode, res) => {
+  const payload = {
+    user: { id: user.id, role: user.role, school_id: user.school_id },
+  };
 
-// --- CONTROLLER FUNCTIONS ---
+  const token = jwt.sign(payload, process.env.JWT_SECRET, {
+    expiresIn: '7d',
+  });
 
-/**
- * @desc    Register a new School Admin and their associated School.
- * This function performs a database transaction to ensure that both the
- * school and the user are created successfully, or neither is.
- * @route   POST /api/auth/register
- * @access  Public
- */
-const register = async (req, res) => {
-  // 1. Destructure required data from the request body
-  const {
-    adminFullName,
-    adminEmail,
-    password,
-    schoolName,
-    schoolCode,
-    schoolAddress,
-    schoolEmail
-  } = req.body;
+  const options = {
+    expires: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+  };
 
-  // 2. Validate that all essential fields are present
+  delete user.password_hash;
+
+  res
+    .status(statusCode)
+    .cookie('token', token, options)
+    .json({ success: true, user });
+};
+
+// @desc    Register a new SchoolAdmin and their School
+exports.register = async (req, res, next) => {
+  const { adminFullName, adminEmail, password, schoolName, schoolCode, schoolAddress } = req.body;
+
   if (!adminFullName || !adminEmail || !password || !schoolName || !schoolCode) {
-    return res.status(400).json({ message: 'Please provide all required fields for admin and school.' });
+    const error = new Error('Required fields are missing.');
+    error.statusCode = 400;
+    return next(error);
   }
 
-  // 3. Get a client from the connection pool for transaction management
   const client = await pool.connect();
-
   try {
-    // 4. Check if a user with the same email already exists to prevent duplicates
-    const userExists = await client.query('SELECT id FROM users WHERE email = $1', [adminEmail]);
-    if (userExists.rowCount > 0) {
-      return res.status(409).json({ message: 'An administrator with this email already exists.' });
-    }
-
-    // 5. Check if a school with the same code already exists
-    const schoolExists = await client.query('SELECT id FROM schools WHERE school_code = $1', [schoolCode]);
-    if (schoolExists.rowCount > 0) {
-      return res.status(409).json({ message: 'A school with this code already exists.' });
-    }
-
-    // --- DATABASE TRANSACTION START ---
     await client.query('BEGIN');
 
-    // 6. Create the School record first
-    const newSchoolQuery = `
-      INSERT INTO schools (school_code, name, address, email, admin_email, is_active)
-      VALUES ($1, $2, $3, $4, $5, true)
-      RETURNING id;
+    const userExists = await client.query('SELECT id FROM users WHERE email = $1', [adminEmail]);
+    if (userExists.rowCount > 0) {
+      const error = new Error('Admin email already exists.');
+      error.statusCode = 409;
+      throw error;
+    }
+    
+    const schoolExists = await client.query('SELECT id FROM schools WHERE school_code = $1', [schoolCode]);
+    if (schoolExists.rowCount > 0) {
+      const error = new Error('School code already exists.');
+      error.statusCode = 409;
+      throw error;
+    }
+
+    const schoolQuery = `
+      INSERT INTO schools (school_code, name, address, admin_email, is_active)
+      VALUES ($1, $2, $3, $4, true) RETURNING id;
     `;
-    const schoolResult = await client.query(newSchoolQuery, [schoolCode, schoolName, schoolAddress, schoolEmail || adminEmail, adminEmail]);
+    const schoolResult = await client.query(schoolQuery, [schoolCode, schoolName, schoolAddress, adminEmail]);
     const newSchoolId = schoolResult.rows[0].id;
 
-    // 7. Securely hash the user's password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(password, salt);
 
-    // 8. Create the User record, linking it to the newly created school
     const newUserQuery = `
       INSERT INTO users (full_name, email, password_hash, role, school_id)
-      VALUES ($1, $2, $3, 'SchoolAdmin', $4)
-      RETURNING id, full_name, email, role;
+      VALUES ($1, $2, $3, 'SchoolAdmin', $4) RETURNING *;
     `;
     const userResult = await client.query(newUserQuery, [adminFullName, adminEmail, passwordHash, newSchoolId]);
     const newUser = userResult.rows[0];
 
-    // --- DATABASE TRANSACTION COMMIT ---
-    // If all queries were successful, commit the changes to the database.
     await client.query('COMMIT');
+    sendTokenResponse(newUser, 201, res);
 
-    // 9. Create a JWT payload with essential user info
-    const payload = {
-      user: {
-        id: newUser.id,
-        role: newUser.role,
-        school_id: newSchoolId,
-      },
-    };
-
-    // 10. Sign the token and send it back to the user for immediate login
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }, // Extended token expiration to 7 days
-      (err, token) => {
-        if (err) throw err;
-        // Return both the token and the new user's data
-        res.status(201).json({ token, user: newUser });
-      }
-    );
   } catch (error) {
-    // If any error occurs during the transaction, roll back all changes
     await client.query('ROLLBACK');
-    console.error('Registration Error:', error.message);
-    res.status(500).send('Server error');
+    next(error);
   } finally {
-    // VERY IMPORTANT: Always release the client back to the pool
     client.release();
   }
 };
 
-/**
- * @desc    Authenticate an existing user and return a JWT.
- * @route   POST /api/auth/login
- * @access  Public
- */
-const login = async (req, res) => {
-  // 1. Destructure identifier and password from request body
-  // CHANGED: From 'email' to 'identifier' to match frontend Login.js
-  const { identifier, password } = req.body;
+// @desc    Authenticate an existing user
+exports.login = async (req, res, next) => {
+  const { email, password } = req.body;
 
-  // 2. Validate input
-  if (!identifier || !password) { // CHANGED: From 'email' to 'identifier'
-    return res.status(400).json({ message: 'Please provide an email/phone and password.' });
+  if (!email || !password) {
+    const error = new Error('Please provide email and password.');
+    error.statusCode = 400;
+    return next(error);
   }
 
   try {
-    // 3. Find the user in the database by their unique identifier (email or phone)
-    // NOTE: Assuming 'email' column can store both email and phone for login.
-    // If you have a separate 'phone' column, you'd need to adjust this query
-    // to check both or have separate login flows. For now, assuming identifier maps to 'email'.
-    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [identifier]); // CHANGED: Using 'identifier'
+    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userResult.rows[0];
 
-    // For security, use a generic error message for both wrong identifier and wrong password
-    if (!user) { // No user found with that identifier
-      return res.status(401).json({ message: 'Invalid credentials.' });
+    if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      const error = new Error('Invalid credentials.');
+      error.statusCode = 401;
+      return next(error);
     }
-
-    // 4. Compare the provided password with the securely stored hash
-    const isMatch = await bcrypt.compare(password, user.password_hash);
-    if (!isMatch) {
-      return res.status(401).json({ message: 'Invalid credentials.' });
-    }
-
-    // 5. If password is correct, create JWT payload
-    const payload = {
-      user: {
-        id: user.id,
-        role: user.role,
-        school_id: user.school_id, // Ensure school_id is available on the user object
-      },
-    };
-
-    // Omit the password hash from the user object before sending it back
-    delete user.password_hash;
-
-    // 6. Sign the token and send it back with the user data
-    jwt.sign(
-      payload,
-      process.env.JWT_SECRET,
-      { expiresIn: '7d' }, // Consistent 7-day expiration
-      (err, token) => {
-        if (err) throw err;
-        res.status(200).json({ token, user });
-      }
-    );
+    
+    sendTokenResponse(user, 200, res);
   } catch (error) {
-    console.error('Login Error:', error.message);
-    res.status(500).send('Server error.');
+    next(error);
   }
 };
 
+// @desc    Get current logged in user
+exports.getMe = async (req, res, next) => {
+  // The 'protect' middleware already fetched the user and attached it to req.user
+  res.status(200).json({
+    success: true,
+    user: req.user,
+  });
+};
 
-// --- MODULE EXPORTS ---
-// Export the functions to be used in the route files
-module.exports = {
-  register,
-  login,
+// @desc    Log user out / clear cookie
+exports.logout = (req, res, next) => {
+  res.cookie('token', 'none', {
+    expires: new Date(Date.now() + 10 * 1000),
+    httpOnly: true,
+  });
+
+  res.status(200).json({
+    success: true,
+    data: {},
+  });
 };

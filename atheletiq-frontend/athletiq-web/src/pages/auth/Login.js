@@ -1,116 +1,122 @@
-// src/pages/Login.js
+//
+// 🧠 ATHLETIQ - Login Page (Upgraded for Zustand & Secure Cookies)
+//
+// This component now uses the central 'useUserStore' to manage the user's
+// state. It no longer saves the JWT or user data to localStorage, which is
+// a major security and state management improvement.
+//
 
-import React, { useState } from "react";
-import axios from "axios";
-import { useNavigate } from "react-router-dom";
-
-/**
- * ATHLETIQ Universal Login Page
- * Supports: super_admin, school_admin, player, coach, referee, organization, etc.
- * 
- * - Use email or phone as identifier.
- * - Stores JWT token and user info in localStorage.
- * - Redirects user to dashboard based on role.
- * - Error handling and loading states.
- * 
- * ONBOARDING NOTES:
- * - The /api/auth/login endpoint expects: { identifier, password }
- * - Returns: { token, user: { id, role, email, ... } }
- * - Add routes for "/admin", "/school-dashboard", "/player-dashboard" in App.js
- */
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import apiClient from '@/api/apiClient'; // Use our pre-configured Axios instance
+import useUserStore from '@/store/userStore'; // Import our new Zustand store
 
 export default function Login() {
-  const [identifier, setIdentifier] = useState(""); // Email or phone
-  const [password, setPassword] = useState("");
-  const [err, setErr] = useState("");
-  const [loading, setLoading] = useState(false);
-  const navigate = useNavigate();
+  // --- Component State ---
+  const [identifier, setIdentifier] = useState(''); // Can be email or phone
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
-  // Submit login form
+  // --- Hooks ---
+  const navigate = useNavigate();
+  // Get the 'setUser' action from our global user store
+  const setUser = useUserStore((state) => state.setUser);
+
+  /**
+   * Handles the form submission for logging in a user.
+   */
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setErr("");
-    setLoading(true);
+    setError('');
+    setIsLoading(true);
 
     try {
-      // POST to backend
-      const res = await axios.post("http://localhost:5000/api/auth/login", {
-        email: identifier.trim(),
+      // 1. Send login credentials to the backend.
+      // Our apiClient is configured with `withCredentials: true`, so the browser
+      // will handle the secure cookie automatically.
+      const response = await apiClient.post('/auth/login', {
+        email: identifier.trim(), // The backend expects an 'email' field for the identifier
         password,
       });
 
-      const { token, user } = res.data;
-      // Save to localStorage
-      localStorage.setItem("token", token);
-      localStorage.setItem("user", JSON.stringify(user));
+      const { user } = response.data;
 
-      // Route based on role (customize as needed)
-      if (user.role === "super_admin") {
-        navigate("/admin");
-      } else if (user.role === "school_admin") {
-        navigate("/school-dashboard");
-      } else if (user.role === "player") {
-        navigate("/player-dashboard");
-      } else if (user.role === "coach") {
-        navigate("/coach-dashboard");
-      } else if (user.role === "referee") {
-        navigate("/referee-dashboard");
-      } else if (user.role === "organization") {
-        navigate("/org-dashboard");
-      } else {
-        navigate("/");
+      // 2. CRITICAL CHANGE: Instead of localStorage, update the global state.
+      // This makes the user's data available to the entire application.
+      setUser(user);
+
+      // 3. Navigate to the correct dashboard based on the user's role.
+      // This logic remains the same, but it's now based on a more secure flow.
+      switch (user.role) {
+        case 'SuperAdmin':
+          navigate('/admin/dashboard');
+          break;
+        case 'SchoolAdmin':
+          navigate('/school/dashboard');
+          break;
+        // Add cases for other roles as they are built
+        // case 'Player':
+        //   navigate('/player/dashboard');
+        //   break;
+        default:
+          navigate('/'); // Default redirect for any other role
       }
-    } catch (error) {
-      setErr(
-        error?.response?.data?.message ||
-        "Login failed. Please check your credentials."
-      );
+    } catch (err) {
+      // Set a user-friendly error message from the API response.
+      setError(err.response?.data?.message || 'Login failed. Please check your credentials.');
     } finally {
-      setLoading(false);
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="flex flex-col items-center justify-center h-screen bg-blue-50">
-      <div className="w-full max-w-md bg-white p-8 rounded shadow-lg">
-        <h1 className="text-2xl font-bold mb-4 text-center">ATHLETIQ Login</h1>
+    <div className="flex items-center justify-center min-h-screen bg-gray-100">
+      <div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-xl">
+        <div className="text-center">
+          <h1 className="text-3xl font-bold text-athletiq-navy">Welcome Back</h1>
+          <p className="text-gray-500">Log in to your Athletiq account</p>
+        </div>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm mb-1 font-medium">
-              Email or Phone
+            <label className="block text-sm font-medium text-gray-700" htmlFor="identifier">
+              Email Address
             </label>
             <input
-              className="w-full border p-2 rounded"
+              id="identifier"
+              className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-athletiq-green"
               value={identifier}
               onChange={(e) => setIdentifier(e.target.value)}
               required
               autoFocus
               autoComplete="username"
-              placeholder="Enter email or phone"
+              placeholder="Enter your email"
             />
           </div>
           <div>
-            <label className="block text-sm mb-1 font-medium">Password</label>
+            <label className="block text-sm font-medium text-gray-700" htmlFor="password">
+              Password
+            </label>
             <input
-              className="w-full border p-2 rounded"
+              id="password"
+              className="w-full px-4 py-2 mt-1 border border-gray-300 rounded-lg focus:ring-2 focus:ring-athletiq-green"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               type="password"
               required
               autoComplete="current-password"
-              placeholder="Enter password"
+              placeholder="Enter your password"
             />
           </div>
-          {err && <div className="text-red-500">{err}</div>}
+          {error && <div className="p-3 text-sm text-red-700 bg-red-100 rounded-lg">{error}</div>}
           <button
             type="submit"
-            disabled={loading}
-            className="w-full bg-blue-600 text-white rounded py-2"
+            disabled={isLoading}
+            className="w-full py-3 font-semibold text-white bg-athletiq-navy rounded-lg hover:bg-navy-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-athletiq-navy disabled:opacity-50"
           >
-            {loading ? "Logging in..." : "Login"}
+            {isLoading ? 'Logging in...' : 'Login'}
           </button>
         </form>
-        {/* Optional: add registration or forgot password links here */}
       </div>
     </div>
   );

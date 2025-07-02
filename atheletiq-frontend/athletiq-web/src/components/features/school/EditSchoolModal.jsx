@@ -1,29 +1,42 @@
-// src/components/SchoolDashboard/EditSchoolModal.jsx
-
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 /**
  * EditSchoolModal
  * Props:
- * - school: current school object
+ * - school: current school object (can be null)
  * - onClose: function to close the modal
  * - onUpdate: callback after successful update
  * - token: JWT auth token
  */
 export default function EditSchoolModal({ school, onClose, onUpdate, token }) {
+  // Handle null/undefined school prop
   const [form, setForm] = useState({
-    name: school.name || "",
-    address: school.address || "",
-    phone: school.phone || "",
-    email: school.email || "",
-    province: school.province || "",
-    district: school.district || "",
+    name: "",
+    address: "",
+    phone: "",
+    email: "",
+    province: "",
+    district: "",
   });
 
   const [logoFile, setLogoFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState("");
+
+  // Populate form when school prop changes
+  useEffect(() => {
+    if (school) {
+      setForm({
+        name: school.name || "",
+        address: school.address || "",
+        phone: school.phone || "",
+        email: school.email || "",
+        province: school.province || "",
+        district: school.district || "",
+      });
+    }
+  }, [school]);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -43,16 +56,20 @@ export default function EditSchoolModal({ school, onClose, onUpdate, token }) {
         formData.append("logo", logoFile);
       }
 
-      await axios.patch(`http://localhost:5000/api/schools/${school.id}`, formData, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          "Content-Type": "multipart/form-data",
-        },
-      });
+      await axios.patch(
+        `http://localhost:5000/api/schools/${school?.id}`,
+        formData,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
 
       setMsg("✅ Profile updated!");
-      onUpdate(); // refetch school data in parent
-      onClose(); // close modal
+      if (onUpdate) onUpdate(); // refetch school data in parent
+      if (onClose) onClose(); // close modal
     } catch (err) {
       console.error(err);
       setMsg("❌ Failed to update. Try again.");
@@ -60,6 +77,9 @@ export default function EditSchoolModal({ school, onClose, onUpdate, token }) {
       setLoading(false);
     }
   };
+
+  // If school is null, don't render the modal
+  if (!school) return null;
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">

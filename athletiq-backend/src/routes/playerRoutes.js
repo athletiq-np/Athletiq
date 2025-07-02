@@ -1,171 +1,168 @@
 const express = require('express');
 const router = express.Router();
 const pool = require('../config/db');
-const authMiddleware = require('../middlewares/authMiddleware');
 const multer = require('multer');
-const fs = require('fs');
-const csv = require('csv-parser');
 const { generateShortCode } = require('../utils/codeGenerator');
-const COUNTRY_CODE = process.env.COUNTRY_CODE || 'NP';
+const { protect, checkRole } = require('../middlewares/authMiddleware');
 
-// ========== Multer Setup ==========
+// --- Multer Setup for file uploads ---
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/'),
+  destination: (req, file, cb) => cb(null, 'uploads/players/'), // Use a dedicated subfolder
   filename: (req, file, cb) =>
-    cb(null, Date.now() + "_" + file.originalname.replace(/\s+/g, "_"))
+    cb(null, `player-${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`)
 });
 const upload = multer({ storage });
 
-const csvUpload = multer({ dest: 'uploads/' });
-
-// Helper: Validate date string (YYYY-MM-DD)
+// Helper to validate YYYY-MM-DD date format
 function isValidDate(dateStr) {
   return /^\d{4}-\d{2}-\d{2}$/.test(dateStr);
 }
 
-// 1. Register New Player
-router.post("/register", authMiddleware, upload.fields([
-  { name: "photo", maxCount: 1 },
-  { name: "birth_cert", maxCount: 1 }
-]), async (req, res) => {
-  console.log('Received player registration request...');
-  try {
-    const { full_name, dob, school_id } = req.body;
 
-    const missingFields = [];
-    if (!full_name || full_name.trim() === "") missingFields.push("full_name");
-    if (!dob || !dob.trim() || !isValidDate(dob)) missingFields.push("dob (format YYYY-MM-DD)");
-    if (!school_id || school_id.trim() === "") missingFields.push("school_id");
+// ========== 1. Register a New Player ==========
+// This route is protected, meaning only a logged-in user (like a SchoolAdmin) can register a player.
+router.post(
+  '/register', 
+  protect, 
+  upload.fields([
+    { name: "profile_photo_url", maxCount: 1 },
+    { name: "birth_cert_url", maxCount: 1 }
+  ]), 
+  async (req, res, next) => {
+    try {
+      const { full_name, date_of_birth, school_id } = req.body;
+      const created_by = req.user.id; // The logged-in user is the creator
 
-    if (missingFields.length) {
-      return res.status(400).json({
-        message: `Required or invalid fields: ${missingFields.join(", ")}`
+      // --- Robust Validation ---
+      if (!full_name || !date_of_birth || !school_id) {
+        const error = new Error('Full name, date of birth, and school ID are required.');
+        error.statusCode = 400;
+        throw error;
+      }
+      if (!isValidDate(date_of_birth)) {
+        const error = new Error('Date of birth must be in YYYY-MM-DD format.');
+        error.statusCode = 400;
+        throw error;
+      }
+
+      // Check if player already exists with the same details for that school
+      const exists = await pool.query(
+        "SELECT id FROM players WHERE LOWER(full_name)=LOWER($1) AND date_of_birth=$2 AND school_id=$3",
+        [full_name.trim(), date_of_birth, school_id]
+      );
+      if (exists.rowCount > 0) {
+        const error = new Error('A player with this name and date of birth is already registered for this school.');
+        error.statusCode = 409; // 409 Conflict
+        throw error;
+      }
+
+      // Generate a unique player code
+      const player_code = await generateShortCode('PL', 8);
+
+      const photo_url = req.files?.profile_photo_url?.[0]?.filename || null;
+      const birth_cert_url = req.files?.birth_cert_url?.[0]?.filename || null;
+
+      const insertQuery = `
+        INSERT INTO players (
+          player_code, full_name, date_of_birth, school_id, 
+          profile_photo_url, birth_cert_url, created_by, is_active
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, TRUE)
+        RETURNING *;
+      `;
+      const values = [player_code, full_name.trim(), date_of_birth, school_id, photo_url, birth_cert_url, created_by];
+      
+      const result = await pool.query(insertQuery, values);
+
+      res.status(201).json({
+        success: true,
+        message: "Player registered successfully.",
+        player: result.rows[0]
       });
+
+    } catch (err) {
+      // Pass any errors to our central error handler
+      next(err);
     }
-
-    // Check if school exists
-    console.log(`Checking if school ID: ${school_id} exists...`);
-    const schoolCheck = await pool.query(
-      "SELECT id FROM schools WHERE id=$1",
-      [school_id]
-    );
-    if (schoolCheck.rows.length === 0) {
-      return res.status(400).json({ message: "Invalid school_id, school not found." });
-    }
-
-    // Check if player already exists
-    console.log('Checking if player already exists...');
-    const exists = await pool.query(
-      "SELECT 1 FROM players WHERE LOWER(full_name)=LOWER($1) AND dob=$2 AND school_id=$3",
-      [full_name.trim(), dob, school_id]
-    );
-    if (exists.rows.length) {
-      return res.status(409).json({ message: "Player already registered." });
-    }
-
-    // File handling
-    const photo_url = req.files?.photo?.[0]?.filename || null;
-    const birth_cert_url = req.files?.birth_cert?.[0]?.filename || null;
-
-    // Generate unique player code
-    const existsFn = async (code) => {
-      const r = await pool.query("SELECT 1 FROM players WHERE player_code=$1", [code]);
-      return r.rows.length > 0;
-    };
-    const player_code = await generateShortCode(COUNTRY_CODE, 7, existsFn);
-
-    console.log('Inserting player data...');
-    const insertParams = [
-      player_code, full_name.trim(), dob, school_id, photo_url, birth_cert_url, req.user.id
-    ];
-
-    const result = await pool.query(
-      `INSERT INTO players (
-        player_code, full_name, dob, school_id,
-        profile_photo_url, birth_cert_url, is_active, created_by
-      )
-      VALUES ($1,$2,$3,$4,$5,$6,TRUE,$7)
-      RETURNING id, player_code, full_name, dob, school_id, profile_photo_url, birth_cert_url
-      `,
-      insertParams
-    );
-
-    console.log(`Player registered successfully: ${result.rows[0].player_code}`);
-    res.status(201).json({
-      message: "Player registered successfully.",
-      player: result.rows[0]
-    });
-  } catch (err) {
-    console.error("Player registration error:", err);
-    res.status(500).json({ message: "Server error during player registration." });
   }
-});
+);
 
-// List Players (GET /api/players)
-router.get('/', authMiddleware, async (req, res) => {
-  console.log('Fetching players...');
+
+// ========== 2. Get a Paginated List of Players ==========
+router.get('/', protect, async (req, res, next) => {
   try {
     const user = req.user;
     const page = parseInt(req.query.page) > 0 ? parseInt(req.query.page) : 1;
-    const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 50;
+    const limit = parseInt(req.query.limit) > 0 ? parseInt(req.query.limit) : 25;
     const offset = (page - 1) * limit;
     const search = req.query.search?.trim() || "";
     const filterSchoolId = req.query.school_id || null;
 
-    let query = `
-      SELECT p.*, s.name AS school_name, s.school_code
+    let baseQuery = `
       FROM players p
       LEFT JOIN schools s ON p.school_id = s.id
     `;
     const conditions = [];
     const values = [];
+    let paramIndex = 1;
 
-    if (user.role === 'school_admin') {
-      conditions.push("p.school_id = $1");
+    // If the user is a SchoolAdmin, they can only see their own players
+    if (user.role === 'SchoolAdmin') {
+      conditions.push(`p.school_id = $${paramIndex++}`);
       values.push(user.school_id);
-    } else if (filterSchoolId) {
-      conditions.push(`p.school_id = $${values.length + 1}`);
+    } else if (user.role === 'SuperAdmin' && filterSchoolId) {
+      // If SuperAdmin is filtering by a specific school
+      conditions.push(`p.school_id = $${paramIndex++}`);
       values.push(filterSchoolId);
     }
 
+    // Add search condition
     if (search) {
-      conditions.push(`p.full_name ILIKE $${values.length + 1}`);
+      conditions.push(`(p.full_name ILIKE $${paramIndex} OR p.player_code ILIKE $${paramIndex})`);
       values.push(`%${search}%`);
+      paramIndex++;
     }
 
     if (conditions.length > 0) {
-      query += " WHERE " + conditions.join(" AND ");
+      baseQuery += ` WHERE ${conditions.join(" AND ")}`;
     }
 
-    query += " ORDER BY p.created_at DESC ";
-    query += ` LIMIT $${values.length + 1} OFFSET $${values.length + 2}`;
+    // --- This is where the original code was cut off ---
 
-    values.push(limit, offset);
+    // 1. Get the total count of records that match the filter
+    const totalResult = await pool.query(`SELECT COUNT(*) ${baseQuery}`, values);
+    const totalPlayers = parseInt(totalResult.rows[0].count, 10);
+    const totalPages = Math.ceil(totalPlayers / limit);
 
-    let countQuery = "SELECT COUNT(*) FROM players p ";
-    if (conditions.length > 0) {
-      countQuery += " WHERE " + conditions.join(" AND ");
-    }
+    // 2. Get the paginated list of players
+    const playersQuery = `
+      SELECT p.*, s.name AS school_name, s.school_code
+      ${baseQuery}
+      ORDER BY p.created_at DESC
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+    const playersResult = await pool.query(playersQuery, [...values, limit, offset]);
 
-    const [playersRes, countRes] = await Promise.all([
-      pool.query(query, values),
-      pool.query(countQuery, values.slice(0, values.length - 2))
-    ]);
-
-    console.log(`Fetched ${playersRes.rows.length} players.`);
-    res.json({
-      players: playersRes.rows,
+    // 3. Send the complete response
+    res.status(200).json({
+      success: true,
+      count: playersResult.rowCount,
+      total: totalPlayers,
       pagination: {
-        page,
-        limit,
-        total: parseInt(countRes.rows[0].count, 10),
-        totalPages: Math.ceil(countRes.rows[0].count / limit)
-      }
+        currentPage: page,
+        totalPages: totalPages
+      },
+      players: playersResult.rows
     });
+
   } catch (err) {
-    console.error("Fetch players error:", err);
-    res.status(500).json({ message: "Server error fetching players." });
+    // Pass any errors to our central error handler
+    next(err);
   }
 });
 
+
+// We can add other routes like getPlayerById, updatePlayer, deletePlayer here later.
+
+
+// --- This was also missing ---
 module.exports = router;

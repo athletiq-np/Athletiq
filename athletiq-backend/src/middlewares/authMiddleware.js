@@ -1,73 +1,75 @@
-// src/middlewares/authMiddleware.js
+//
+// 🧠 ATHLETIQ - Authentication Middleware (Upgraded for Secure Cookies)
+//
+// This middleware now reads the JWT from a secure, HttpOnly cookie
+// instead of the Authorization header. It also fetches the user from the
+// database on each request to ensure data is always fresh.
+//
 
-// 🧠 ATHLETIQ - Authentication Middleware
-// This middleware is responsible for:
-// 1. Extracting the JWT (JSON Web Token) from the request headers.
-// 2. Verifying the token's authenticity and expiration.
-// 3. Attaching the decoded user payload (including user ID, role, school_id) to the `req.user` object.
-// 4. Protecting routes by denying access if no valid token is provided.
+const jwt = require('jsonwebtoken');
+const pool = require('../config/db');
 
-// --- MODULE IMPORTS ---
-const jwt = require('jsonwebtoken'); // For token verification
-
-// --- MIDDLEWARE FUNCTION ---
 /**
- * Express middleware to protect routes by verifying JWT.
- * If the token is valid, it attaches the decoded user payload to `req.user`.
- * Otherwise, it sends a 401 Unauthorized response.
- * @param {object} req - The Express request object.
- * @param {object} res - The Express response object.
- * @param {function} next - The next middleware function in the stack.
+ * @desc    Protect routes by verifying the token from the cookie.
+ * If valid, it attaches the full user object to req.user.
  */
-module.exports = function (req, res, next) {
-  // 1. Get token from the 'Authorization' header
-  // Tokens are usually sent as "Bearer <TOKEN>"
-  const authHeader = req.header('Authorization');
+const protect = async (req, res, next) => {
+  let token;
 
-  // Check if Authorization header exists and starts with 'Bearer '
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
-    console.log('Auth Middleware: No token or invalid format.');
-    return res.status(401).json({ message: 'No token, authorization denied.' });
+  // 1. Read the token from the 'token' cookie sent by the browser
+  if (req.cookies && req.cookies.token) {
+    token = req.cookies.token;
   }
 
-  // Extract the token part (remove "Bearer ")
-  const token = authHeader.split(' ')[1];
+  // 2. Make sure a token exists
+  if (!token) {
+    // Using next() with an error allows our central errorHandler to handle it
+    const error = new Error('Not authorized, no token provided.');
+    error.statusCode = 401;
+    return next(error);
+  }
 
-  // 2. Verify token
   try {
-    // Verify the token using the secret from environment variables
-    // The payload received is directly { id, email, role, school_id, ... }
+    // 3. Verify the token's signature
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    // --- DEBUGGING LOG (Keep for now to confirm new structure) ---
-    console.log('Auth Middleware: Decoded token payload:', decoded);
-    // --- END DEBUGGING ---
+    // 4. Fetch the user from the database using the ID from the token.
+    // This ensures the user data is always current and prevents issues
+    // with outdated roles or permissions stored in an old token.
+    const userResult = await pool.query(
+      'SELECT id, full_name, email, role, school_id FROM users WHERE id = $1',
+      [decoded.user.id]
+    );
 
-    // IMPORTANT FIX:
-    // Attach the entire decoded payload directly to req.user
-    // This is because your current JWTs are signed with id, email, role directly at the root,
-    // NOT nested under a 'user' property.
-    req.user = decoded; // Now req.user will directly contain { id, email, role, school_id, ... }
-
-    // Removed the 'if (!decoded || !decoded.user)' check as 'decoded.user' is not expected.
-    // The previous check would incorrectly fail if the 'user' property was not nested.
-
-    console.log(`Auth Middleware: User authenticated successfully. Role: ${req.user.role}, ID: ${req.user.id}`);
-
-    // Proceed to the next middleware or route handler
-    next();
-  } catch (err) {
-    // Handle specific JWT errors (e.g., token expired, invalid signature)
-    if (err.name === 'TokenExpiredError') {
-      console.log('Auth Middleware: Token expired.');
-      return res.status(401).json({ message: 'Token expired. Please log in again.' });
-    } else if (err.name === 'JsonWebTokenError') {
-      console.log('Auth Middleware: Invalid token signature/format.');
-      return res.status(401).json({ message: 'Token is not valid.' });
-    } else {
-      // Catch any other unexpected errors during verification
-      console.error('Auth Middleware: Verification error:', err.message);
-      return res.status(500).json({ message: 'Server error during authentication.' });
+    if (userResult.rows.length === 0) {
+      const error = new Error('User not found, authorization denied.');
+      error.statusCode = 401;
+      return next(error);
     }
+
+    // 5. Attach the user object to the request for use in subsequent routes
+    req.user = userResult.rows[0];
+    
+    next(); // Proceed to the next middleware or controller
+  } catch (error) {
+    const authError = new Error('Not authorized, token failed verification.');
+    authError.statusCode = 401;
+    next(authError);
   }
 };
+
+/**
+ * @desc    Middleware to check if the logged-in user has one of the required roles.
+ * @param   {Array<string>} roles - An array of roles that are allowed to access the route.
+ */
+const checkRole = (roles) => (req, res, next) => {
+  if (!roles.includes(req.user.role)) {
+    const error = new Error(`Forbidden. User role '${req.user.role}' is not authorized for this route.`);
+    error.statusCode = 403;
+    return next(error);
+  }
+  next();
+};
+
+// Export both functions for use in our route files
+module.exports = { protect, checkRole };

@@ -1,63 +1,122 @@
+//
+// 🧠 ATHLETIQ - Admin Controller
+//
+// This file contains all the logic for SuperAdmin-only actions,
+// such as creating other admins and viewing platform-wide stats.
+//
+
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 
 /**
- * @desc    Admin changes the password for a school's primary admin user.
+ * @desc    Register a new super admin
+ * @route   POST /api/admin/register-superadmin
+ * @access  Private (SuperAdmin)
+ */
+exports.registerSuperAdmin = async (req, res, next) => {
+  const { full_name, email, password } = req.body;
+  
+  if (!full_name || !email || !password) {
+    const error = new Error('full_name, email & password are required.');
+    error.statusCode = 400;
+    return next(error);
+  }
+
+  try {
+    const { rows: existing } = await pool.query('SELECT 1 FROM users WHERE email = $1', [email]);
+    if (existing.length) {
+      const error = new Error('Email already in use.');
+      error.statusCode = 409;
+      return next(error);
+    }
+    
+    const hashed = await bcrypt.hash(password, 10);
+    await pool.query(
+      `INSERT INTO users (full_name, email, password_hash, role) VALUES ($1, $2, $3, 'SuperAdmin')`,
+      [full_name, email, hashed]
+    );
+
+    res.status(201).json({ success: true, message: 'Super admin created successfully.' });
+  } catch (err) {
+    next(err);
+  }
+};
+
+
+/**
+ * @desc    Get all data for the SuperAdmin dashboard
+ * @route   GET /api/admin/dashboard-stats
+ * @access  Private (SuperAdmin)
+ */
+exports.getDashboardStats = async (req, res, next) => {
+  try {
+    // Run all database queries in parallel for efficiency
+    const [schoolResult, playerResult, tournamentResult] = await Promise.all([
+      pool.query('SELECT * FROM schools ORDER BY created_at DESC'),
+      pool.query('SELECT * FROM players ORDER BY created_at DESC'),
+      pool.query('SELECT * FROM tournaments ORDER BY start_date DESC')
+    ]);
+
+    const stats = {
+      schools: schoolResult.rows,
+      players: playerResult.rows,
+      tournaments: tournamentResult.rows,
+      schoolCount: schoolResult.rowCount,
+      playerCount: playerResult.rowCount,
+      tournamentCount: tournamentResult.rowCount
+    };
+
+    res.status(200).json({ success: true, data: stats });
+  } catch (error) {
+    next(error);
+  }
+};
+
+
+/**
+ * @desc    Admin changes the password for a school's primary admin user
  * @route   PUT /api/admin/schools/:schoolId/change-password
  * @access  Private (SuperAdmin)
  */
-exports.changeSchoolPassword = async (req, res) => {
-  // First, verify the user making the request is a SuperAdmin.
-  // This is a double-check, as the route middleware should also enforce this.
-  if (req.user.role !== 'super_admin') {
-    return res.status(403).json({ message: 'Permission denied. Super admin access required.' });
-  }
-
+exports.changeSchoolPassword = async (req, res, next) => {
   const { schoolId } = req.params;
   const { newPassword } = req.body;
 
-  // Validate the new password input
   if (!newPassword || newPassword.length < 6) {
-    return res.status(400).json({ message: 'Password must be at least 6 characters long.' });
+    const error = new Error('Password must be at least 6 characters long.');
+    error.statusCode = 400;
+    return next(error);
   }
 
   const client = await pool.connect();
-
   try {
-    // Find the school to get its assigned admin_user_id
-    const schoolResult = await client.query(
-      'SELECT admin_user_id FROM schools WHERE school_id = $1',
-      [schoolId]
-    );
+    const schoolResult = await client.query('SELECT admin_user_id FROM schools WHERE id = $1', [schoolId]);
 
     if (schoolResult.rows.length === 0) {
-      return res.status(404).json({ message: 'School not found.' });
+      const error = new Error('School not found.');
+      error.statusCode = 404;
+      throw error;
     }
 
     const adminUserId = schoolResult.rows[0].admin_user_id;
     if (!adminUserId) {
-      return res.status(404).json({ message: 'This school does not have an assigned admin user to update.' });
+      const error = new Error('This school does not have an assigned admin user to update.');
+      error.statusCode = 404;
+      throw error;
     }
 
-    // Securely hash the new password
     const salt = await bcrypt.genSalt(10);
     const passwordHash = await bcrypt.hash(newPassword, salt);
 
-    // Update the password_hash in the 'users' table for the correct user
     await client.query(
-      'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE user_id = $2',
+      'UPDATE users SET password_hash = $1, updated_at = NOW() WHERE id = $2',
       [passwordHash, adminUserId]
     );
     
-    res.status(200).json({ message: 'School admin password updated successfully.' });
-
+    res.status(200).json({ success: true, message: 'School admin password updated successfully.' });
   } catch (error) {
-    console.error('Error changing school password:', error);
-    res.status(500).json({ message: 'Server error while changing password.' });
+    next(error);
   } finally {
-    // Always release the database client back to the pool
-    if (client) {
-      client.release();
-    }
+    client.release();
   }
 };
