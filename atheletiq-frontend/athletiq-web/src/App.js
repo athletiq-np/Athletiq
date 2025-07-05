@@ -1,21 +1,37 @@
 //
-// 🧠 ATHLETIQ - App.js (Corrected with Proper Nested Routing)
+// 🧠 ATHLETIQ - App.js (Enhanced with Error Boundaries & Code Splitting)
 //
-import React, { useEffect } from 'react';
+import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import apiClient from '@/api/apiClient';
 import useUserStore from '@/store/userStore';
 
-// --- Import Layouts and Page Components ---
-import DashboardLayout from '@/components/layout/DashboardLayout';
+// Import Error Boundary
+import ErrorBoundary from '@/components/common/ErrorBoundary';
+
+// --- Import Layouts and Common Components ---
 import ProtectedRoute from '@/components/layout/ProtectedRoute';
+
+// Immediate load components (critical path)
 import Home from '@/pages/public/Home';
 import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
+import NotFoundPage from '@/pages/public/NotFoundPage';
+
+// Import admin components directly (simple and clean)
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import Settings from '@/pages/admin/Settings';
 import SchoolDashboard from '@/pages/school/SchoolDashboard';
-import NotFoundPage from '@/pages/public/NotFoundPage';
+
+// Loading component
+const PageLoader = ({ message = 'Loading...' }) => (
+  <div className="flex items-center justify-center h-screen bg-gray-50">
+    <div className="text-center">
+      <div className="animate-spin rounded-full h-16 w-16 border-b-2 border-athletiq-green mx-auto mb-4"></div>
+      <p className="text-gray-600 font-medium">{message}</p>
+    </div>
+  </div>
+);
 
 function App() {
   const { setUser, clearUser, isLoading, setLoading } = useUserStore();
@@ -36,48 +52,66 @@ function App() {
   }
 
   return (
-    <Router>
-      <Routes>
-        {/* --- Public Routes --- */}
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
+    <ErrorBoundary 
+      title="Application Error"
+      description="Something went wrong with the Athletiq application. We're working to fix this issue."
+    >
+      <Router>
+        <Routes>
+          {/* --- Public Routes --- */}
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
 
-        {/* --- THIS IS THE FIX --- */}
-        {/* All protected dashboard routes are now children of the DashboardLayout. */}
-        {/* The path is now correctly defined at the top level. */}
-        <Route
-          path="/admin"
-          element={
-            <ProtectedRoute roles={['SuperAdmin']}>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-          {/* The 'index' route makes AdminDashboard the default page for '/admin' */}
-          <Route index element={<AdminDashboard />} />
-          {/* Add dashboard route for tab navigation */}
-          <Route path="dashboard" element={<AdminDashboard />} />
-          {/* Add settings route */}
-          <Route path="settings" element={<Settings />} />
-          {/* Add other admin-specific pages here, e.g., path="schools" */}
-        </Route>
+          {/* --- Protected Admin Routes --- */}
+          <Route
+            path="/admin"
+            element={
+              <ErrorBoundary title="Admin Dashboard Error">
+                <ProtectedRoute roles={['SuperAdmin']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/admin/dashboard"
+            element={
+              <ErrorBoundary title="Admin Dashboard Error">
+                <ProtectedRoute roles={['SuperAdmin']}>
+                  <AdminDashboard />
+                </ProtectedRoute>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/admin/settings"
+            element={
+              <ErrorBoundary title="Admin Dashboard Error">
+                <ProtectedRoute roles={['SuperAdmin']}>
+                  <Settings />
+                </ProtectedRoute>
+              </ErrorBoundary>
+            }
+          />
 
-        <Route
-          path="/school"
-          element={
-            <ProtectedRoute roles={['SchoolAdmin']}>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        >
-          <Route index element={<SchoolDashboard />} />
-        </Route>
+          {/* --- Protected School Routes --- */}
+          <Route
+            path="/school"
+            element={
+              <ErrorBoundary title="School Dashboard Error">
+                <ProtectedRoute roles={['SchoolAdmin']}>
+                  <SchoolDashboard />
+                </ProtectedRoute>
+              </ErrorBoundary>
+            }
+          />
 
-        {/* --- 404 Not Found --- */}
-        <Route path="*" element={<NotFoundPage />} />
-      </Routes>
-    </Router>
+          {/* --- 404 Not Found --- */}
+          <Route path="*" element={<NotFoundPage />} />
+        </Routes>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

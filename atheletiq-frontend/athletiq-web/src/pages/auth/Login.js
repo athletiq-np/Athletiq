@@ -33,14 +33,16 @@ export default function Login() {
       const response = await apiClient.post('/auth/login', formData);
       
       if (response.data.success) {
-        setUser(response.data.user);
+        // Backend returns user data in response.data.data
+        const userData = response.data.data;
+        setUser(userData);
         toast.success(t('login_successful'));
         
         // Redirect based on user role
         const from = location.state?.from?.pathname || '/';
-        if (response.data.user.role === 'SuperAdmin') {
+        if (userData.role === 'SuperAdmin') {
           navigate('/admin', { replace: true });
-        } else if (response.data.user.role === 'SchoolAdmin') {
+        } else if (userData.role === 'SchoolAdmin') {
           navigate('/school', { replace: true });
         } else {
           navigate(from, { replace: true });

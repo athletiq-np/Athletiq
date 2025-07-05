@@ -1,0 +1,243 @@
+{
+  "dashboard": {
+    "title": "प्रशासक ड्यासबोर्ड",
+    "welcome": "स्वागत छ, {{name}}",
+    "tabs": {
+      "overview": "सारांश",
+      "players": "खेलाडीहरू",
+      "schools": "स्कूलहरू",
+      "tournaments": "प्रतियोगिताहरू",
+      "analytics": "विश्लेषण",
+      "settings": "सेटिङहरू"
+    },
+    "stats": {
+      "registeredPlayers": "दर्ता भएका खेलाडीहरू",
+      "schools": "स्कूलहरू",
+      "tournaments": "प्रतियोगिताहरू",
+      "activeTournaments": "सक्रिय प्रतियोगिताहरू",
+      "pendingVerifications": "बाँकी प्रमाणीकरण",
+      "missingDocs": "हराएका कागजातहरू",
+      "totalRevenue": "कुल आम्दानी",
+      "monthlyGrowth": "मासिक वृद्धि",
+      "thisMonth": "यस महिना",
+      "activeSchools": "सक्रिय स्कूलहरू",
+      "totalTournaments": "कुल प्रतियोगिताहरू",
+      "currentlyActive": "हाल सक्रिय",
+      "needsReview": "समीक्षा आवश्यक",
+      "requiresAttention": "ध्यान आवश्यक",
+      "thisQuarter": "यस त्रैमासिक",
+      "comparedToLastMonth": "गत महिनाको तुलनामा"
+    },
+    "search": {
+      "placeholder": "खेलाडी, स्कूल, प्रतियोगिता खोज्नुहोस्..."
+    },
+    "quickActions": {
+      "addPlayer": "खेलाडी थप्नुहोस्",
+      "addSchool": "स्कूल थप्नुहोस्",
+      "createTournament": "प्रतियोगिता सिर्जना गर्नुहोस्",
+      "viewAnalytics": "विश्लेषण हेर्नुहोस्"
+    },
+    "recentPlayers": {
+      "title": "हालका खेलाडी दर्ताहरू",
+      "viewAll": "सबै खेलाडीहरू हेर्नुहोस्"
+    },
+    "recentActivity": {
+      "title": "हालका गतिविधिहरू",
+      "empty": "देखाउनको लागि कुनै हालको गतिविधि छैन"
+    },
+    "language": {
+      "changed": "भाषा सफलतापूर्वक परिवर्तन भयो"
+    },
+    "sidebar": {
+      "expand": "साइडबार विस्तार गर्नुहोस्",
+      "collapse": "साइडबार बन्द गर्नुहोस्"
+    },
+    "error": {
+      "title": "ड्यासबोर्ड लोड गर्नमा त्रुटि",
+      "loadFailed": "ड्यासबोर्ड डेटा लोड गर्न असफल",
+      "retry": "फेरि प्रयास गर्नुहोस्"
+    }
+  },
+  "sidebar": {
+    "sections": {
+      "management": "व्यवस्थापन",
+      "analytics": "विश्लेषण",
+      "settings": "सेटिङहरू",
+      "help": "मद्दत र सहयोग"
+    },
+    "items": {
+      "overview": "सारांश",
+      "players": "खेलाडीहरू",
+      "schools": "स्कूलहरू",
+      "tournaments": "प्रतियोगिताहरू",
+      "analytics": "विश्लेषण",
+      "reports": "रिपोर्टहरू",
+      "insights": "अंतर्दृष्टि",
+      "settings": "सेटिङहरू",
+      "notifications": "सूचनाहरू",
+      "preferences": "प्राथमिकताहरू",
+      "documentation": "दस्तावेजीकरण",
+      "tutorials": "ट्यूटोरियलहरू",
+      "support": "सहायता"
+    },
+    "logout": "लग आउट",
+    "darkMode": "डार्क मोड",
+    "lightMode": "लाइट मोड"
+  },
+  "filters": {
+    "title": "फिल्टरहरू",
+    "clearAll": "सबै हटाउनुहोस्",
+    "refresh": "रिफ्रेस गर्नुहोस्",
+    "export": "निर्यात गर्नुहोस्",
+    "status": {
+      "title": "स्थिति",
+      "all": "सबै स्थिति",
+      "active": "सक्रिय",
+      "pending": "बाँकी",
+      "inactive": "निष्क्रिय",
+      "suspended": "निलम्बित"
+    },
+    "school": {
+      "title": "स्कूल प्रकार",
+      "all": "सबै स्कूलहरू",
+      "public": "सार्वजनिक स्कूलहरू",
+      "private": "निजी स्कूलहरू",
+      "international": "अन्तर्राष्ट्रिय स्कूलहरू"
+    },
+    "sport": {
+      "title": "खेल",
+      "all": "सबै खेलहरू",
+      "football": "फुटबल",
+      "basketball": "बास्केटबल",
+      "volleyball": "भलिबल",
+      "athletics": "एथलेटिक्स",
+      "swimming": "पौडीखेल"
+    },
+    "region": {
+      "title": "क्षेत्र",
+      "all": "सबै क्षेत्रहरू",
+      "kathmandu": "काठमाडौं",
+      "pokhara": "पोखरा",
+      "biratnagar": "बिराटनगर",
+      "bharatpur": "भरतपुर",
+      "birgunj": "बिरगञ्ज"
+    },
+    "dateRange": {
+      "last7Days": "गत ७ दिन",
+      "last30Days": "गत ३० दिन",
+      "last90Days": "गत ९० दिन",
+      "lastYear": "गत वर्ष",
+      "custom": "कस्टम"
+    },
+    "presets": {
+      "activePlayers": "सक्रिय खेलाडीहरू",
+      "pendingVerification": "बाँकी प्रमाणीकरण",
+      "privateSchools": "निजी स्कूलहरू"
+    }
+  },
+  "notifications": {
+    "title": "सूचनाहरू",
+    "unreadCount": "{{count}} नपढिएको",
+    "allRead": "सबै सूचनाहरू पढिएको",
+    "markAllRead": "सबैलाई पढेको चिन्ह लगाउनुहोस्",
+    "markRead": "पढेको चिन्ह लगाउनुहोस्",
+    "close": "बन्द गर्नुहोस्",
+    "filters": {
+      "all": "सबै",
+      "unread": "नपढिएको",
+      "players": "खेलाडीहरू",
+      "schools": "स्कूलहरू",
+      "tournaments": "प्रतियोगिताहरू",
+      "verification": "प्रमाणीकरण"
+    },
+    "empty": {
+      "title": "कुनै सूचना छैन",
+      "message": "तपाईं सबै समातिसक्नुभयो! अहिले कुनै नयाँ सूचनाहरू छैनन्।"
+    }
+  },
+  "settings": {
+    "title": "ड्यासबोर्ड सेटिङहरू",
+    "subtitle": "तपाईंको ड्यासबोर्ड अनुभव अनुकूलन गर्नुहोस्",
+    "save": "परिवर्तनहरू सुरक्षित गर्नुहोस्",
+    "reset": "रिसेट गर्नुहोस्",
+    "export": "सेटिङहरू निर्यात गर्नुहोस्",
+    "saveSuccess": "सेटिङहरू सफलतापूर्वक सुरक्षित भए",
+    "saveError": "सेटिङहरू सुरक्षित गर्न असफल",
+    "resetSuccess": "सेटिङहरू पूर्वनिर्धारितमा रिसेट भए",
+    "exportSuccess": "सेटिङहरू सफलतापूर्वक निर्यात भए",
+    "navigation": {
+      "title": "सेटिङहरू"
+    },
+    "sections": {
+      "profile": "प्रोफाइल",
+      "profileDesc": "व्यक्तिगत जानकारी",
+      "security": "सुरक्षा",
+      "securityDesc": "सुरक्षा सेटिङहरू",
+      "notifications": "सूचनाहरू",
+      "notificationsDesc": "सूचना प्राथमिकताहरू",
+      "preferences": "प्राथमिकताहरू",
+      "preferencesDesc": "प्रदर्शन प्राथमिकताहरू",
+      "data": "डेटा व्यवस्थापन",
+      "dataDesc": "डेटा ब्याकअप र निर्यात"
+    },
+    "profile": {
+      "title": "प्रोफाइल जानकारी",
+      "name": "पूरा नाम",
+      "email": "इमेल ठेगाना",
+      "phone": "फोन नम्बर",
+      "timezone": "समय क्षेत्र"
+    },
+    "security": {
+      "title": "सुरक्षा सेटिङहरू",
+      "twoFactor": "दुई-कारक प्रमाणीकरण",
+      "twoFactorDesc": "तपाईंको खातामा अतिरिक्त सुरक्षा तह थप्नुहोस्",
+      "sessionTimeout": "सेसन समय सीमा",
+      "passwordExpiry": "पासवर्ड म्याद"
+    },
+    "notifications": {
+      "title": "सूचना प्राथमिकताहरू",
+      "emailNotifications": "इमेल सूचनाहरू",
+      "emailNotificationsDesc": "इमेल मार्फत सूचनाहरू प्राप्त गर्नुहोस्",
+      "pushNotifications": "पुश सूचनाहरू",
+      "pushNotificationsDesc": "ब्राउजर पुश सूचनाहरू प्राप्त गर्नुहोस्",
+      "smsNotifications": "SMS सूचनाहरू",
+      "smsNotificationsDesc": "SMS मार्फत सूचनाहरू प्राप्त गर्नुहोस्",
+      "weeklyReports": "साप्ताहिक रिपोर्टहरू",
+      "weeklyReportsDesc": "साप्ताहिक सारांश रिपोर्टहरू प्राप्त गर्नुहोस्",
+      "monthlyReports": "मासिक रिपोर्टहरू",
+      "monthlyReportsDesc": "मासिक सारांश रिपोर्टहरू प्राप्त गर्नुहोस्",
+      "systemAlerts": "प्रणाली चेतावनीहरू",
+      "systemAlertsDesc": "प्रणाली स्थिति चेतावनीहरू प्राप्त गर्नुहोस्"
+    },
+    "preferences": {
+      "title": "प्रदर्शन प्राथमिकताहरू",
+      "theme": "थिम",
+      "lightTheme": "लाइट थिम",
+      "darkTheme": "डार्क थिम",
+      "systemTheme": "प्रणाली थिम",
+      "language": "भाषा",
+      "autoRefresh": "स्वचालित रिफ्रेस",
+      "autoRefreshDesc": "ड्यासबोर्ड डेटा स्वचालित रूपमा रिफ्रेस गर्नुहोस्",
+      "showWelcomeMessage": "स्वागत सन्देश देखाउनुहोस्",
+      "showWelcomeMessageDesc": "लगइनमा स्वागत सन्देश प्रदर्शन गर्नुहोस्",
+      "sidebarCollapsed": "साइडबार संकुचित",
+      "sidebarCollapsedDesc": "साइडबार पूर्वनिर्धारित रूपमा संकुचित राख्नुहोस्"
+    },
+    "data": {
+      "title": "डेटा व्यवस्थापन",
+      "autoBackup": "स्वचालित ब्याकअप",
+      "autoBackupDesc": "तपाईंको डेटा स्वचालित रूपमा ब्याकअप गर्नुहोस्",
+      "backupFrequency": "ब्याकअप आवृत्ति",
+      "exportFormat": "निर्यात ढाँचा",
+      "daily": "दैनिक",
+      "weekly": "साप्ताहिक",
+      "monthly": "मासिक"
+    }
+  },
+  "auth": {
+    "logout": {
+      "success": "सफलतापूर्वक लग आउट भयो",
+      "error": "लग आउट गर्न असफल"
+    }
+  }
+}

@@ -28,6 +28,247 @@
   "email": "Contact Email",
   "upload_documents": "Upload Documents",
   "school_logo": "School Logo (optional)",
+  "dashboard": {
+    "title": "Admin Dashboard",
+    "welcome": "Welcome, {{name}}",
+    "tabs": {
+      "overview": "Overview",
+      "players": "Players",
+      "schools": "Schools",
+      "tournaments": "Tournaments",
+      "analytics": "Analytics",
+      "settings": "Settings"
+    },
+    "stats": {
+      "registeredPlayers": "Registered Players",
+      "schools": "Schools",
+      "tournaments": "Tournaments",
+      "activeTournaments": "Active Tournaments",
+      "pendingVerifications": "Pending Verifications",
+      "missingDocs": "Missing Documents",
+      "totalRevenue": "Total Revenue",
+      "monthlyGrowth": "Monthly Growth",
+      "thisMonth": "This Month",
+      "activeSchools": "Active Schools",
+      "totalTournaments": "Total Tournaments",
+      "currentlyActive": "Currently Active",
+      "needsReview": "Needs Review",
+      "requiresAttention": "Requires Attention",
+      "thisQuarter": "This Quarter",
+      "comparedToLastMonth": "Compared to Last Month"
+    },
+    "search": {
+      "placeholder": "Search players, schools, tournaments..."
+    },
+    "quickActions": {
+      "addPlayer": "Add Player",
+      "addSchool": "Add School",
+      "createTournament": "Create Tournament",
+      "viewAnalytics": "View Analytics"
+    },
+    "recentPlayers": {
+      "title": "Recent Player Registrations",
+      "viewAll": "View All Players"
+    },
+    "recentActivity": {
+      "title": "Recent Activity",
+      "empty": "No recent activity to display"
+    },
+    "language": {
+      "changed": "Language changed successfully"
+    },
+    "sidebar": {
+      "expand": "Expand sidebar",
+      "collapse": "Collapse sidebar"
+    },
+    "error": {
+      "title": "Error Loading Dashboard",
+      "loadFailed": "Failed to load dashboard data",
+      "retry": "Retry"
+    }
+  },
+  "sidebar": {
+    "sections": {
+      "management": "Management",
+      "analytics": "Analytics",
+      "settings": "Settings",
+      "help": "Help & Support"
+    },
+    "items": {
+      "overview": "Overview",
+      "players": "Players",
+      "schools": "Schools",
+      "tournaments": "Tournaments",
+      "analytics": "Analytics",
+      "reports": "Reports",
+      "insights": "Insights",
+      "settings": "Settings",
+      "notifications": "Notifications",
+      "preferences": "Preferences",
+      "documentation": "Documentation",
+      "tutorials": "Tutorials",
+      "support": "Support"
+    },
+    "logout": "Logout",
+    "darkMode": "Dark Mode",
+    "lightMode": "Light Mode"
+  },
+  "filters": {
+    "title": "Filters",
+    "clearAll": "Clear All",
+    "refresh": "Refresh",
+    "export": "Export",
+    "status": {
+      "title": "Status",
+      "all": "All Status",
+      "active": "Active",
+      "pending": "Pending",
+      "inactive": "Inactive",
+      "suspended": "Suspended"
+    },
+    "school": {
+      "title": "School Type",
+      "all": "All Schools",
+      "public": "Public Schools",
+      "private": "Private Schools",
+      "international": "International Schools"
+    },
+    "sport": {
+      "title": "Sport",
+      "all": "All Sports",
+      "football": "Football",
+      "basketball": "Basketball",
+      "volleyball": "Volleyball",
+      "athletics": "Athletics",
+      "swimming": "Swimming"
+    },
+    "region": {
+      "title": "Region",
+      "all": "All Regions",
+      "kathmandu": "Kathmandu",
+      "pokhara": "Pokhara",
+      "biratnagar": "Biratnagar",
+      "bharatpur": "Bharatpur",
+      "birgunj": "Birgunj"
+    },
+    "dateRange": {
+      "last7Days": "Last 7 Days",
+      "last30Days": "Last 30 Days",
+      "last90Days": "Last 90 Days",
+      "lastYear": "Last Year",
+      "custom": "Custom"
+    },
+    "presets": {
+      "activePlayers": "Active Players",
+      "pendingVerification": "Pending Verification",
+      "privateSchools": "Private Schools"
+    }
+  },
+  "notifications": {
+    "title": "Notifications",
+    "unreadCount": "{{count}} unread",
+    "allRead": "All notifications read",
+    "markAllRead": "Mark all as read",
+    "markRead": "Mark as read",
+    "close": "Close",
+    "filters": {
+      "all": "All",
+      "unread": "Unread",
+      "players": "Players",
+      "schools": "Schools",
+      "tournaments": "Tournaments",
+      "verification": "Verification"
+    },
+    "empty": {
+      "title": "No notifications",
+      "message": "You're all caught up! No new notifications at the moment."
+    }
+  },
+  "settings": {
+    "title": "Dashboard Settings",
+    "subtitle": "Customize your dashboard experience",
+    "save": "Save Changes",
+    "reset": "Reset",
+    "export": "Export Settings",
+    "saveSuccess": "Settings saved successfully",
+    "saveError": "Failed to save settings",
+    "resetSuccess": "Settings reset to default",
+    "exportSuccess": "Settings exported successfully",
+    "navigation": {
+      "title": "Settings"
+    },
+    "sections": {
+      "profile": "Profile",
+      "profileDesc": "Personal information",
+      "security": "Security",
+      "securityDesc": "Security settings",
+      "notifications": "Notifications",
+      "notificationsDesc": "Notification preferences",
+      "preferences": "Preferences",
+      "preferencesDesc": "Display preferences",
+      "data": "Data Management",
+      "dataDesc": "Data backup and export"
+    },
+    "profile": {
+      "title": "Profile Information",
+      "name": "Full Name",
+      "email": "Email Address",
+      "phone": "Phone Number",
+      "timezone": "Timezone"
+    },
+    "security": {
+      "title": "Security Settings",
+      "twoFactor": "Two-Factor Authentication",
+      "twoFactorDesc": "Add an extra layer of security to your account",
+      "sessionTimeout": "Session Timeout",
+      "passwordExpiry": "Password Expiry"
+    },
+    "notifications": {
+      "title": "Notification Preferences",
+      "emailNotifications": "Email Notifications",
+      "emailNotificationsDesc": "Receive notifications via email",
+      "pushNotifications": "Push Notifications",
+      "pushNotificationsDesc": "Receive browser push notifications",
+      "smsNotifications": "SMS Notifications",
+      "smsNotificationsDesc": "Receive notifications via SMS",
+      "weeklyReports": "Weekly Reports",
+      "weeklyReportsDesc": "Get weekly summary reports",
+      "monthlyReports": "Monthly Reports",
+      "monthlyReportsDesc": "Get monthly summary reports",
+      "systemAlerts": "System Alerts",
+      "systemAlertsDesc": "Receive system status alerts"
+    },
+    "preferences": {
+      "title": "Display Preferences",
+      "theme": "Theme",
+      "lightTheme": "Light Theme",
+      "darkTheme": "Dark Theme",
+      "systemTheme": "System Theme",
+      "language": "Language",
+      "autoRefresh": "Auto Refresh",
+      "autoRefreshDesc": "Automatically refresh dashboard data",
+      "showWelcomeMessage": "Show Welcome Message",
+      "showWelcomeMessageDesc": "Display welcome message on login",
+      "sidebarCollapsed": "Collapsed Sidebar",
+      "sidebarCollapsedDesc": "Keep sidebar collapsed by default"
+    },
+    "data": {
+      "title": "Data Management",
+      "autoBackup": "Auto Backup",
+      "autoBackupDesc": "Automatically backup your data",
+      "backupFrequency": "Backup Frequency",
+      "exportFormat": "Export Format",
+      "daily": "Daily",
+      "weekly": "Weekly",
+      "monthly": "Monthly"
+    }
+  },
+  "auth": {
+    "logout": {
+      "success": "Logged out successfully",
+      "error": "Failed to logout"
+    }
+  },
   "official_doc": "Official Document (required)",
   "choose_file": "Choose File",
   "admin_info": "School Admin Information",
@@ -50,6 +291,5 @@
   "logging_in": "Logging in...",
   "login_successful": "Login successful!",
   "login_failed": "Login failed. Please check your credentials.",
-  "test_accounts": "Test Accounts",
-  "dashboard": "Dashboard"
+  "test_accounts": "Test Accounts"
 }
