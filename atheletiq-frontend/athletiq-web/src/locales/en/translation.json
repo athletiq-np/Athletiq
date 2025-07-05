@@ -39,6 +39,17 @@
   "submit": "Submit Registration",
   "success_title": "Registration Submitted!",
   "success_msg": "Your registration is pending verification. You'll be notified soon.",
-  "athletiq_mission": "A new era of youth sports data, registration & tournaments—powered by technology, built for every school in the world."
-
+  "athletiq_mission": "A new era of youth sports data, registration & tournaments—powered by technology, built for every school in the world.",
+  "login_title": "Login to Athletiq",
+  "login_subtitle": "Enter your credentials to access your dashboard",
+  "login_email": "Email",
+  "password": "Password",
+  "enter_email": "Enter your email",
+  "enter_password": "Enter your password",
+  "login": "Login",
+  "logging_in": "Logging in...",
+  "login_successful": "Login successful!",
+  "login_failed": "Login failed. Please check your credentials.",
+  "test_accounts": "Test Accounts",
+  "dashboard": "Dashboard"
 }

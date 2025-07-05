@@ -28,5 +28,5 @@ app.use('/api/admin', require('./src/routes/adminRoutes'));
 // --- Error Handling Middleware ---
 app.use(errorHandler);
 
-const PORT = process.env.PORT || 5000;
+const PORT = 5000;
 app.listen(PORT, () => console.log(`Server started in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`));

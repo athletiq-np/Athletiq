@@ -112,3 +112,180 @@ exports.changeSchoolPassword = async (req, res, next) => {
     client.release();
   }
 };
+
+
+/**
+ * @desc    Get all players with pagination and filtering
+ * @route   GET /api/admin/players
+ */
+exports.getAllPlayers = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 50, schoolId, search } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let query = `
+      SELECT p.*, s.name as school_name, s.school_code
+      FROM players p 
+      LEFT JOIN schools s ON p.school_id = s.id
+    `;
+    let params = [];
+    let whereConditions = [];
+    
+    // Add school filter
+    if (schoolId) {
+      whereConditions.push(`p.school_id = $${params.length + 1}`);
+      params.push(schoolId);
+    }
+    
+    // Add search filter
+    if (search) {
+      whereConditions.push(`(p.full_name ILIKE $${params.length + 1} OR s.name ILIKE $${params.length + 1})`);
+      params.push(`%${search}%`);
+    }
+    
+    if (whereConditions.length > 0) {
+      query += ` WHERE ${whereConditions.join(' AND ')}`;
+    }
+    
+    query += ` ORDER BY p.created_at DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+    
+    const result = await pool.query(query, params);
+    
+    // Get total count for pagination
+    let countQuery = `SELECT COUNT(*) FROM players p LEFT JOIN schools s ON p.school_id = s.id`;
+    let countParams = [];
+    
+    if (schoolId) {
+      countQuery += ` WHERE p.school_id = $1`;
+      countParams.push(schoolId);
+    }
+    
+    const countResult = await pool.query(countQuery, countParams);
+    const totalCount = parseInt(countResult.rows[0].count);
+    
+    res.status(200).json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalCount / limit),
+        totalCount,
+        hasNext: page * limit < totalCount,
+        hasPrev: page > 1
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get all schools with pagination and filtering
+ * @route   GET /api/admin/schools
+ */
+exports.getAllSchools = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 50, search } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let query = `
+      SELECT s.*, 
+        COUNT(p.id) as player_count,
+        COUNT(CASE WHEN p.is_active = true THEN 1 END) as active_player_count
+      FROM schools s 
+      LEFT JOIN players p ON s.id = p.school_id
+    `;
+    let params = [];
+    
+    // Add search filter
+    if (search) {
+      query += ` WHERE s.name ILIKE $1 OR s.school_code ILIKE $1`;
+      params.push(`%${search}%`);
+    }
+    
+    query += ` GROUP BY s.id ORDER BY s.name LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+    
+    const result = await pool.query(query, params);
+    
+    // Get total count
+    let countQuery = `SELECT COUNT(*) FROM schools`;
+    let countParams = [];
+    
+    if (search) {
+      countQuery += ` WHERE name ILIKE $1 OR school_code ILIKE $1`;
+      countParams.push(`%${search}%`);
+    }
+    
+    const countResult = await pool.query(countQuery, countParams);
+    const totalCount = parseInt(countResult.rows[0].count);
+    
+    res.status(200).json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalCount / limit),
+        totalCount,
+        hasNext: page * limit < totalCount,
+        hasPrev: page > 1
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get all tournaments with pagination and filtering
+ * @route   GET /api/admin/tournaments
+ */
+exports.getAllTournaments = async (req, res, next) => {
+  try {
+    const { page = 1, limit = 50, search } = req.query;
+    const offset = (page - 1) * limit;
+    
+    let query = `
+      SELECT * FROM tournaments
+    `;
+    let params = [];
+    
+    // Add search filter
+    if (search) {
+      query += ` WHERE name ILIKE $1`;
+      params.push(`%${search}%`);
+    }
+    
+    query += ` ORDER BY start_date DESC LIMIT $${params.length + 1} OFFSET $${params.length + 2}`;
+    params.push(limit, offset);
+    
+    const result = await pool.query(query, params);
+    
+    // Get total count
+    let countQuery = `SELECT COUNT(*) FROM tournaments`;
+    let countParams = [];
+    
+    if (search) {
+      countQuery += ` WHERE name ILIKE $1`;
+      countParams.push(`%${search}%`);
+    }
+    
+    const countResult = await pool.query(countQuery, countParams);
+    const totalCount = parseInt(countResult.rows[0].count);
+    
+    res.status(200).json({
+      success: true,
+      data: result.rows,
+      pagination: {
+        currentPage: parseInt(page),
+        totalPages: Math.ceil(totalCount / limit),
+        totalCount,
+        hasNext: page * limit < totalCount,
+        hasPrev: page > 1
+      }
+    });
+  } catch (error) {
+    next(error);
+  }
+};

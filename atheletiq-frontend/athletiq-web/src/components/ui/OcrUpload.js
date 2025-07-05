@@ -1,6 +1,6 @@
 // src/components/OcrUpload.js
 import React, { useState } from 'react';
-import { uploadBirthCertificate } from '../api/ocrApi';
+import { uploadBirthCertificate } from '@api/ocrApi';
 
 export default function OcrUpload({ onExtracted }) {
   const [file, setFile] = useState(null);

@@ -1,7 +1,7 @@
 // src/components/layout/DashboardLayout.jsx
 
 import React from 'react';
-import { NavLink, Outlet, useLocation } from 'react-router-dom';
+import { NavLink, Outlet, useLocation, useSearchParams } from 'react-router-dom';
 import {
   FaHome,
   FaUsers,
@@ -17,34 +17,29 @@ import athletiqLogo from '@/assets/logos/athletiq-logo.png';
 
 const NAV_LINKS = [
   {
-    to: '/admin/dashboard',
+    to: '/admin/dashboard?tab=overview',
     icon: <FaHome />,
     label: { en: 'Dashboard', np: 'ड्यासबोर्ड' },
   },
   {
-    to: '/admin/players',
+    to: '/admin/dashboard?tab=players',
     icon: <FaUsers />,
     label: { en: 'Player Roster', np: 'खिलाडी सूची' },
   },
   {
-    to: '/admin/players/add',
-    icon: <FaUserPlus />,
-    label: { en: 'Add Player', np: 'नयाँ खेलाडी' },
-  },
-  {
-    to: '/admin/schools',
+    to: '/admin/dashboard?tab=schools',
     icon: <FaSchool />,
     label: { en: 'Schools', np: 'विद्यालय' },
   },
   {
-    to: '/admin/tournaments',
+    to: '/admin/dashboard?tab=tournaments',
     icon: <FaTrophy />,
     label: { en: 'Tournaments', np: 'टूर्नामेन्ट' },
   },
   {
-    to: '/admin/stats',
+    to: '/admin/dashboard?tab=stats',
     icon: <FaListAlt />,
-    label: { en: 'Stats', np: 'स्ट्याट्स' },
+    label: { en: 'Statistics', np: 'स्ट्याट्स' },
   },
   {
     to: '/admin/settings',
@@ -56,12 +51,30 @@ const NAV_LINKS = [
 export default function DashboardLayout() {
   const { user } = useUserStore();
   const location = useLocation();
+  const [searchParams] = useSearchParams();
   const lang = 'en';
+  const currentTab = searchParams.get('tab') || 'overview';
 
   // Logout logic (replace with real API call & Zustand reset as needed)
   const handleLogout = () => {
     // Optionally call /api/auth/logout and clear Zustand state
     window.location.href = '/login';
+  };
+
+  // Function to check if a nav link is active
+  const isNavLinkActive = (linkTo) => {
+    const url = new URL(linkTo, 'http://localhost');
+    const linkTab = url.searchParams.get('tab');
+    
+    if (location.pathname === '/admin/dashboard') {
+      if (linkTab) {
+        return currentTab === linkTab;
+      } else {
+        return currentTab === 'overview';
+      }
+    }
+    
+    return location.pathname === url.pathname;
   };
 
   return (
@@ -81,13 +94,14 @@ export default function DashboardLayout() {
             <NavLink
               to={link.to}
               key={link.to}
-              className={({ isActive }) =>
-                `flex items-center gap-3 px-6 py-3 rounded-lg font-medium transition-colors ${
-                  isActive || location.pathname.startsWith(link.to)
+              className={() => {
+                const isActive = isNavLinkActive(link.to);
+                return `flex items-center gap-3 px-6 py-3 rounded-lg font-medium transition-colors ${
+                  isActive
                     ? 'bg-athletiq-green text-white shadow'
                     : 'text-athletiq-navy hover:bg-athletiq-green/20'
-                }`
-              }
+                }`;
+              }}
               end
             >
               <span className="text-xl">{link.icon}</span>

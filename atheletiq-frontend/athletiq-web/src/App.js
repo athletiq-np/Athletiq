@@ -13,27 +13,18 @@ import Home from '@/pages/public/Home';
 import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
 import AdminDashboard from '@/pages/admin/AdminDashboard';
+import Settings from '@/pages/admin/Settings';
 import SchoolDashboard from '@/pages/school/SchoolDashboard';
 import NotFoundPage from '@/pages/public/NotFoundPage';
 
 function App() {
   const { setUser, clearUser, isLoading, setLoading } = useUserStore();
 
-  // This effect runs on app load to check for a logged-in user
+  // Removed auto-login check - users must manually login
   useEffect(() => {
-    const checkLoggedInUser = async () => {
-      setLoading(true);
-      try {
-        const response = await apiClient.get('/auth/me');
-        setUser(response.data.user);
-      } catch {
-        clearUser();
-      } finally {
-        setLoading(false);
-      }
-    };
-    checkLoggedInUser();
-  }, [setUser, clearUser, setLoading]);
+    clearUser(); // Clear any existing user data
+    setLoading(false); // Set loading to false immediately
+  }, [clearUser, setLoading]);
 
   // While checking auth, show a loading screen
   if (isLoading) {
@@ -64,7 +55,11 @@ function App() {
           }
         >
           {/* The 'index' route makes AdminDashboard the default page for '/admin' */}
-          <Route index path="dashboard" element={<AdminDashboard />} />
+          <Route index element={<AdminDashboard />} />
+          {/* Add dashboard route for tab navigation */}
+          <Route path="dashboard" element={<AdminDashboard />} />
+          {/* Add settings route */}
+          <Route path="settings" element={<Settings />} />
           {/* Add other admin-specific pages here, e.g., path="schools" */}
         </Route>
 
@@ -76,7 +71,7 @@ function App() {
             </ProtectedRoute>
           }
         >
-          <Route index path="dashboard" element={<SchoolDashboard />} />
+          <Route index element={<SchoolDashboard />} />
         </Route>
 
         {/* --- 404 Not Found --- */}

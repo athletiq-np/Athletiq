@@ -22,9 +22,8 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 
 // Corrected import path for the official sports list from our new data file
-// Assuming TournamentSportsStep.jsx is at src/components/tournament-steps/
-// and sportsList.js is at src/data/sportsList.js
-import sportsList from '../../../data/sportsList'; // Correct relative path from tournament-steps/ to data/
+// Using CRACO path alias to import sports data
+import sportsList from '@/data/sportsList';
 
 // --- COMPONENT DEFINITION ---
 // Helper object to map the icon names from sportsList.js to visual emojis.

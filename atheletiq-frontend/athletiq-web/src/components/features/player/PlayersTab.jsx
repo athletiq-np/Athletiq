@@ -1,7 +1,7 @@
 // src/components/SchoolDashboard/PlayersTab.jsx
 
 import React from "react";
-import defaultAvatar from "../../assets/default-avatar.png";
+import defaultAvatar from "@assets/default-avatar.png";
 
 /**
  * PlayersTab: Shows all registered players of the school

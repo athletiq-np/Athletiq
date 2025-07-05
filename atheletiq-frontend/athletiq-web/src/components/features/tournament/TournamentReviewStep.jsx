@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { createTournament } from '../../../api/tournamentApi'; // Import the new API function
+import { createTournament } from '@api/tournamentApi'; // Import the new API function
 import { FaPaperPlane, FaSpinner, FaCheckCircle, FaExclamationCircle } from 'react-icons/fa';
 
 // This is the final step in the tournament creation wizard.

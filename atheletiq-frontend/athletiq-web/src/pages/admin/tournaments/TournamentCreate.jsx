@@ -12,10 +12,10 @@ import { motion } from "framer-motion";
 import axios from "axios";
 
 // Import the child components for each step of the wizard
-import TournamentInfoStep from "../../../components/features/tournament/TournamentInfoStep";
-import TournamentSportsStep from "../../../components/features/tournament/TournamentSportsStep";
-import TournamentConfigStep from "../../../components/features/tournament/TournamentConfigStep";
-import TournamentReviewStep from "../../../components/features/tournament/TournamentReviewStep";
+import TournamentInfoStep from "@features/tournament/TournamentInfoStep";
+import TournamentSportsStep from "@features/tournament/TournamentSportsStep";
+import TournamentConfigStep from "@features/tournament/TournamentConfigStep";
+import TournamentReviewStep from "@features/tournament/TournamentReviewStep";
 
 // --- COMPONENT DEFINITION ---
 const steps = ["Tournament Info", "Sports & Format", "Configure & Fixtures", "Review & Confirm"];

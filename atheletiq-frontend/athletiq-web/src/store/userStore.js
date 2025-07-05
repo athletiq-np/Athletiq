@@ -11,7 +11,7 @@ import { create } from 'zustand';
  */
 const useUserStore = create((set) => ({
   user: null,
-  isLoading: true, // Start in a loading state until we check for a logged-in user
+  isLoading: false, // Start with loading false - no auto-login check
   
   // Action to set the user in the store (e.g., after login)
   setUser: (user) => set({ user, isLoading: false }),

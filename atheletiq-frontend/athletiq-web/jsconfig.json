@@ -2,7 +2,21 @@
   "compilerOptions": {
     "baseUrl": "src",
     "paths": {
-      "@/*": ["*"]
+      "@/*": ["*"],
+      "@components/*": ["components/*"],
+      "@pages/*": ["pages/*"],
+      "@assets/*": ["assets/*"],
+      "@utils/*": ["utils/*"],
+      "@services/*": ["services/*"],
+      "@hooks/*": ["hooks/*"],
+      "@contexts/*": ["contexts/*"],
+      "@store/*": ["store/*"],
+      "@config/*": ["config/*"],
+      "@api/*": ["api/*"],
+      "@shared/*": ["shared/*"],
+      "@features/*": ["components/features/*"],
+      "@layouts/*": ["components/layout/*"],
+      "@lib/*": ["lib/*"]
     }
   },
   "include": ["src"]
