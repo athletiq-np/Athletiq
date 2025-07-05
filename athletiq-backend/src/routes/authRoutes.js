@@ -2,16 +2,18 @@ const express = require('express');
 const router = express.Router();
 const authController = require('../controllers/authController');
 const { protect } = require('../middlewares/authMiddleware');
+const { authLimiter, passwordResetLimiter } = require('../middlewares/rateLimiter');
+const { validateUserLogin, validateUserRegistration } = require('../middlewares/validation');
 
 // @route   POST /api/auth/register
 // @desc    Register a new School Admin and their School
 // @access  Public
-router.post('/register', authController.register);
+router.post('/register', authLimiter, validateUserRegistration, authController.register);
 
 // @route   POST /api/auth/login
 // @desc    Authenticate a user and set a secure cookie
 // @access  Public
-router.post('/login', authController.login);
+router.post('/login', authLimiter, validateUserLogin, authController.login);
 
 // @route   GET /api/auth/logout
 // @desc    Log user out by clearing the authentication cookie

@@ -2,8 +2,8 @@
 
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middlewares/authMiddleware');
-const pool = require('../config/db');
+const { protect: authMiddleware } = require('../middlewares/authMiddleware');
+const { pool, query } = require('../config/db');
 
 /**
  * Register a team for a tournament (school admin only)
@@ -20,14 +20,14 @@ router.post('/', authMiddleware, async (req, res) => {
 
   try {
     // Check this admin owns the team
-    const school = await pool.query(
+    const school = await query(
       'SELECT id FROM schools WHERE created_by = $1 LIMIT 1',
       [req.user.id]
     );
     if (school.rows.length === 0)
       return res.status(400).json({ message: 'School not found for this admin.' });
 
-    const team = await pool.query(
+    const team = await query(
       'SELECT * FROM teams WHERE id = $1 AND school_id = $2',
       [team_id, school.rows[0].id]
     );
@@ -35,7 +35,7 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(403).json({ message: 'Not authorized to register this team.' });
 
     // Check not already registered
-    const exists = await pool.query(
+    const exists = await query(
       `SELECT * FROM tournament_registrations WHERE team_id = $1 AND tournament_id = $2`,
       [team_id, tournament_id]
     );
@@ -43,7 +43,7 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(409).json({ message: 'Team already registered for this tournament.' });
 
     // Register!
-    const result = await pool.query(
+    const result = await query(
       `INSERT INTO tournament_registrations (team_id, tournament_id, registered_at)
        VALUES ($1, $2, NOW()) RETURNING *`,
       [team_id, tournament_id]
@@ -62,7 +62,7 @@ router.post('/', authMiddleware, async (req, res) => {
 router.get('/tournament/:tournament_id', authMiddleware, async (req, res) => {
   const { tournament_id } = req.params;
   try {
-    const result = await pool.query(
+    const result = await query(
       `SELECT tr.*, t.name AS team_name, t.sport
        FROM tournament_registrations tr
        JOIN teams t ON tr.team_id = t.id

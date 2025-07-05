@@ -1,8 +1,10 @@
 //
-// 🧠 ATHLETIQ - Admin Controller (Upgraded)
+// 🧠 ATHLETIQ - Admin Controller (Upgraded with Security & Standards)
 //
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
+const { ApiResponse, getPaginationInfo } = require('../utils/apiResponse');
+const { logInfo, logError, logSecurityEvent } = require('../utils/logger');
 
 /**
  * @desc    Register a new super admin
@@ -11,28 +13,25 @@ const bcrypt = require('bcryptjs');
 exports.registerSuperAdmin = async (req, res, next) => {
   const { full_name, email, password } = req.body;
   
-  if (!full_name || !email || !password) {
-    const error = new Error('Full name, email, and password are required.');
-    error.statusCode = 400;
-    return next(error);
-  }
-
   try {
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rowCount > 0) {
-      const error = new Error('Email already in use.');
-      error.statusCode = 409;
-      return next(error);
+      logSecurityEvent('Duplicate super admin registration attempt', { email, ip: req.ip });
+      return ApiResponse.conflict(res, 'Email already in use');
     }
     
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await pool.query(
-      `INSERT INTO users (full_name, email, password_hash, role) VALUES ($1, $2, $3, 'SuperAdmin')`,
+    const hashedPassword = await bcrypt.hash(password, 12); // Increased rounds for admin
+    const result = await pool.query(
+      `INSERT INTO users (full_name, email, password_hash, role) VALUES ($1, $2, $3, 'SuperAdmin') RETURNING id, full_name, email, role`,
       [full_name, email, hashedPassword]
     );
 
-    res.status(201).json({ success: true, message: 'Super admin created successfully.' });
+    logSecurityEvent('Super admin created', { adminId: result.rows[0].id, email, createdBy: req.user?.id });
+    logInfo('Super admin registered successfully', { email, adminId: result.rows[0].id });
+    
+    return ApiResponse.created(res, result.rows[0], 'Super admin created successfully');
   } catch (err) {
+    logError('Super admin registration failed', err, { email });
     next(err);
   }
 };
@@ -44,23 +43,40 @@ exports.registerSuperAdmin = async (req, res, next) => {
  */
 exports.getDashboardStats = async (req, res, next) => {
   try {
-    const [schoolResult, playerResult, tournamentResult] = await Promise.all([
-      pool.query('SELECT * FROM schools ORDER BY created_at DESC'),
-      pool.query('SELECT * FROM players ORDER BY created_at DESC'),
-      pool.query('SELECT * FROM tournaments ORDER BY start_date DESC')
+    const [schoolResult, playerResult, tournamentResult, userResult] = await Promise.all([
+      pool.query('SELECT COUNT(*) as count, COUNT(*) FILTER (WHERE is_active = true) as active_count FROM schools'),
+      pool.query('SELECT COUNT(*) as count, COUNT(*) FILTER (WHERE is_active = true) as active_count FROM players'),
+      pool.query('SELECT COUNT(*) as count, COUNT(*) FILTER (WHERE status = \'ongoing\') as active_count FROM tournaments'),
+      pool.query('SELECT COUNT(*) as count, role FROM users GROUP BY role')
     ]);
 
     const stats = {
-      schools: schoolResult.rows,
-      players: playerResult.rows,
-      tournaments: tournamentResult.rows,
-      schoolCount: schoolResult.rowCount,
-      playerCount: playerResult.rowCount,
-      tournamentCount: tournamentResult.rowCount
+      schools: {
+        total: parseInt(schoolResult.rows[0].count),
+        active: parseInt(schoolResult.rows[0].active_count)
+      },
+      players: {
+        total: parseInt(playerResult.rows[0].count),
+        active: parseInt(playerResult.rows[0].active_count)
+      },
+      tournaments: {
+        total: parseInt(tournamentResult.rows[0].count),
+        active: parseInt(tournamentResult.rows[0].active_count)
+      },
+      users: userResult.rows.reduce((acc, row) => {
+        acc[row.role.toLowerCase()] = parseInt(row.count);
+        return acc;
+      }, {}),
+      // Legacy fields for compatibility
+      schoolCount: parseInt(schoolResult.rows[0].count),
+      playerCount: parseInt(playerResult.rows[0].count),
+      tournamentCount: parseInt(tournamentResult.rows[0].count)
     };
 
-    res.status(200).json({ success: true, data: stats });
+    logInfo('Dashboard stats retrieved', { userId: req.user.id });
+    return ApiResponse.success(res, stats, 'Dashboard statistics retrieved successfully');
   } catch (error) {
+    logError('Failed to get dashboard stats', error, { userId: req.user.id });
     next(error);
   }
 };

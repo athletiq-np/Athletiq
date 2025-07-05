@@ -3,23 +3,27 @@
 const express = require('express');
 const router = express.Router();
 const matchService = require('../services/matchService');
+const { protect } = require('../middlewares/authMiddleware');
+const { generalLimiter } = require('../middlewares/rateLimiter');
+const { validateTournamentId } = require('../middlewares/validation');
 const pool = require('../config/db');
+const apiResponse = require('../utils/apiResponse');
 
 /**
  * Bulk create matches for a tournament.
  * POST /api/matches/bulk
  * Body: { matches: [ {home_team_id, away_team_id, ...}, ... ] }
  */
-router.post('/bulk', async (req, res) => {
+router.post('/bulk', generalLimiter, protect, async (req, res) => {
   try {
     if (!Array.isArray(req.body.matches)) {
-      return res.status(400).json({ error: "matches should be an array" });
+      return res.status(400).json(apiResponse.error("matches should be an array", 400));
     }
     const created = await matchService.bulkCreateMatches(req.body.matches);
-    res.status(201).json({ matches: created });
+    res.status(201).json(apiResponse.success(created, 'Matches created successfully'));
   } catch (err) {
     console.error("Bulk match create error:", err);
-    res.status(500).json({ error: err.message || "Error creating matches" });
+    res.status(500).json(apiResponse.error(err.message || "Error creating matches", 500));
   }
 });
 
@@ -27,7 +31,7 @@ router.post('/bulk', async (req, res) => {
  * Get all matches for a tournament (grouped by category)
  * GET /api/matches/by-tournament/:id
  */
-router.get('/by-tournament/:id', async (req, res) => {
+router.get('/by-tournament/:id', generalLimiter, validateTournamentId, async (req, res) => {
   try {
     const { id } = req.params;
     const result = await pool.query(

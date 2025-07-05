@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const fs = require('fs');
 const { OpenAI } = require('openai');
+const apiResponse = require('../utils/apiResponse');
 
 // ========== 1. REGISTER PLAYER HANDLER ==========
 
@@ -18,7 +19,7 @@ exports.registerPlayer = async (req, res) => {
     } = req.body;
 
     if (!full_name || !dob || !gender || !father_name || !guardian_phone)
-      return res.status(400).json({ message: "Missing required fields." });
+      return res.status(400).json(apiResponse.error("Missing required fields.", 400));
 
     let photoFilename = null;
     let certFilename = null;
@@ -34,10 +35,13 @@ exports.registerPlayer = async (req, res) => {
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW()) RETURNING id`,
       [full_name, dob, gender, father_name, mother_name, guardian_phone, guardian_email, address, photoFilename, certFilename]
     );
-    res.status(201).json({ message: "Player registered!", player_id: result.rows[0].id });
+    res.status(201).json(apiResponse.success(
+      { player_id: result.rows[0].id }, 
+      "Player registered successfully!"
+    ));
   } catch (err) {
     console.error("Player registration error:", err);
-    res.status(500).json({ message: "Server error during registration." });
+    res.status(500).json(apiResponse.error("Server error during registration.", 500));
   }
 };
 

@@ -4,6 +4,9 @@ const pool = require('../config/db');
 const multer = require('multer');
 const { generateShortCode } = require('../utils/codeGenerator');
 const { protect, checkRole } = require('../middlewares/authMiddleware');
+const { validatePlayerRegistration } = require('../middlewares/validation');
+const { generalLimiter } = require('../middlewares/rateLimiter');
+const apiResponse = require('../utils/apiResponse');
 
 // --- Multer Setup for file uploads ---
 const storage = multer.diskStorage({
@@ -23,11 +26,13 @@ function isValidDate(dateStr) {
 // This route is protected, meaning only a logged-in user (like a SchoolAdmin) can register a player.
 router.post(
   '/register', 
+  generalLimiter,
   protect, 
   upload.fields([
     { name: "profile_photo_url", maxCount: 1 },
     { name: "birth_cert_url", maxCount: 1 }
   ]), 
+  validatePlayerRegistration,
   async (req, res, next) => {
     try {
       const { full_name, date_of_birth, school_id } = req.body;

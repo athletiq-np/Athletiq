@@ -1,6 +1,7 @@
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const { generateSchoolCode } = require('../utils/codeGenerator'); // Assuming you have this utility
+const apiResponse = require('../utils/apiResponse');
 
 /**
  * @desc    Register a new school and its primary admin user
@@ -17,7 +18,7 @@ exports.registerSchool = async (req, res) => {
 
   // Basic validation
   if (!name || !address || !admin_name || !admin_email || !password) {
-    return res.status(400).json({ message: 'Missing required fields for school and admin.' });
+    return res.status(400).json(apiResponse.error('Missing required fields for school and admin.', 400));
   }
 
   const client = await pool.connect();
@@ -63,16 +64,18 @@ exports.registerSchool = async (req, res) => {
     // --- Commit Transaction ---
     await client.query('COMMIT');
 
-    res.status(201).json({ 
-      message: "School and admin registered successfully!", 
-      school_id: school_id, 
-      school_code: new_school_code 
-    });
+    res.status(201).json(apiResponse.success(
+      { 
+        school_id: school_id, 
+        school_code: new_school_code 
+      }, 
+      'School and admin registered successfully!'
+    ));
 
   } catch (err) {
     await client.query('ROLLBACK');
     console.error("Register school error:", err);
-    res.status(500).json({ message: err.message || "Server error during registration." });
+    res.status(500).json(apiResponse.error(err.message || "Server error during registration.", 500));
   } finally {
     client.release();
   }
@@ -87,14 +90,14 @@ exports.registerSchool = async (req, res) => {
 exports.getAllSchools = async (req, res) => {
   // This check ensures only SuperAdmins can get the full list
   if (req.user.role !== 'SuperAdmin') {
-    return res.status(403).json({ message: 'Access denied.' });
+    return res.status(403).json(apiResponse.error('Access denied.', 403));
   }
   try {
     const result = await pool.query('SELECT * FROM schools ORDER BY created_at DESC');
-    res.status(200).json({ schools: result.rows });
+    res.status(200).json(apiResponse.success(result.rows, 'Schools retrieved successfully'));
   } catch (error) {
     console.error('Error fetching all schools:', error);
-    res.status(500).json({ message: 'Server error while fetching schools.' });
+    res.status(500).json(apiResponse.error('Server error while fetching schools.', 500));
   }
 };
 
@@ -109,15 +112,15 @@ exports.getMySchoolProfile = async (req, res) => {
     // The school_id is securely taken from the user's token, not a URL parameter
     const schoolId = req.user.school_id;
     if (!schoolId) {
-        return res.status(404).json({ message: "No school associated with this user." });
+        return res.status(404).json(apiResponse.error("No school associated with this user.", 404));
     }
     const { rows } = await pool.query("SELECT * FROM schools WHERE school_id=$1", [schoolId]);
     if (!rows.length) {
-      return res.status(404).json({ message: "Associated school not found." });
+      return res.status(404).json(apiResponse.error("Associated school not found.", 404));
     }
-    res.status(200).json({ school: rows[0] });
+    res.status(200).json(apiResponse.success(rows[0], 'School profile retrieved successfully'));
   } catch (err) {
     console.error("Get my school error:", err);
-    res.status(500).json({ message: "Server error while fetching school profile." });
+    res.status(500).json(apiResponse.error("Server error while fetching school profile.", 500));
   }
 };

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 
-const authMiddleware = require('../middlewares/authMiddleware');
+const { protect: authMiddleware } = require('../middlewares/authMiddleware');
 const authorizeRoles = require('../middlewares/authorizeRoles');
 const uploadMiddleware = require('../middlewares/uploadMiddleware');
 const { extractBirthCertificateData } = require('../controllers/playerController');

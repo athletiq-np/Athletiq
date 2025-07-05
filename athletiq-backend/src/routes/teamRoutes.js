@@ -2,8 +2,8 @@
 
 const express = require('express');
 const router = express.Router();
-const authMiddleware = require('../middlewares/authMiddleware');
-const pool = require('../config/db');
+const { protect: authMiddleware } = require('../middlewares/authMiddleware');
+const { pool, query } = require('../config/db');
 
 /**
  * Create a team (school admin only)
@@ -21,7 +21,7 @@ router.post('/', authMiddleware, async (req, res) => {
 
   try {
     // Find the school of the admin
-    const school = await pool.query(
+    const school = await query(
       'SELECT id FROM schools WHERE created_by = $1 LIMIT 1',
       [req.user.id]
     );
@@ -29,7 +29,7 @@ router.post('/', authMiddleware, async (req, res) => {
       return res.status(400).json({ message: 'School not found for this admin.' });
     }
 
-    const teamRes = await pool.query(
+    const teamRes = await query(
       `INSERT INTO teams (name, sport, coach_name, school_id, created_at, updated_at)
        VALUES ($1, $2, $3, $4, NOW(), NOW())
        RETURNING *`,
@@ -54,13 +54,13 @@ router.patch('/:id', authMiddleware, async (req, res) => {
     // Only allow school admin for their own team, or super admin
     let teamCheck;
     if (req.user.role === 'school_admin') {
-      const school = await pool.query(
+      const school = await query(
         'SELECT id FROM schools WHERE created_by = $1 LIMIT 1',
         [req.user.id]
       );
       if (school.rows.length === 0)
         return res.status(400).json({ message: 'School not found for this admin.' });
-      teamCheck = await pool.query(
+      teamCheck = await query(
         'SELECT * FROM teams WHERE id = $1 AND school_id = $2',
         [id, school.rows[0].id]
       );
@@ -83,7 +83,7 @@ router.patch('/:id', authMiddleware, async (req, res) => {
     if (fields.length === 1) // Only updated_at
       return res.status(400).json({ message: 'No fields to update.' });
 
-    const result = await pool.query(
+    const result = await query(
       `UPDATE teams SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
       values
     );
@@ -108,13 +108,13 @@ router.delete('/:id', authMiddleware, async (req, res) => {
     // Check ownership or role
     let teamCheck;
     if (req.user.role === 'school_admin') {
-      const school = await pool.query(
+      const school = await query(
         'SELECT id FROM schools WHERE created_by = $1 LIMIT 1',
         [req.user.id]
       );
       if (school.rows.length === 0)
         return res.status(400).json({ message: 'School not found for this admin.' });
-      teamCheck = await pool.query(
+      teamCheck = await query(
         'SELECT * FROM teams WHERE id = $1 AND school_id = $2',
         [id, school.rows[0].id]
       );
@@ -124,7 +124,7 @@ router.delete('/:id', authMiddleware, async (req, res) => {
       return res.status(403).json({ message: 'Access denied.' });
     }
 
-    const result = await pool.query('DELETE FROM teams WHERE id = $1 RETURNING *', [id]);
+    const result = await query('DELETE FROM teams WHERE id = $1 RETURNING *', [id]);
     if (result.rows.length === 0)
       return res.status(404).json({ message: 'Team not found.' });
 
@@ -143,18 +143,18 @@ router.get('/', authMiddleware, async (req, res) => {
   try {
     let result;
     if (req.user.role === 'school_admin') {
-      const school = await pool.query(
+      const school = await query(
         'SELECT id FROM schools WHERE created_by = $1 LIMIT 1',
         [req.user.id]
       );
       if (school.rows.length === 0)
         return res.status(400).json({ message: 'School not found for this admin.' });
-      result = await pool.query(
+      result = await query(
         'SELECT * FROM teams WHERE school_id = $1',
         [school.rows[0].id]
       );
     } else if (req.user.role === 'super_admin') {
-      result = await pool.query('SELECT * FROM teams');
+      result = await query('SELECT * FROM teams');
     } else {
       return res.status(403).json({ message: 'Access denied.' });
     }

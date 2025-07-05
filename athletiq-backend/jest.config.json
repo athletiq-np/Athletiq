@@ -1,0 +1,29 @@
+{
+  "name": "athletiq-backend-tests",
+  "testEnvironment": "node",
+  "testMatch": [
+    "**/tests/**/*.test.js",
+    "**/tests/**/*.spec.js"
+  ],
+  "testPathIgnorePatterns": [
+    "/node_modules/",
+    "/logs/"
+  ],
+  "collectCoverage": true,
+  "coverageDirectory": "coverage",
+  "coveragePathIgnorePatterns": [
+    "/node_modules/",
+    "/tests/",
+    "/logs/"
+  ],
+  "coverageReporters": [
+    "text",
+    "lcov",
+    "html"
+  ],
+  "setupFilesAfterEnv": [
+    "<rootDir>/tests/setup.js"
+  ],
+  "testTimeout": 10000,
+  "verbose": true
+}

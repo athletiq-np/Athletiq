@@ -7,6 +7,7 @@
 
 const pool = require("../config/db");
 const { generateShortCode } = require("../utils/codeGenerator");
+const apiResponse = require('../utils/apiResponse');
 
 /**
  * @desc    Get all tournaments
@@ -19,7 +20,7 @@ const getTournaments = async (req, res, next) => {
     const { rows } = await pool.query(
       "SELECT id, name, level, start_date, end_date, logo_url, status FROM tournaments ORDER BY start_date DESC"
     );
-    res.status(200).json(rows);
+    res.status(200).json(apiResponse.success(rows, 'Tournaments retrieved successfully'));
   } catch (err) {
     // Pass any database errors to the central error handler
     next(err);
@@ -42,7 +43,7 @@ const getTournamentById = async (req, res, next) => {
       return next(error);
     }
     
-    res.status(200).json(rows[0]);
+    res.status(200).json(apiResponse.success(rows[0], 'Tournament retrieved successfully'));
   } catch (err) {
     next(err);
   }
@@ -102,7 +103,7 @@ const createTournament = async (req, res, next) => {
       created_by_user_id,
     ]);
 
-    res.status(201).json(rows[0]);
+    res.status(201).json(apiResponse.success(rows[0], 'Tournament created successfully'));
   } catch (err) {
     next(err);
   }
