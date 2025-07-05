@@ -1,97 +1,9 @@
 // db.js - Enhanced Production-Ready Database Configuration
 require('dotenv').config();
-const { Pool } = require('pg');
-const winston = require('winston');
+const { getPool, dbLogger } = require('./database');
 
-// Configure Winston Logger for Database Operations
-const dbLogger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
-  format: winston.format.combine(
-    winston.format.timestamp(),
-    winston.format.errors({ stack: true }),
-    winston.format.json()
-  ),
-  defaultMeta: { service: 'database' },
-  transports: [
-    new winston.transports.File({ filename: 'logs/db-error.log', level: 'error' }),
-    new winston.transports.File({ filename: 'logs/db-combined.log' }),
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple()
-      )
-    })
-  ]
-});
-
-// Database Configuration with Advanced Settings
-const dbConfig = {
-  user: process.env.DB_USER || 'postgres',
-  host: process.env.DB_HOST || 'localhost',
-  database: process.env.DB_NAME || 'athletiq',
-  password: process.env.DB_PASSWORD,
-  port: parseInt(process.env.DB_PORT) || 5432,
-  
-  // SSL Configuration
-  ssl: process.env.NODE_ENV === 'production' ? {
-    rejectUnauthorized: false,
-    ca: process.env.DB_CA_CERT,
-    key: process.env.DB_CLIENT_KEY,
-    cert: process.env.DB_CLIENT_CERT
-  } : false,
-  
-  // Connection Pool Settings
-  max: parseInt(process.env.DB_MAX_CONNECTIONS) || 20,
-  min: parseInt(process.env.DB_MIN_CONNECTIONS) || 2,
-  idleTimeoutMillis: parseInt(process.env.DB_IDLE_TIMEOUT) || 30000,
-  connectionTimeoutMillis: parseInt(process.env.DB_CONNECTION_TIMEOUT) || 5000,
-  acquireTimeoutMillis: parseInt(process.env.DB_ACQUIRE_TIMEOUT) || 10000,
-  
-  // Statement timeout (30 seconds)
-  statement_timeout: parseInt(process.env.DB_STATEMENT_TIMEOUT) || 30000,
-  
-  // Query timeout (25 seconds)
-  query_timeout: parseInt(process.env.DB_QUERY_TIMEOUT) || 25000,
-  
-  // Application name for connection tracking
-  application_name: process.env.APP_NAME || 'athletiq-backend'
-};
-
-// Create the connection pool
-const pool = new Pool(dbConfig);
-
-// Connection Pool Event Handlers
-pool.on('connect', (client) => {
-  dbLogger.info('New client connected to database', {
-    processId: client.processID,
-    database: dbConfig.database,
-    user: dbConfig.user
-  });
-});
-
-pool.on('acquire', (client) => {
-  dbLogger.debug('Client acquired from pool', {
-    processId: client.processID,
-    totalCount: pool.totalCount,
-    idleCount: pool.idleCount,
-    waitingCount: pool.waitingCount
-  });
-});
-
-pool.on('remove', (client) => {
-  dbLogger.info('Client removed from pool', {
-    processId: client.processID,
-    totalCount: pool.totalCount
-  });
-});
-
-pool.on('error', (err, client) => {
-  dbLogger.error('Database pool error', {
-    error: err.message,
-    stack: err.stack,
-    processId: client ? client.processID : 'unknown'
-  });
-});
+// Get the database pool (handles test vs production automatically)
+const pool = getPool();
 
 // Health Check Function
 const healthCheck = async () => {
@@ -124,10 +36,10 @@ const healthCheck = async () => {
 const initializeDatabase = async () => {
   try {
     dbLogger.info('Initializing database connection...', {
-      host: dbConfig.host,
-      database: dbConfig.database,
-      user: dbConfig.user,
-      maxConnections: dbConfig.max
+      database: process.env.DB_NAME || (process.env.NODE_ENV === 'test' ? 'athletiq_test' : 'athletiq'),
+      user: process.env.DB_USER || 'postgres',
+      host: process.env.DB_HOST || 'localhost',
+      environment: process.env.NODE_ENV || 'development'
     });
     
     const client = await pool.connect();
@@ -150,10 +62,10 @@ const initializeDatabase = async () => {
       error: error.message,
       stack: error.stack,
       config: {
-        host: dbConfig.host,
-        database: dbConfig.database,
-        user: dbConfig.user,
-        port: dbConfig.port
+        host: process.env.DB_HOST || 'localhost',
+        database: process.env.DB_NAME || (process.env.NODE_ENV === 'test' ? 'athletiq_test' : 'athletiq'),
+        user: process.env.DB_USER || 'postgres',
+        port: process.env.DB_PORT || 5432
       }
     });
     throw error;

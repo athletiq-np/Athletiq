@@ -20,24 +20,38 @@ const validateRequest = (req, res, next) => {
  * Validation rules for user registration
  */
 const validateUserRegistration = [
-  body('full_name')
+  body('adminFullName')
     .notEmpty()
-    .withMessage('Full name is required')
+    .withMessage('Admin full name is required')
     .isLength({ min: 2, max: 100 })
-    .withMessage('Full name must be between 2 and 100 characters')
+    .withMessage('Admin full name must be between 2 and 100 characters')
     .matches(/^[a-zA-Z\s]+$/)
-    .withMessage('Full name can only contain letters and spaces'),
+    .withMessage('Admin full name can only contain letters and spaces'),
   
-  body('email')
+  body('adminEmail')
     .isEmail()
     .normalizeEmail()
-    .withMessage('Valid email is required'),
+    .withMessage('Valid admin email is required'),
   
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
     .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
+  
+  body('schoolName')
+    .notEmpty()
+    .withMessage('School name is required')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('School name must be between 2 and 100 characters'),
+  
+  body('schoolCode')
+    .notEmpty()
+    .withMessage('School code is required')
+    .isLength({ min: 2, max: 20 })
+    .withMessage('School code must be between 2 and 20 characters')
+    .matches(/^[a-zA-Z0-9]+$/)
+    .withMessage('School code can only contain letters and numbers'),
   
   validateRequest
 ];

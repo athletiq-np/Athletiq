@@ -1,7 +1,7 @@
-const pool = require('../config/db');
+const { pool } = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const apiResponse = require('../utils/apiResponse');
+const { ApiResponse } = require('../utils/apiResponse');
 
 // Helper function to generate and set the cookie
 const sendTokenResponse = (user, statusCode, res) => {
@@ -25,7 +25,11 @@ const sendTokenResponse = (user, statusCode, res) => {
   res
     .status(statusCode)
     .cookie('token', token, options)
-    .json(apiResponse.success(user, 'Authentication successful'));
+    .json({
+      success: true,
+      message: 'Authentication successful',
+      data: user
+    });
 };
 
 // @desc    Register a new SchoolAdmin and their School
@@ -57,7 +61,7 @@ exports.register = async (req, res, next) => {
     }
 
     const schoolQuery = `
-      INSERT INTO schools (school_code, name, address, admin_email, is_active)
+      INSERT INTO schools (school_code, name, address, email, is_active)
       VALUES ($1, $2, $3, $4, true) RETURNING id;
     `;
     const schoolResult = await client.query(schoolQuery, [schoolCode, schoolName, schoolAddress, adminEmail]);
@@ -113,7 +117,7 @@ exports.login = async (req, res, next) => {
 // @desc    Get current logged in user
 exports.getMe = async (req, res, next) => {
   // The 'protect' middleware already fetched the user and attached it to req.user
-  res.status(200).json(apiResponse.success(req.user, 'User profile retrieved successfully'));
+  return ApiResponse.success(res, req.user, 'User profile retrieved successfully');
 };
 
 // @desc    Log user out / clear cookie
@@ -123,5 +127,5 @@ exports.logout = (req, res, next) => {
     httpOnly: true,
   });
 
-  res.status(200).json(apiResponse.success(null, 'Logged out successfully'));
+  return ApiResponse.success(res, null, 'Logged out successfully');
 };
