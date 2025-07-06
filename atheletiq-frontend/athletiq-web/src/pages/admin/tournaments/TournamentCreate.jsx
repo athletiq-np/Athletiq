@@ -13,10 +13,15 @@ import {
 import axios from "axios";
 
 // Import the step components
-import TournamentInfoStep from "@features/tournament/TournamentInfoStep";
-import TournamentSportsStep from "@features/tournament/TournamentSportsStep";
-import TournamentConfigStep from "@features/tournament/TournamentConfigStep";
-import TournamentReviewStep from "@features/tournament/TournamentReviewStep";
+import TournamentInfoStep from "../../../components/features/tournament/TournamentInfoStep";
+import TournamentSportsStep from "../../../components/features/tournament/TournamentSportsStep";
+import TournamentConfigStep from "../../../components/features/tournament/TournamentConfigStep";
+import TournamentReviewStep from "../../../components/features/tournament/TournamentReviewStep";
+import TournamentTemplateSelector from "../../../components/features/tournament/TournamentTemplateSelector";
+
+// Import hooks and utilities
+import { useToast } from "../../../components/common/ErrorHandling";
+import { useAutoSave } from "../../../hooks/usePerformance";
 
 // Step configuration
 const STEPS = [
@@ -162,6 +167,7 @@ function AutoSaveIndicator({ isVisible, status }) {
 
 // Main Component
 export default function TournamentCreate() {
+  const [showTemplateSelector, setShowTemplateSelector] = useState(true);
   const [currentStep, setCurrentStep] = useState(0);
   const [form, setForm] = useState({
     name: "",
@@ -181,6 +187,31 @@ export default function TournamentCreate() {
   
   const navigate = useNavigate();
   const token = localStorage.getItem("token");
+  const { success, error: toastError } = useToast();
+
+  // Auto-save functionality with performance hook
+  const { lastSaved, isSaving } = useAutoSave(
+    form,
+    async (data) => {
+      localStorage.setItem('tournament_draft', JSON.stringify(data));
+      return Promise.resolve();
+    },
+    3000
+  );
+
+  // Handle template selection
+  const handleTemplateSelect = (templateData) => {
+    setForm(prevForm => ({
+      ...prevForm,
+      ...templateData
+    }));
+    setShowTemplateSelector(false);
+    success('Template applied successfully!');
+  };
+
+  const handleSkipTemplate = () => {
+    setShowTemplateSelector(false);
+  };
 
   // Auto-save functionality
   useEffect(() => {
@@ -208,6 +239,7 @@ export default function TournamentCreate() {
       try {
         const parsedDraft = JSON.parse(draft);
         setForm(parsedDraft);
+        setShowTemplateSelector(false);
       } catch (e) {
         console.error('Failed to load draft:', e);
       }
@@ -306,36 +338,56 @@ export default function TournamentCreate() {
       animate="visible"
     >
       <div className="max-w-6xl mx-auto px-6">
-        {/* Header */}
-        <div className="text-center mb-8">
-          <motion.h1
-            className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3"
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Trophy className="text-yellow-500" />
-            Create New Tournament
-          </motion.h1>
-          <p className="text-gray-600 text-lg">
-            Set up your tournament step by step
-          </p>
-          
-          {/* Auto-save indicator */}
-          <div className="mt-4 flex justify-center">
-            <AutoSaveIndicator
-              isVisible={autoSave.visible}
-              status={autoSave.status}
-            />
-          </div>
-        </div>
+        {/* Template Selector */}
+        {showTemplateSelector && (
+          <TournamentTemplateSelector
+            onTemplateSelect={handleTemplateSelect}
+            onSkip={handleSkipTemplate}
+          />
+        )}
 
-        {/* Step Progress */}
-        <StepProgress
-          currentStep={currentStep}
-          steps={STEPS}
-          onStepClick={goToStep}
-        />
+        {/* Main Tournament Creation Flow */}
+        {!showTemplateSelector && (
+          <>
+            {/* Header */}
+            <div className="text-center mb-8">
+              <motion.h1
+                className="text-4xl font-bold text-gray-900 mb-2 flex items-center justify-center gap-3"
+                initial={{ opacity: 0, y: -20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <Trophy className="text-yellow-500" />
+                Create New Tournament
+              </motion.h1>
+              <p className="text-gray-600 text-lg">
+                Set up your tournament step by step
+              </p>
+              
+              {/* Auto-save indicator */}
+              <div className="mt-4 flex justify-center">
+                <div className="flex items-center gap-2 text-sm text-gray-600">
+                  {isSaving ? (
+                    <>
+                      <Save size={14} className="animate-spin" />
+                      Saving...
+                    </>
+                  ) : lastSaved ? (
+                    <>
+                      <Check size={14} className="text-green-600" />
+                      Saved {lastSaved.toLocaleTimeString()}
+                    </>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+
+            {/* Step Progress */}
+            <StepProgress
+              currentStep={currentStep}
+              steps={STEPS}
+              onStepClick={goToStep}
+            />
 
         {/* Error Message */}
         <AnimatePresence>
@@ -435,6 +487,8 @@ export default function TournamentCreate() {
             <ChevronRight size={16} />
           </button>
         </div>
+          </>
+        )}
       </div>
     </motion.div>
   );
