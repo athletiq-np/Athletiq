@@ -28,4 +28,22 @@ router.get('/me', protect, authController.getMe);
 // Add this temporary line for testing
 router.get('/test', (req, res) => res.send('Auth route is working!'));
 
+// Development-only endpoint to clear rate limit for an IP
+if (process.env.NODE_ENV === 'development') {
+  router.post('/clear-rate-limit', (req, res) => {
+    // This will clear the rate limit store for the current IP
+    const { authLimiter } = require('../middlewares/rateLimiter');
+    try {
+      // Clear rate limit for the requesting IP
+      const key = `${req.ip}:${req.route.path}`;
+      if (authLimiter.store && authLimiter.store.resetKey) {
+        authLimiter.store.resetKey(key);
+      }
+      res.json({ success: true, message: 'Rate limit cleared for this IP' });
+    } catch (error) {
+      res.json({ success: false, message: 'Unable to clear rate limit', error: error.message });
+    }
+  });
+}
+
 module.exports = router;

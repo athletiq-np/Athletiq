@@ -11,7 +11,9 @@ const {
   changeSchoolPassword,
   getAllPlayers,
   getAllSchools,
-  getAllTournaments
+  getAllTournaments,
+  getNotifications,
+  getActivities
 } = require('../controllers/adminController');
 
 // Correctly import the 'protect' and 'checkRole' middleware
@@ -36,6 +38,12 @@ router.get('/schools', protect, SUPER_ADMIN_ONLY, getAllSchools);
 
 // @route  GET /api/admin/tournaments
 router.get('/tournaments', protect, SUPER_ADMIN_ONLY, getAllTournaments);
+
+// @route  GET /api/admin/notifications
+router.get('/notifications', protect, SUPER_ADMIN_ONLY, getNotifications);
+
+// @route  GET /api/admin/activities
+router.get('/activities', protect, SUPER_ADMIN_ONLY, getActivities);
 
 // @route  PUT /api/admin/schools/:id/change-password
 router.put('/schools/:id/change-password', protect, SUPER_ADMIN_ONLY, changeSchoolPassword);

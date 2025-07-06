@@ -12,6 +12,7 @@ import { HiMenuAlt3, HiX } from 'react-icons/hi';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import useUserStore from '@/store/userStore';
+import apiClient from '@/api/apiClient';
 import athletiqLogo from '@/assets/logos/athletiq-logo.png';
 
 /**
@@ -56,7 +57,7 @@ export default function GlobalSidebar({
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const { logout } = useUserStore();
+  const clearUser = useUserStore((state) => state.clearUser);
   
   const [expandedSections, setExpandedSections] = useState({
     management: true,
@@ -76,7 +77,9 @@ export default function GlobalSidebar({
   // Handle logout
   const handleLogout = async () => {
     try {
-      await logout();
+      // Call backend logout endpoint
+      await apiClient.get('/auth/logout');
+      clearUser();
       toast.success(t('auth.logout.success'));
       navigate('/login');
     } catch (error) {

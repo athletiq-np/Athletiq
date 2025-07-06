@@ -305,3 +305,101 @@ exports.getAllTournaments = async (req, res, next) => {
     next(error);
   }
 };
+
+/**
+ * @desc    Get notifications for admin dashboard
+ * @route   GET /api/admin/notifications
+ */
+exports.getNotifications = async (req, res, next) => {
+  try {
+    const { limit = 20, page = 1 } = req.query;
+    
+    // For now, return mock notifications until we implement a proper notification system
+    const mockNotifications = [
+      {
+        id: 1,
+        type: 'info',
+        title: 'New School Registration',
+        message: 'A new school has registered and needs approval',
+        created_at: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        read: false
+      },
+      {
+        id: 2,
+        type: 'success',
+        title: 'Tournament Created',
+        message: 'New basketball tournament has been created',
+        created_at: new Date(Date.now() - 24 * 60 * 60 * 1000), // 1 day ago
+        read: true
+      },
+      {
+        id: 3,
+        type: 'warning',
+        title: 'System Maintenance',
+        message: 'Scheduled maintenance in 2 hours',
+        created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+        read: false
+      }
+    ];
+
+    return ApiResponse.success(res, mockNotifications, 'Notifications retrieved successfully');
+  } catch (error) {
+    logError('Failed to get notifications', error, { userId: req.user.id });
+    next(error);
+  }
+};
+
+/**
+ * @desc    Get recent activities for admin dashboard
+ * @route   GET /api/admin/activities
+ */
+exports.getActivities = async (req, res, next) => {
+  try {
+    const { limit = 50, page = 1 } = req.query;
+    
+    // For now, return mock activities until we implement proper activity logging
+    const mockActivities = [
+      {
+        id: 1,
+        type: 'user_registration',
+        user: 'John Doe',
+        action: 'registered as a new player',
+        details: 'Basketball player registration completed',
+        created_at: new Date(Date.now() - 30 * 60 * 1000), // 30 minutes ago
+        icon: 'user-plus'
+      },
+      {
+        id: 2,
+        type: 'school_update',
+        user: 'Admin',
+        action: 'updated school profile',
+        details: 'Updated contact information for ABC School',
+        created_at: new Date(Date.now() - 2 * 60 * 60 * 1000), // 2 hours ago
+        icon: 'edit'
+      },
+      {
+        id: 3,
+        type: 'tournament_create',
+        user: 'Tournament Admin',
+        action: 'created new tournament',
+        details: 'Inter-school Basketball Championship 2025',
+        created_at: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
+        icon: 'trophy'
+      },
+      {
+        id: 4,
+        type: 'document_upload',
+        user: 'Sarah Wilson',
+        action: 'uploaded player documents',
+        details: 'Medical certificate and player registration',
+        created_at: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
+        icon: 'file-upload'
+      }
+    ];
+
+    return ApiResponse.success(res, mockActivities, 'Activities retrieved successfully');
+  } catch (error) {
+    logError('Failed to get activities', error, { userId: req.user.id });
+    next(error);
+  }
+};

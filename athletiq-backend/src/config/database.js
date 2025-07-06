@@ -53,9 +53,9 @@ const getPool = () => {
     pool.on('connect', (client) => {
       dbLogger.info('New client connected', { 
         database: config.database,
-        totalCount: pool.totalCount,
-        idleCount: pool.idleCount,
-        waitingCount: pool.waitingCount
+        totalCount: pool ? pool.totalCount : 0,
+        idleCount: pool ? pool.idleCount : 0,
+        waitingCount: pool ? pool.waitingCount : 0
       });
     });
 
@@ -65,9 +65,9 @@ const getPool = () => {
 
     pool.on('remove', () => {
       dbLogger.info('Client removed from pool', {
-        totalCount: pool.totalCount,
-        idleCount: pool.idleCount,
-        waitingCount: pool.waitingCount
+        totalCount: pool ? pool.totalCount : 0,
+        idleCount: pool ? pool.idleCount : 0,
+        waitingCount: pool ? pool.waitingCount : 0
       });
     });
   }

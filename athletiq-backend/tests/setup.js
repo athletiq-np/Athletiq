@@ -23,7 +23,14 @@ beforeAll(async () => {
     console.log('Test environment setup complete');
   } catch (error) {
     console.error('Failed to setup test environment:', error);
-    throw error;
+    // Make sure we throw a proper Error object
+    if (typeof error === 'string') {
+      throw new Error(error);
+    } else if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error(`Unknown error in test setup: ${JSON.stringify(error)}`);
+    }
   }
 }, 30000); // 30 second timeout for setup
 
@@ -44,7 +51,14 @@ afterAll(async () => {
     console.log('Test environment teardown complete');
   } catch (error) {
     console.error('Failed to teardown test environment:', error);
-    throw error;
+    // Make sure we throw a proper Error object
+    if (typeof error === 'string') {
+      throw new Error(error);
+    } else if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error(`Unknown error in test teardown: ${JSON.stringify(error)}`);
+    }
   }
 }, 15000); // 15 second timeout for teardown
 
@@ -55,7 +69,14 @@ beforeEach(async () => {
     await TestDatabase.clearTestData();
   } catch (error) {
     console.error('Failed to clear test data:', error);
-    throw error;
+    // Make sure we throw a proper Error object
+    if (typeof error === 'string') {
+      throw new Error(error);
+    } else if (error instanceof Error) {
+      throw error;
+    } else {
+      throw new Error(`Unknown error in test setup: ${JSON.stringify(error)}`);
+    }
   }
 });
 

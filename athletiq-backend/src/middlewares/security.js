@@ -46,31 +46,61 @@ const securityMiddleware = helmet({
  */
 const corsOptions = {
   origin: function (origin, callback) {
-    // Allow requests with no origin (like mobile apps or curl requests)
-    if (!origin) return callback(null, true);
+    // Define allowed origins based on environment
+    const allowedOrigins = process.env.NODE_ENV === 'production' 
+      ? [
+          'https://athletiq.com',
+          'https://www.athletiq.com',
+          'https://app.athletiq.com',
+          'https://admin.athletiq.com',
+          // Add your production domains here
+        ]
+      : [
+          'http://localhost:3000',
+          'http://localhost:3001',
+          'http://localhost:3002',
+          'http://127.0.0.1:3000',
+          'http://127.0.0.1:3001',
+          'http://127.0.0.1:3002',
+        ];
     
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'https://athletiq.com',
-      'https://www.athletiq.com'
-    ];
-    
-    if (process.env.NODE_ENV === 'development') {
-      // Allow all origins in development
+    // Allow requests with no origin (like mobile apps or curl requests) only in development
+    if (!origin && process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // In production, require origin to be in allowedOrigins
+    if (process.env.NODE_ENV === 'production' && !origin) {
+      return callback(new Error('Origin required for production requests'));
+    }
+    
+    // Check if origin is in allowed list
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(new Error('Not allowed by CORS'));
+      console.warn(`CORS: Blocked request from unauthorized origin: ${origin}`);
+      callback(new Error(`CORS: Origin ${origin} not allowed`));
     }
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
-  exposedHeaders: ['X-Total-Count', 'X-Page-Count']
+  allowedHeaders: [
+    'Content-Type', 
+    'Authorization', 
+    'X-Requested-With',
+    'X-API-Key',
+    'Cache-Control',
+    'Pragma'
+  ],
+  exposedHeaders: [
+    'X-Total-Count', 
+    'X-Page-Count', 
+    'X-RateLimit-Limit',
+    'X-RateLimit-Remaining',
+    'X-RateLimit-Reset'
+  ],
+  maxAge: 86400, // 24 hours - cache preflight responses
+  optionsSuccessStatus: 200, // Some legacy browsers (IE11, various SmartTVs) choke on 204
 };
 
 /**

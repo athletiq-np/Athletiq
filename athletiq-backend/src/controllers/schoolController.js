@@ -1,7 +1,7 @@
 const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const { generateSchoolCode } = require('../utils/codeGenerator'); // Assuming you have this utility
-const apiResponse = require('../utils/apiResponse');
+const { ApiResponse } = require('../utils/apiResponse');
 
 /**
  * @desc    Register a new school and its primary admin user
@@ -18,7 +18,7 @@ exports.registerSchool = async (req, res) => {
 
   // Basic validation
   if (!name || !address || !admin_name || !admin_email || !password) {
-    return res.status(400).json(apiResponse.error('Missing required fields for school and admin.', 400));
+    return ApiResponse.error(res, 'Missing required fields for school and admin.', 400);
   }
 
   const client = await pool.connect();
@@ -64,18 +64,19 @@ exports.registerSchool = async (req, res) => {
     // --- Commit Transaction ---
     await client.query('COMMIT');
 
-    res.status(201).json(apiResponse.success(
+    ApiResponse.success(res, 
       { 
         school_id: school_id, 
         school_code: new_school_code 
       }, 
-      'School and admin registered successfully!'
-    ));
+      'School and admin registered successfully!',
+      201
+    );
 
   } catch (err) {
     await client.query('ROLLBACK');
     console.error("Register school error:", err);
-    res.status(500).json(apiResponse.error(err.message || "Server error during registration.", 500));
+    ApiResponse.error(res, err.message || "Server error during registration.", 500);
   } finally {
     client.release();
   }
@@ -90,14 +91,14 @@ exports.registerSchool = async (req, res) => {
 exports.getAllSchools = async (req, res) => {
   // This check ensures only SuperAdmins can get the full list
   if (req.user.role !== 'SuperAdmin') {
-    return res.status(403).json(apiResponse.error('Access denied.', 403));
+    return ApiResponse.error(res, 'Access denied.', 403);
   }
   try {
     const result = await pool.query('SELECT * FROM schools ORDER BY created_at DESC');
-    res.status(200).json(apiResponse.success(result.rows, 'Schools retrieved successfully'));
+    ApiResponse.success(res, result.rows, 'Schools retrieved successfully');
   } catch (error) {
     console.error('Error fetching all schools:', error);
-    res.status(500).json(apiResponse.error('Server error while fetching schools.', 500));
+    ApiResponse.error(res, 'Server error while fetching schools.', 500);
   }
 };
 
@@ -109,18 +110,134 @@ exports.getAllSchools = async (req, res) => {
  */
 exports.getMySchoolProfile = async (req, res) => {
   try {
+    console.log('🏫 getMySchoolProfile - START');
+    console.log('User:', req.user);
+    
     // The school_id is securely taken from the user's token, not a URL parameter
     const schoolId = req.user.school_id;
+    console.log('School ID:', schoolId);
+    
     if (!schoolId) {
-        return res.status(404).json(apiResponse.error("No school associated with this user.", 404));
+        console.log('❌ No school_id found');
+        return ApiResponse.error(res, "No school associated with this user.", 404);
     }
-    const { rows } = await pool.query("SELECT * FROM schools WHERE school_id=$1", [schoolId]);
+    
+    console.log('🔍 Querying database for school ID:', schoolId);
+    const { rows } = await pool.query("SELECT * FROM schools WHERE id=$1", [schoolId]);
+    console.log('📊 Query completed. Rows found:', rows.length);
+    
     if (!rows.length) {
-      return res.status(404).json(apiResponse.error("Associated school not found.", 404));
+      console.log('❌ No school found');
+      return ApiResponse.error(res, "Associated school not found.", 404);
     }
-    res.status(200).json(apiResponse.success(rows[0], 'School profile retrieved successfully'));
+    
+    console.log('✅ School found:', rows[0].name);
+    console.log('📤 Sending response');
+    ApiResponse.success(res, rows[0], 'School profile retrieved successfully');
   } catch (err) {
     console.error("Get my school error:", err);
-    res.status(500).json(apiResponse.error("Server error while fetching school profile.", 500));
+    ApiResponse.error(res, "Server error while fetching school profile.", 500);
+  }
+};
+
+
+/**
+ * @desc    Update the profile for the currently logged-in admin's school
+ * @route   PATCH /api/schools/me
+ * @access  Private (SchoolAdmin)
+ */
+exports.updateMySchoolProfile = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+    if (!schoolId) {
+      return ApiResponse.error(res, "No school associated with this user.", 404);
+    }
+
+    const {
+      name,
+      address,
+      phone,
+      email,
+      province,
+      district,
+      city,
+      ward,
+      website,
+      principal_name
+    } = req.body;
+
+    // Build update query dynamically
+    const updateFields = [];
+    const values = [];
+    let paramIndex = 1;
+
+    if (name) {
+      updateFields.push(`name = $${paramIndex++}`);
+      values.push(name);
+    }
+    if (address) {
+      updateFields.push(`address = $${paramIndex++}`);
+      values.push(address);
+    }
+    if (phone) {
+      updateFields.push(`phone = $${paramIndex++}`);
+      values.push(phone);
+    }
+    if (email) {
+      updateFields.push(`email = $${paramIndex++}`);
+      values.push(email);
+    }
+    if (province) {
+      updateFields.push(`province = $${paramIndex++}`);
+      values.push(province);
+    }
+    if (district) {
+      updateFields.push(`district = $${paramIndex++}`);
+      values.push(district);
+    }
+    if (city) {
+      updateFields.push(`city = $${paramIndex++}`);
+      values.push(city);
+    }
+    if (ward) {
+      updateFields.push(`ward = $${paramIndex++}`);
+      values.push(ward);
+    }
+    if (website) {
+      updateFields.push(`website = $${paramIndex++}`);
+      values.push(website);
+    }
+    if (principal_name) {
+      updateFields.push(`principal_name = $${paramIndex++}`);
+      values.push(principal_name);
+    }
+
+    if (updateFields.length === 0) {
+      return ApiResponse.error(res, "No fields to update.", 400);
+    }
+
+    // Add updated_at timestamp
+    updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
+    
+    // Add school_id for WHERE clause
+    values.push(schoolId);
+
+    const query = `
+      UPDATE schools 
+      SET ${updateFields.join(', ')} 
+      WHERE school_id = $${paramIndex} 
+      RETURNING *
+    `;
+
+    const { rows } = await pool.query(query, values);
+    
+    if (!rows.length) {
+      return ApiResponse.error(res, "School not found.", 404);
+    }
+
+    ApiResponse.success(res, rows[0], 'School profile updated successfully');
+  } catch (err) {
+    console.error("Update my school error:", err);
+    ApiResponse.error(res, "Server error while updating school profile.", 500);
   }
 };

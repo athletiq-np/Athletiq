@@ -30,6 +30,13 @@ router.get('/', generalLimiter, protect, checkRole(['SuperAdmin']), schoolContro
  */
 router.get('/me', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getMySchoolProfile);
 
+/**
+ * @route   PATCH /api/schools/me
+ * @desc    Update the profile of the currently logged-in School Admin's school.
+ * @access  Private (SchoolAdmin only)
+ */
+router.patch('/me', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.updateMySchoolProfile);
+
 
 // You can add the update route here later, pointing to a controller function
 // router.patch('/:id', protect, upload.fields([...]), schoolController.updateSchool);

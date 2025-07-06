@@ -7,7 +7,7 @@
 
 const pool = require("../config/db");
 const { generateShortCode } = require("../utils/codeGenerator");
-const apiResponse = require('../utils/apiResponse');
+const { ApiResponse } = require('../utils/apiResponse');
 
 /**
  * @desc    Get all tournaments
@@ -18,9 +18,9 @@ const getTournaments = async (req, res, next) => {
   try {
     // This query fetches a summary of all tournaments for a public listing.
     const { rows } = await pool.query(
-      "SELECT id, name, level, start_date, end_date, logo_url, status FROM tournaments ORDER BY start_date DESC"
+      "SELECT id, name, tournament_type, start_date, end_date, status FROM tournaments ORDER BY start_date DESC"
     );
-    res.status(200).json(apiResponse.success(rows, 'Tournaments retrieved successfully'));
+    return ApiResponse.success(res, rows, 'Tournaments retrieved successfully');
   } catch (err) {
     // Pass any database errors to the central error handler
     next(err);
@@ -43,7 +43,7 @@ const getTournamentById = async (req, res, next) => {
       return next(error);
     }
     
-    res.status(200).json(apiResponse.success(rows[0], 'Tournament retrieved successfully'));
+    return ApiResponse.success(res, rows[0], 'Tournament retrieved successfully');
   } catch (err) {
     next(err);
   }
@@ -59,8 +59,9 @@ const createTournament = async (req, res, next) => {
     const {
       name,
       description = "",
-      level = null,
-      hosted_by = null,
+      tournament_type = null,
+      format = null,
+      location = null,
       start_date = null,
       end_date = null,
       logo_url = null,
@@ -82,9 +83,12 @@ const createTournament = async (req, res, next) => {
       return rowCount > 0;
     });
 
+    // Extract sport from sports_config if available
+    const sport = sports_config.length > 0 ? sports_config[0].sport : 'general';
+
     const insertQuery = `
       INSERT INTO tournaments 
-        (name, description, level, hosted_by, start_date, end_date, logo_url, sports_config, tournament_code, created_by, status)
+        (name, description, sport, tournament_type, format, location, start_date, end_date, tournament_code, created_by, status)
       VALUES 
         ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 'draft')
       RETURNING *;
@@ -93,17 +97,17 @@ const createTournament = async (req, res, next) => {
     const { rows } = await pool.query(insertQuery, [
       name,
       description,
-      level,
-      hosted_by,
+      sport,
+      tournament_type,
+      format,
+      location,
       start_date || null,
       end_date || null,
-      logo_url,
-      JSON.stringify(sports_config), // Ensure sports_config is stored as a valid JSON string
       tournament_code,
       created_by_user_id,
     ]);
 
-    res.status(201).json(apiResponse.success(rows[0], 'Tournament created successfully'));
+    return ApiResponse.success(res, rows[0], 'Tournament created successfully', 201);
   } catch (err) {
     next(err);
   }

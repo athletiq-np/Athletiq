@@ -1,5 +1,8 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
+import apiClient from '@/api/apiClient';
+
+// Configure axios to include cookies with requests
+// Note: This is now handled by apiClient configuration
 
 /**
  * EditSchoolModal
@@ -7,9 +10,8 @@ import axios from "axios";
  * - school: current school object (can be null)
  * - onClose: function to close the modal
  * - onUpdate: callback after successful update
- * - token: JWT auth token
  */
-export default function EditSchoolModal({ school, onClose, onUpdate, token }) {
+export default function EditSchoolModal({ school, onClose, onUpdate }) {
   // Handle null/undefined school prop
   const [form, setForm] = useState({
     name: "",
@@ -48,31 +50,21 @@ export default function EditSchoolModal({ school, onClose, onUpdate, token }) {
     setMsg("");
 
     try {
-      const formData = new FormData();
-      for (let key in form) {
-        formData.append(key, form[key]);
-      }
-      if (logoFile) {
-        formData.append("logo", logoFile);
-      }
-
-      await axios.patch(
-        `http://localhost:5000/api/schools/${school?.id}`,
-        formData,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            "Content-Type": "multipart/form-data",
-          },
-        }
+      // Send form data as JSON instead of FormData for now
+      await apiClient.patch(
+        `/schools/me`,
+        form
       );
 
       setMsg("✅ Profile updated!");
       if (onUpdate) onUpdate(); // refetch school data in parent
-      if (onClose) onClose(); // close modal
+      setTimeout(() => {
+        if (onClose) onClose(); // close modal after showing success message
+      }, 1000);
     } catch (err) {
       console.error(err);
-      setMsg("❌ Failed to update. Try again.");
+      const errorMsg = err.response?.data?.message || "Failed to update. Try again.";
+      setMsg(`❌ ${errorMsg}`);
     } finally {
       setLoading(false);
     }

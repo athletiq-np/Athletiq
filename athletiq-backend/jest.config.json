@@ -1,5 +1,4 @@
 {
-  "name": "athletiq-backend-tests",
   "testEnvironment": "node",
   "testMatch": [
     "**/tests/**/*.test.js",
@@ -21,9 +20,20 @@
     "lcov",
     "html"
   ],
-  "setupFilesAfterEnv": [
-    "<rootDir>/tests/setup.js"
+  "projects": [
+    {
+      "displayName": "unit",
+      "testMatch": ["**/tests/unit/**/*.test.js"],
+      "testTimeout": 10000
+    },
+    {
+      "displayName": "integration",
+      "testMatch": ["**/tests/integration/**/*.test.js"],
+      "setupFilesAfterEnv": ["<rootDir>/tests/setup.js"],
+      "testTimeout": 30000
+    }
   ],
-  "testTimeout": 10000,
-  "verbose": true
+  "verbose": true,
+  "maxWorkers": 1,
+  "forceExit": true
 }

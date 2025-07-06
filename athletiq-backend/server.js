@@ -9,15 +9,21 @@ const { generalLimiter } = require('./src/middlewares/rateLimiter');
 const { sanitizeInput } = require('./src/middlewares/validation');
 const { specs, swaggerUi } = require('./src/config/swagger');
 
+// Initialize monitoring systems (do this early)
+const monitoring = require('./src/config/monitoring');
+if (process.env.NODE_ENV !== 'test') {
+  monitoring.initializeMonitoring();
+}
+
 const app = express();
+
+// CORS must be first for preflight requests
+app.use(cors(corsOptions));
 
 // Security middleware
 app.use(securityMiddleware);
 app.use(requestLogger);
 app.use(generalLimiter);
-
-// CORS with security configuration
-app.use(cors(corsOptions));
 
 // Body parsing middleware
 app.use(express.json({ limit: '10mb' }));
@@ -46,8 +52,9 @@ app.use('/api/documents', require('./src/routes/documentRoutes'));
 app.use('/api/ai', require('./src/routes/aiRoutes'));
 console.log('✅ AI and Document routes registered');
 
-// Health check and legacy routes
+// Health check and monitoring routes
 app.use('/api/health', require('./src/routes/health'));
+app.use('/api/monitoring', require('./src/routes/monitoringRoutes'));
 app.use('/api/upload', require('./src/routes/uploadRoutes'));
 app.use('/api/ocr', require('./src/routes/ocr'));
 

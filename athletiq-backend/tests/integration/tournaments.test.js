@@ -1,13 +1,16 @@
 // tests/integration/tournaments.test.js
 const request = require('supertest');
-const app = require('../../server');
-const pool = require('../../src/config/db');
+const createTestApp = require('../testApp');
+const { testPool } = require('../setup');
 
 // Mock data for testing
 const mockTournament = {
   name: 'Test Tournament',
   description: 'A test tournament',
-  level: 'school',
+  sport: 'football',
+  tournament_type: 'school',
+  format: 'knockout',
+  location: 'Test Location',
   start_date: '2025-08-01',
   end_date: '2025-08-15',
   sports_config: [{ sport: 'football', categories: ['U12', 'U16'] }]
@@ -23,11 +26,15 @@ const mockUser = {
 describe('Tournament API', () => {
   let authToken;
   let tournamentId;
+  let app;
 
-  beforeAll(async () => {
+  beforeEach(async () => {
+    // Create test app
+    app = createTestApp();
+    
     // Create a test user and get auth token
     const hashedPassword = await require('bcryptjs').hash(mockUser.password, 10);
-    const userResult = await pool.query(
+    const userResult = await testPool.query(
       'INSERT INTO users (email, password_hash, full_name, role) VALUES ($1, $2, $3, $4) RETURNING id',
       [mockUser.email, hashedPassword, mockUser.full_name, mockUser.role]
     );
@@ -36,13 +43,14 @@ describe('Tournament API', () => {
       .post('/api/auth/login')
       .send({ email: mockUser.email, password: mockUser.password });
     
-    authToken = loginResponse.headers['set-cookie'][0].split(';')[0].split('=')[1];
-  });
-
-  afterAll(async () => {
-    // Clean up test data
-    await pool.query('DELETE FROM tournaments WHERE name = $1', [mockTournament.name]);
-    await pool.query('DELETE FROM users WHERE email = $1', [mockUser.email]);
+    if (loginResponse.status !== 200) {
+      throw new Error(`Login failed: ${JSON.stringify(loginResponse.body)}`);
+    }
+    
+    // Extract token from cookie
+    const cookies = loginResponse.headers['set-cookie'];
+    const tokenCookie = cookies.find(cookie => cookie.startsWith('token='));
+    authToken = tokenCookie.split(';')[0].split('=')[1];
   });
 
   describe('POST /api/tournaments', () => {
@@ -55,7 +63,7 @@ describe('Tournament API', () => {
       expect(response.status).toBe(201);
       expect(response.body.success).toBe(true);
       expect(response.body.data.name).toBe(mockTournament.name);
-      expect(response.body.data.tournament_code).toBeDefined();
+      expect(response.body.data.tournament_id).toBeDefined();
       
       tournamentId = response.body.data.id;
     });
@@ -92,12 +100,21 @@ describe('Tournament API', () => {
 
   describe('GET /api/tournaments/:id', () => {
     it('should get a tournament by ID', async () => {
+      // First create a tournament
+      const createResponse = await request(app)
+        .post('/api/tournaments')
+        .set('Cookie', `token=${authToken}`)
+        .send(mockTournament);
+
+      const createdTournamentId = createResponse.body.data.id;
+
+      // Then get it by ID
       const response = await request(app)
-        .get(`/api/tournaments/${tournamentId}`);
+        .get(`/api/tournaments/${createdTournamentId}`);
 
       expect(response.status).toBe(200);
       expect(response.body.success).toBe(true);
-      expect(response.body.data.id).toBe(tournamentId);
+      expect(response.body.data.id).toBe(createdTournamentId);
     });
 
     it('should return 404 for non-existent tournament', async () => {

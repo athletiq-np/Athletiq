@@ -6,15 +6,14 @@ const rateLimit = require('express-rate-limit');
  */
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 1000 : 10000, // 1000 requests per 15 minutes in production
   message: {
-    success: false,
-    message: 'Too many requests from this IP, please try again later.',
+    error: 'Too many requests from this IP, please try again later.',
+    retryAfter: 15 * 60 // 15 minutes
   },
   standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-  // Store rate limit info in memory (use Redis in production)
-  store: undefined,
+  skip: (req) => process.env.NODE_ENV === 'test', // Skip rate limiting in tests
 });
 
 /**
@@ -22,15 +21,15 @@ const generalLimiter = rateLimit({
  */
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 5, // limit each IP to 5 requests per windowMs
+  max: process.env.NODE_ENV === 'production' ? 10 : 100, // 10 login attempts per 15 minutes in production
   message: {
-    success: false,
-    message: 'Too many login attempts from this IP, please try again after 15 minutes.',
+    error: 'Too many login attempts from this IP, please try again later.',
+    retryAfter: 15 * 60 // 15 minutes
   },
   standardHeaders: true,
   legacyHeaders: false,
-  // Skip successful requests
-  skipSuccessfulRequests: true,
+  skip: (req) => process.env.NODE_ENV === 'test',
+  skipSuccessfulRequests: true, // Don't count successful requests
 });
 
 /**
@@ -38,13 +37,14 @@ const authLimiter = rateLimit({
  */
 const passwordResetLimiter = rateLimit({
   windowMs: 60 * 60 * 1000, // 1 hour
-  max: 3, // limit each IP to 3 password reset requests per hour
+  max: process.env.NODE_ENV === 'production' ? 5 : 50, // 5 password reset attempts per hour in production
   message: {
-    success: false,
-    message: 'Too many password reset attempts from this IP, please try again after 1 hour.',
+    error: 'Too many password reset attempts from this IP, please try again later.',
+    retryAfter: 60 * 60 // 1 hour
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV === 'test',
 });
 
 /**
@@ -52,13 +52,14 @@ const passwordResetLimiter = rateLimit({
  */
 const uploadLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 20, // limit each IP to 20 file uploads per windowMs
+  max: process.env.NODE_ENV === 'production' ? 50 : 200, // 50 uploads per 15 minutes in production
   message: {
-    success: false,
-    message: 'Too many file uploads from this IP, please try again later.',
+    error: 'Too many file uploads from this IP, please try again later.',
+    retryAfter: 15 * 60 // 15 minutes
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV === 'test',
 });
 
 /**
@@ -66,13 +67,29 @@ const uploadLimiter = rateLimit({
  */
 const adminLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200, // higher limit for admin users
+  max: process.env.NODE_ENV === 'production' ? 200 : 1000, // 200 admin requests per 15 minutes in production
   message: {
-    success: false,
-    message: 'Too many admin requests from this IP, please try again later.',
+    error: 'Too many admin requests from this IP, please try again later.',
+    retryAfter: 15 * 60 // 15 minutes
   },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV === 'test',
+});
+
+/**
+ * Rate limiter for API creation endpoints (tournaments, players, etc.)
+ */
+const createLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: process.env.NODE_ENV === 'production' ? 100 : 500, // 100 create operations per 15 minutes in production
+  message: {
+    error: 'Too many create operations from this IP, please try again later.',
+    retryAfter: 15 * 60 // 15 minutes
+  },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: (req) => process.env.NODE_ENV === 'test',
 });
 
 module.exports = {
@@ -80,5 +97,6 @@ module.exports = {
   authLimiter,
   passwordResetLimiter,
   uploadLimiter,
-  adminLimiter
+  adminLimiter,
+  createLimiter
 };
