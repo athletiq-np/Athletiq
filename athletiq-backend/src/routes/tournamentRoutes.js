@@ -25,6 +25,10 @@ const {
   getTournaments,
   getTournamentById,
   createTournament,
+  registerTeamForTournament,
+  generateTournamentBracket,
+  getTournamentBracket,
+  updateMatchResult,
 } = require("../controllers/tournamentController");
 
 // --- Route Definitions ---
@@ -172,6 +176,235 @@ router.get("/", generalLimiter, getTournaments);
 // @desc    Get a single tournament by its ID
 // @access  Public
 router.get("/:id", generalLimiter, validateTournamentId, getTournamentById);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/register:
+ *   post:
+ *     summary: Register a team for a tournament
+ *     description: Register a team to participate in the tournament
+ *     tags: [Tournaments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Tournament ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - team_id
+ *             properties:
+ *               team_id:
+ *                 type: integer
+ *                 description: ID of the team to register
+ *     responses:
+ *       200:
+ *         description: Team registered successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         tournament_id:
+ *                           type: integer
+ *                         team_id:
+ *                           type: integer
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament or team not found
+ *       429:
+ *         description: Too many requests
+ */
+// @route   POST /api/tournaments/:id/register
+// @desc    Register team for tournament
+// @access  Private (SchoolAdmin)
+router.post("/:id/register", generalLimiter, protect, checkRole(['SchoolAdmin', 'SuperAdmin']), registerTeamForTournament);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/generate-bracket:
+ *   post:
+ *     summary: Generate tournament bracket
+ *     description: Generate the bracket for the tournament
+ *     tags: [Tournaments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Tournament ID
+ *     responses:
+ *       200:
+ *         description: Bracket generated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         tournament_id:
+ *                           type: integer
+ *                         bracket:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *       400:
+ *         description: Invalid tournament ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament not found
+ *       429:
+ *         description: Too many requests
+ */
+// @route   POST /api/tournaments/:id/generate-bracket
+// @desc    Generate tournament bracket
+// @access  Private (Admin)
+router.post("/:id/generate-bracket", generalLimiter, protect, checkRole(['SuperAdmin']), generateTournamentBracket);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/bracket:
+ *   get:
+ *     summary: Get tournament bracket
+ *     description: Retrieve the bracket for a specific tournament
+ *     tags: [Tournaments]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Tournament ID
+ *     responses:
+ *       200:
+ *         description: Bracket retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         tournament_id:
+ *                           type: integer
+ *                         bracket:
+ *                           type: array
+ *                           items:
+ *                             type: object
+ *       400:
+ *         description: Invalid tournament ID
+ *       404:
+ *         description: Tournament not found
+ *       429:
+ *         description: Too many requests
+ */
+// @route   GET /api/tournaments/:id/bracket
+// @desc    Get tournament bracket
+// @access  Public
+router.get("/:id/bracket", generalLimiter, getTournamentBracket);
+
+/**
+ * @swagger
+ * /api/tournaments/{tournamentId}/matches/{matchId}/result:
+ *   patch:
+ *     summary: Update match result
+ *     description: Update the result of a match in the tournament
+ *     tags: [Tournaments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: tournamentId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Tournament ID
+ *       - in: path
+ *         name: matchId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Match ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - result
+ *             properties:
+ *               result:
+ *                 type: string
+ *                 description: Result of the match (e.g., 'Team A 3 - 1 Team B')
+ *     responses:
+ *       200:
+ *         description: Match result updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         tournament_id:
+ *                           type: integer
+ *                         match_id:
+ *                           type: integer
+ *                         result:
+ *                           type: string
+ *       400:
+ *         description: Invalid tournament or match ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament or match not found
+ *       429:
+ *         description: Too many requests
+ */
+// @route   PATCH /api/tournaments/:tournamentId/matches/:matchId/result
+// @desc    Update match result
+// @access  Private (Admin/Referee)
+router.patch("/:tournamentId/matches/:matchId/result", generalLimiter, protect, checkRole(['SuperAdmin', 'Referee']), updateMatchResult);
 
 
 // Example of a role-protected route we might add later:

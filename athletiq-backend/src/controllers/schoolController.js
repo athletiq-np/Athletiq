@@ -241,3 +241,247 @@ exports.updateMySchoolProfile = async (req, res) => {
     ApiResponse.error(res, "Server error while updating school profile.", 500);
   }
 };
+
+
+/**
+ * @desc    Get tournaments for the school
+ * @route   GET /api/schools/me/tournaments
+ * @access  Private (SchoolAdmin)
+ */
+exports.getMySchoolTournaments = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+    
+    if (!schoolId) {
+      return ApiResponse.error(res, "No school associated with this user.", 404);
+    }
+    
+    // Get tournaments where school's teams are registered
+    const { rows } = await pool.query(`
+      SELECT DISTINCT
+        t.id,
+        t.name,
+        t.tournament_code,
+        t.tournament_type,
+        t.format,
+        t.start_date,
+        t.end_date,
+        t.location,
+        t.status,
+        t.max_teams,
+        t.sports_config,
+        COUNT(tt.id) as registered_teams,
+        json_agg(
+          json_build_object(
+            'team_id', teams.id,
+            'team_name', teams.name,
+            'sport', sports.name,
+            'registration_status', tr.status
+          )
+        ) as teams
+      FROM tournaments t
+      LEFT JOIN tournament_teams tt ON t.id = tt.tournament_id
+      LEFT JOIN teams ON tt.team_id = teams.id
+      LEFT JOIN schools s ON teams.school_id = s.id
+      LEFT JOIN sports ON teams.sport_id = sports.id
+      LEFT JOIN tournament_registrations tr ON t.id = tr.tournament_id AND tr.team_id = teams.id
+      WHERE s.id = $1
+      GROUP BY t.id, t.name, t.tournament_code, t.tournament_type, t.format, t.start_date, t.end_date, t.location, t.status, t.max_teams, t.sports_config
+      ORDER BY t.start_date DESC
+    `, [schoolId]);
+    
+    // Also get available tournaments (not registered yet)
+    const { rows: availableTournaments } = await pool.query(`
+      SELECT 
+        t.id,
+        t.name,
+        t.tournament_code,
+        t.tournament_type,
+        t.format,
+        t.start_date,
+        t.end_date,
+        t.location,
+        t.status,
+        t.max_teams,
+        t.sports_config,
+        COUNT(tt.id) as current_teams
+      FROM tournaments t
+      LEFT JOIN tournament_teams tt ON t.id = tt.tournament_id
+      WHERE t.status IN ('draft', 'open', 'active')
+        AND t.id NOT IN (
+          SELECT DISTINCT tr.tournament_id 
+          FROM tournament_registrations tr 
+          JOIN teams ON tr.team_id = teams.id 
+          WHERE teams.school_id = $1
+        )
+      GROUP BY t.id, t.name, t.tournament_code, t.tournament_type, t.format, t.start_date, t.end_date, t.location, t.status, t.max_teams, t.sports_config
+      ORDER BY t.start_date ASC
+    `, [schoolId]);
+    
+    ApiResponse.success(res, {
+      registered_tournaments: rows,
+      available_tournaments: availableTournaments
+    }, 'School tournaments retrieved successfully');
+    
+  } catch (err) {
+    console.error("Get school tournaments error:", err);
+    ApiResponse.error(res, "Server error while fetching school tournaments.", 500);
+  }
+};
+
+/**
+ * @desc    Get school teams
+ * @route   GET /api/schools/me/teams
+ * @access  Private (SchoolAdmin)
+ */
+exports.getMySchoolTeams = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+    
+    if (!schoolId) {
+      return ApiResponse.error(res, "No school associated with this user.", 404);
+    }
+    
+    const { rows } = await pool.query(`
+      SELECT 
+        t.id,
+        t.team_name as name,
+        s.name as sport,
+        t.season,
+        COUNT(psp.player_id) as player_count,
+        json_agg(
+          json_build_object(
+            'id', p.id,
+            'name', p.full_name,
+            'player_code', p.player_code,
+            'position', psp.event_category
+          )
+        ) FILTER (WHERE p.id IS NOT NULL) as players
+      FROM teams t
+      LEFT JOIN sports s ON t.sport_id = s.id
+      LEFT JOIN player_sport_participation psp ON t.id = psp.team_id
+      LEFT JOIN players p ON psp.player_id = p.id
+      WHERE t.school_id = $1
+      GROUP BY t.id, t.team_name, s.name, t.season
+      ORDER BY t.team_name, t.season DESC
+    `, [schoolId]);
+    
+    ApiResponse.success(res, rows, 'School teams retrieved successfully');
+    
+  } catch (err) {
+    console.error("Get school teams error:", err);
+    ApiResponse.error(res, "Server error while fetching school teams.", 500);
+  }
+};
+
+/**
+ * @desc    Get school players
+ * @route   GET /api/schools/me/players
+ * @access  Private (SchoolAdmin)
+ */
+exports.getMySchoolPlayers = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+    
+    if (!schoolId) {
+      return ApiResponse.error(res, "No school associated with this user.", 404);
+    }
+    
+    const { rows } = await pool.query(`
+      SELECT 
+        p.id,
+        p.player_code,
+        p.full_name,
+        p.date_of_birth,
+        p.gender,
+        p.class,
+        p.section,
+        p.contact_no,
+        p.email,
+        p.registration_status,
+        p.is_active,
+        p.created_at,
+        json_agg(
+          json_build_object(
+            'sport', s.name,
+            'team', t.team_name,
+            'position', psp.event_category
+          )
+        ) FILTER (WHERE s.id IS NOT NULL) as sports_participation
+      FROM players p
+      LEFT JOIN player_sport_participation psp ON p.id = psp.player_id
+      LEFT JOIN sports s ON psp.sport_id = s.id
+      LEFT JOIN teams t ON psp.team_id = t.id
+      WHERE p.school_id = $1
+      GROUP BY p.id, p.player_code, p.full_name, p.date_of_birth, p.gender, p.class, p.section, p.contact_no, p.email, p.registration_status, p.is_active, p.created_at
+      ORDER BY p.full_name
+    `, [schoolId]);
+    
+    ApiResponse.success(res, rows, 'School players retrieved successfully');
+    
+  } catch (err) {
+    console.error("Get school players error:", err);
+    ApiResponse.error(res, "Server error while fetching school players.", 500);
+  }
+};
+
+/**
+ * @desc    Get school tournament statistics
+ * @route   GET /api/schools/me/tournament-stats
+ * @access  Private (SchoolAdmin)
+ */
+exports.getMySchoolTournamentStats = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+    
+    if (!schoolId) {
+      return ApiResponse.error(res, "No school associated with this user.", 404);
+    }
+    
+    // Get tournament statistics
+    const { rows } = await pool.query(`
+      SELECT 
+        COUNT(DISTINCT t.id) as total_tournaments,
+        COUNT(DISTINCT CASE WHEN t.status = 'active' THEN t.id END) as active_tournaments,
+        COUNT(DISTINCT CASE WHEN t.status = 'completed' THEN t.id END) as completed_tournaments,
+        COUNT(DISTINCT tt.id) as total_teams_registered,
+        COUNT(DISTINCT m.id) as total_matches_played,
+        COUNT(DISTINCT CASE WHEN m.status = 'completed' AND 
+              ((m.home_team_id = tt.id AND m.home_score > m.away_score) OR 
+               (m.away_team_id = tt.id AND m.away_score > m.home_score)) 
+              THEN m.id END) as matches_won,
+        COUNT(DISTINCT players.id) as total_players
+      FROM schools s
+      LEFT JOIN teams teams ON s.id = teams.school_id
+      LEFT JOIN tournament_teams tt ON teams.id = tt.team_id
+      LEFT JOIN tournaments t ON tt.tournament_id = t.id
+      LEFT JOIN matches m ON t.id = m.tournament_id AND (m.home_team_id = tt.id OR m.away_team_id = tt.id)
+      LEFT JOIN players ON s.id = players.school_id
+      WHERE s.id = $1
+    `, [schoolId]);
+    
+    const stats = rows[0] || {
+      total_tournaments: 0,
+      active_tournaments: 0,
+      completed_tournaments: 0,
+      total_teams_registered: 0,
+      total_matches_played: 0,
+      matches_won: 0,
+      total_players: 0
+    };
+    
+    // Calculate win rate
+    const winRate = stats.total_matches_played > 0 
+      ? ((stats.matches_won / stats.total_matches_played) * 100).toFixed(2)
+      : 0;
+    
+    ApiResponse.success(res, {
+      ...stats,
+      win_rate: winRate
+    }, 'School tournament statistics retrieved successfully');
+    
+  } catch (err) {
+    console.error("Get school tournament stats error:", err);
+    ApiResponse.error(res, "Server error while fetching school tournament statistics.", 500);
+  }
+};
