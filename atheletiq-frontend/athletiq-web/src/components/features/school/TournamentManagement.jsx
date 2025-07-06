@@ -1,12 +1,15 @@
 // src/components/features/school/TournamentManagement.jsx
 import React, { useState, useEffect } from 'react';
-import { FaTrophy, FaPlus, FaCalendarAlt, FaEye, FaEdit, FaUsers, FaChartLine, FaRegClock, FaCheckCircle } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
+import { FaTrophy, FaPlus, FaCalendarAlt, FaEye, FaEdit, FaUsers, FaChartLine, FaRegClock, FaCheckCircle, FaCalendarPlus } from 'react-icons/fa';
 import TournamentCreationModal from './TournamentCreationModal';
 import TournamentRegistrationModal from './TournamentRegistrationModal';
 import TournamentBracket from './TournamentBracket';
 import { toast } from 'react-toastify';
 
 export default function TournamentManagement({ tournaments, school, onRefresh }) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('overview');
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
@@ -122,17 +125,36 @@ export default function TournamentManagement({ tournaments, school, onRefresh })
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">Tournament Management</h2>
+          <h2 className="text-2xl font-bold text-gray-900 flex items-center gap-2">
+            <FaTrophy className="text-yellow-500" />
+            Tournament Management
+          </h2>
           <p className="text-gray-600">Organize and participate in tournaments</p>
         </div>
         <div className="flex items-center space-x-3">
-          <button 
-            onClick={() => setShowCreateModal(true)}
-            className="bg-athletiq-blue text-white px-4 py-2 rounded-lg hover:bg-athletiq-navy transition-colors flex items-center space-x-2"
+          {/* Modern Create Tournament Button */}
+          <motion.button 
+            onClick={() => navigate('/school/tournaments/create')}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 
+                     rounded-xl hover:shadow-xl transition-all duration-200 flex items-center gap-2 font-semibold"
           >
-            <FaCalendarAlt className="h-4 w-4" />
+            <FaCalendarPlus className="h-4 w-4" />
             <span>Create Tournament</span>
-          </button>
+          </motion.button>
+          
+          {/* Legacy Create Button (Alternative) */}
+          <motion.button 
+            onClick={() => setShowCreateModal(true)}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="bg-gray-100 text-gray-700 px-4 py-3 rounded-xl hover:bg-gray-200 
+                     transition-all duration-200 flex items-center gap-2 border border-gray-200"
+          >
+            <FaPlus className="h-4 w-4" />
+            <span>Quick Create</span>
+          </motion.button>
         </div>
       </div>
 

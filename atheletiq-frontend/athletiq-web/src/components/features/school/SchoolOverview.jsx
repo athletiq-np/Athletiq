@@ -7,6 +7,7 @@ import {
   FaEye, FaEdit, FaPlus, FaDownload, FaSchool, FaNewspaper
 } from 'react-icons/fa';
 import { MdNotifications, MdTrendingUp, MdWarning } from 'react-icons/md';
+import TournamentCreationCard from '@features/tournament/TournamentCreationCard';
 
 /**
  * 🏫 School Overview Component
@@ -126,6 +127,19 @@ export default function SchoolOverview({ school, summary, recentActivities, noti
             <div className="text-sm text-blue-100">Setup Complete</div>
           </div>
         </div>
+      </motion.div>
+
+      {/* Tournament Creation Card - Featured */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.5, delay: 0.1 }}
+        className="mb-6"
+      >
+        <TournamentCreationCard 
+          userRole="school"
+          className="max-w-md mx-auto lg:max-w-none"
+        />
       </motion.div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

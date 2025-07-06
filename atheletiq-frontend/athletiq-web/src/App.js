@@ -23,6 +23,9 @@ import AdminDashboard from '@/pages/admin/AdminDashboard';
 import Settings from '@/pages/admin/Settings';
 import SchoolDashboard from '@/pages/school/SchoolDashboard';
 
+// Tournament creation component
+import TournamentCreate from '@/pages/admin/tournaments/TournamentCreate';
+
 // Loading component
 const PageLoader = ({ message = 'Loading...' }) => (
   <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -85,6 +88,16 @@ function App() {
             }
           />
           <Route
+            path="/admin/tournaments/create"
+            element={
+              <ErrorBoundary title="Tournament Creation Error">
+                <ProtectedRoute roles={['SuperAdmin']}>
+                  <TournamentCreate />
+                </ProtectedRoute>
+              </ErrorBoundary>
+            }
+          />
+          <Route
             path="/admin/settings"
             element={
               <ErrorBoundary title="Admin Dashboard Error">
@@ -102,6 +115,16 @@ function App() {
               <ErrorBoundary title="School Dashboard Error">
                 <ProtectedRoute roles={['SchoolAdmin']}>
                   <SchoolDashboard />
+                </ProtectedRoute>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/school/tournaments/create"
+            element={
+              <ErrorBoundary title="Tournament Creation Error">
+                <ProtectedRoute roles={['SchoolAdmin']}>
+                  <TournamentCreate />
                 </ProtectedRoute>
               </ErrorBoundary>
             }

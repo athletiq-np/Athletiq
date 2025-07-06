@@ -1,9 +1,13 @@
 // src/components/AdminDashboard/TournamentsTab.jsx
 
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { motion } from "framer-motion";
+import { FaPlus, FaTrophy, FaCalendarPlus } from "react-icons/fa";
 import ViewTournamentModal from "@features/tournament/ViewTournamentModal";
 
 export default function TournamentsTab({ tournaments = [] }) {
+  const navigate = useNavigate();
   const [searchText, setSearchText] = useState("");
   const [selectedSport, setSelectedSport] = useState("");
   const [filtered, setFiltered] = useState([]);
@@ -25,18 +29,33 @@ export default function TournamentsTab({ tournaments = [] }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-2xl font-bold text-athletiq-navy">🏆 Tournaments</h2>
+        <h2 className="text-2xl font-bold text-athletiq-navy flex items-center gap-2">
+          <FaTrophy className="text-yellow-500" />
+          Tournaments
+        </h2>
 
-        <div className="flex gap-3 flex-wrap">
+        <div className="flex gap-3 flex-wrap items-center">
+          {/* Modern Create Tournament Button */}
+          <motion.button
+            onClick={() => navigate('/admin/tournaments/create')}
+            whileHover={{ scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 
+                     text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+          >
+            <FaPlus className="w-4 h-4" />
+            Create Tournament
+          </motion.button>
+          
           <input
             type="text"
             placeholder="Search by name..."
-            className="border rounded px-4 py-2 text-sm"
+            className="border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
           />
           <select
-            className="border rounded px-4 py-2 text-sm"
+            className="border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             value={selectedSport}
             onChange={(e) => setSelectedSport(e.target.value)}
           >

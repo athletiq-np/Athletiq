@@ -29,6 +29,7 @@ import PlayersTab from '@features/admin/PlayersTab';
 import SchoolsTab from '@features/admin/SchoolsTab';
 import TournamentsTab from '@features/admin/TournamentsTab';
 import StatsTab from '@features/admin/StatsTab';
+import TournamentCreationCard from '@features/tournament/TournamentCreationCard';
 
 /**
  * 🌍 ATHLETIQ - Global Admin Dashboard
@@ -379,6 +380,39 @@ export default function GlobalAdminDashboard() {
                       loading={loading}
                       formatDate={formatDate}
                     />
+
+                    {/* Tournament Creation Card - Featured */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                      <TournamentCreationCard 
+                        userRole="admin"
+                        className="lg:col-span-1"
+                      />
+                      
+                      {/* Quick Stats Summary */}
+                      <div className="lg:col-span-2 bg-white/70 backdrop-blur-sm rounded-2xl p-6 border border-gray-200/50">
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          {t('dashboard.quickStats.title')}
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-blue-600">{summary.registeredPlayers}</div>
+                            <div className="text-sm text-gray-600">{t('dashboard.quickStats.players')}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-green-600">{summary.schools}</div>
+                            <div className="text-sm text-gray-600">{t('dashboard.quickStats.schools')}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-purple-600">{summary.tournaments}</div>
+                            <div className="text-sm text-gray-600">{t('dashboard.quickStats.tournaments')}</div>
+                          </div>
+                          <div className="text-center">
+                            <div className="text-2xl font-bold text-orange-600">{summary.activeTournaments}</div>
+                            <div className="text-sm text-gray-600">{t('dashboard.quickStats.active')}</div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
                     {/* Quick Actions */}
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

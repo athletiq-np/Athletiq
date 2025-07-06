@@ -66,6 +66,13 @@
       "createTournament": "Create Tournament",
       "viewAnalytics": "View Analytics"
     },
+    "quickStats": {
+      "title": "Quick Stats",
+      "players": "Players",
+      "schools": "Schools",
+      "tournaments": "Tournaments",
+      "active": "Active"
+    },
     "recentPlayers": {
       "title": "Recent Player Registrations",
       "viewAll": "View All Players"
