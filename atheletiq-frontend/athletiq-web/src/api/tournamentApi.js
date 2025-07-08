@@ -1,22 +1,7 @@
-import axios from 'axios';
+import apiClient from './apiClient';
 
-// 1. Create a centralized, pre-configured Axios instance
-// This is best practice. All API calls will automatically have the correct base URL
-// and send the auth token from localStorage if it exists.
-const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-  headers: {
-    'Content-Type': 'application/json',
-  },
-});
-
-apiClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+// Use the centralized apiClient that's already configured with withCredentials: true
+// This ensures cookie-based authentication works correctly with the backend
 
 
 /**

@@ -76,8 +76,13 @@ const initializeDatabase = async () => {
 const shutdown = async () => {
   dbLogger.info('Shutting down database connections...');
   try {
-    await pool.end();
-    dbLogger.info('Database connections closed successfully');
+    // Check if pool is already ended to avoid "Called end on pool more than once" error
+    if (pool && !pool.ended) {
+      await pool.end();
+      dbLogger.info('Database connections closed successfully');
+    } else {
+      dbLogger.info('Database pool already closed or not initialized');
+    }
   } catch (error) {
     dbLogger.error('Error during database shutdown', { error: error.message });
   }

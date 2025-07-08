@@ -1,65 +1,56 @@
-// test-server-startup.js - Test server startup with routes
-require('dotenv').config();
-console.log('Testing server startup...');
+// Simple server test to check if the backend can start
+const { spawn } = require('child_process');
+const path = require('path');
 
-const express = require('express');
-const app = express();
+console.log('🔍 Starting backend server test...');
 
-// Test basic middleware
-app.use(express.json());
+const serverPath = path.join(__dirname, 'server.js');
+console.log('Server path:', serverPath);
 
-// Test basic route
-app.get('/', (req, res) => res.send('Test server is running'));
+const server = spawn('node', [serverPath], {
+  cwd: __dirname,
+  stdio: 'pipe',
+  env: process.env
+});
 
-// Test importing the problematic routes
-console.log('Testing document routes import...');
-try {
-  const documentRoutes = require('./src/routes/documentRoutes');
-  console.log('✅ Document routes imported successfully');
-  
-  // Try to use them
-  app.use('/api/documents', documentRoutes);
-  console.log('✅ Document routes registered successfully');
-} catch (error) {
-  console.error('❌ Error importing document routes:', error.message);
-  console.error('Stack:', error.stack);
-}
+let output = '';
+let errorOutput = '';
 
-console.log('Testing AI routes import...');
-try {
-  const aiRoutes = require('./src/routes/aiRoutes');
-  console.log('✅ AI routes imported successfully');
-  
-  app.use('/api/ai', aiRoutes);
-  console.log('✅ AI routes registered successfully');
-} catch (error) {
-  console.error('❌ Error importing AI routes:', error.message);
-  console.error('Stack:', error.stack);
-}
+server.stdout.on('data', (data) => {
+  const text = data.toString();
+  output += text;
+  console.log('📄 STDOUT:', text.trim());
+});
 
-// Try to start server
-const PORT = 5001;
-console.log(`Attempting to start server on port ${PORT}...`);
-
-const server = app.listen(PORT, () => {
-  console.log(`✅ Test server started successfully on port ${PORT}`);
-  // Close server after 2 seconds
-  setTimeout(() => {
-    console.log('Closing test server...');
-    server.close(() => {
-      console.log('Test server closed');
-      process.exit(0);
-    });
-  }, 2000);
+server.stderr.on('data', (data) => {
+  const text = data.toString();
+  errorOutput += text;
+  console.log('❌ STDERR:', text.trim());
 });
 
 server.on('error', (error) => {
-  console.error('❌ Server error:', error.message);
-  process.exit(1);
+  console.log('💥 Server process error:', error.message);
 });
 
-// Handle hanging
+server.on('exit', (code, signal) => {
+  console.log(`🔚 Server process exited with code ${code} and signal ${signal}`);
+  if (code !== 0) {
+    console.log('❌ Server failed to start');
+    console.log('Output:', output);
+    console.log('Error:', errorOutput);
+  }
+});
+
+// Give the server 5 seconds to start
 setTimeout(() => {
-  console.log('⚠️  Server startup taking too long, forcing exit...');
-  process.exit(1);
-}, 10000);
+  console.log('⏰ 5 seconds elapsed, checking server status...');
+  if (output.includes('Server started')) {
+    console.log('✅ Server appears to be running');
+    server.kill();
+  } else {
+    console.log('❌ Server does not appear to be running');
+    console.log('Full output:', output);
+    console.log('Full error:', errorOutput);
+    server.kill();
+  }
+}, 5000);

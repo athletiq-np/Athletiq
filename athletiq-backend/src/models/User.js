@@ -1,7 +1,7 @@
 // src/models/User.js
 // Stores non-school users like coach, referee, organization, super_admin
 
-const pool = require('../config/db');
+const { pool } = require('../config/db');
 
 // PostgreSQL-style user model using manual query (Sequelize not used here)
 const createUser = async ({ fullName, email, password, role }) => {

@@ -1,0 +1,8 @@
+{"database":"athletiq","environment":"development","host":"localhost","level":"info","message":"Initializing database connection...","service":"database","timestamp":"2025-07-07T19:54:09.404Z","user":"postgres"}
+{"database":"athletiq","idleCount":0,"level":"info","message":"New client connected","service":"database","timestamp":"2025-07-07T19:54:09.517Z","totalCount":1,"waitingCount":0}
+{"connectedAt":"2025-07-07T19:54:09.519Z","level":"info","message":"✅ Database connection established successfully","poolStats":{"idleCount":1,"totalCount":1,"waitingCount":0},"service":"database","timestamp":"2025-07-07T19:54:09.547Z","version":"PostgreSQL"}
+{"idleCount":0,"level":"info","message":"Client removed from pool","service":"database","timestamp":"2025-07-07T19:54:39.569Z","totalCount":0,"waitingCount":0}
+{"database":"athletiq","environment":"development","host":"localhost","level":"info","message":"Initializing database connection...","service":"database","timestamp":"2025-07-07T20:07:41.001Z","user":"postgres"}
+{"database":"athletiq","idleCount":0,"level":"info","message":"New client connected","service":"database","timestamp":"2025-07-07T20:07:41.105Z","totalCount":1,"waitingCount":0}
+{"connectedAt":"2025-07-07T20:07:41.108Z","level":"info","message":"✅ Database connection established successfully","poolStats":{"idleCount":1,"totalCount":1,"waitingCount":0},"service":"database","timestamp":"2025-07-07T20:07:41.146Z","version":"PostgreSQL"}
+{"idleCount":0,"level":"info","message":"Client removed from pool","service":"database","timestamp":"2025-07-07T20:08:11.167Z","totalCount":0,"waitingCount":0}

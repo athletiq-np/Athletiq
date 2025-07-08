@@ -25,10 +25,20 @@ const {
   getTournaments,
   getTournamentById,
   createTournament,
+  updateTournamentStatus,
+  assignTournamentOrganizer,
+  checkTournamentEligibility,
+  getTournamentDashboard,
   registerTeamForTournament,
   generateTournamentBracket,
   getTournamentBracket,
   updateMatchResult,
+  getRegistrationDashboard,
+  checkPlayerEligibility,
+  registerTeamEnhanced,
+  updateTeamRegistrationStatus,
+  getTournamentTeams,
+  bulkUpdateTeamRegistrations,
 } = require("../controllers/tournamentController");
 
 // --- Route Definitions ---
@@ -405,6 +415,517 @@ router.get("/:id/bracket", generalLimiter, getTournamentBracket);
 // @desc    Update match result
 // @access  Private (Admin/Referee)
 router.patch("/:tournamentId/matches/:matchId/result", generalLimiter, protect, checkRole(['SuperAdmin', 'Referee']), updateMatchResult);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/status:
+ *   patch:
+ *     summary: Update tournament status
+ *     description: Update the status of a tournament (e.g., active, inactive)
+ *     tags: [Tournaments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Tournament ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [active, inactive]
+ *                 description: New status of the tournament
+ *     responses:
+ *       200:
+ *         description: Tournament status updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         tournament_id:
+ *                           type: integer
+ *                         status:
+ *                           type: string
+ *       400:
+ *         description: Invalid tournament ID or status
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament not found
+ *       429:
+ *         description: Too many requests
+ */
+// @route   PATCH /api/tournaments/:id/status
+// @desc    Update tournament status
+// @access  Private (Admin/Organizer)
+router.patch("/:id/status", generalLimiter, protect, updateTournamentStatus);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/organizer:
+ *   patch:
+ *     summary: Assign tournament organizer
+ *     description: Assign a user as the organizer of the tournament
+ *     tags: [Tournaments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Tournament ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - organizer_id
+ *             properties:
+ *               organizer_id:
+ *                 type: integer
+ *                 description: ID of the user to assign as organizer
+ *     responses:
+ *       200:
+ *         description: Organizer assigned successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         tournament_id:
+ *                           type: integer
+ *                         organizer_id:
+ *                           type: integer
+ *       400:
+ *         description: Invalid tournament ID or organizer ID
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament not found
+ *       429:
+ *         description: Too many requests
+ */
+// @route   PATCH /api/tournaments/:id/organizer
+// @desc    Assign tournament organizer
+// @access  Private (SuperAdmin)
+router.patch("/:id/organizer", generalLimiter, protect, checkRole(['SuperAdmin']), assignTournamentOrganizer);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/check-eligibility:
+ *   post:
+ *     summary: Check tournament eligibility
+ *     description: Check if a team is eligible to participate in the tournament
+ *     tags: [Tournaments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Tournament ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - team_id
+ *             properties:
+ *               team_id:
+ *                 type: integer
+ *                 description: ID of the team to check eligibility for
+ *     responses:
+ *       200:
+ *         description: Eligibility checked successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         tournament_id:
+ *                           type: integer
+ *                         team_id:
+ *                           type: integer
+ *                         eligible:
+ *                           type: boolean
+ *       400:
+ *         description: Validation error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ValidationError'
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament or team not found
+ *       429:
+ *         description: Too many requests
+ */
+// @route   POST /api/tournaments/:id/check-eligibility
+// @desc    Check tournament eligibility
+// @access  Private
+router.post("/:id/check-eligibility", generalLimiter, protect, checkTournamentEligibility);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/dashboard:
+ *   get:
+ *     summary: Get tournament dashboard data
+ *     description: Retrieve dashboard data for a specific tournament
+ *     tags: [Tournaments]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *           minimum: 1
+ *         description: Tournament ID
+ *     responses:
+ *       200:
+ *         description: Tournament dashboard data retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               allOf:
+ *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - type: object
+ *                   properties:
+ *                     data:
+ *                       type: object
+ *                       properties:
+ *                         tournament_id:
+ *                           type: integer
+ *                         teams_registered:
+ *                           type: integer
+ *                         matches_played:
+ *                           type: integer
+ *                         current_stage:
+ *                           type: string
+ *       400:
+ *         description: Invalid tournament ID
+ *       404:
+ *         description: Tournament not found
+ *       429:
+ *         description: Too many requests
+ */
+// @route   GET /api/tournaments/:id/dashboard
+// @desc    Get tournament dashboard data
+// @access  Private (Admin/Organizer)
+router.get("/:id/dashboard", generalLimiter, protect, getTournamentDashboard);
+
+// Enhanced Registration & Team Onboarding Routes
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/registration-dashboard:
+ *   get:
+ *     summary: Get tournament registration dashboard
+ *     description: Get detailed registration dashboard with statistics and team details
+ *     tags: [Tournaments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament ID
+ *     responses:
+ *       200:
+ *         description: Registration dashboard data retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament not found
+ */
+// @route   GET /api/tournaments/:id/registration-dashboard
+// @desc    Get tournament registration dashboard
+// @access  Private (Admin/Organizer)
+router.get("/:id/registration-dashboard", generalLimiter, protect, getRegistrationDashboard);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/check-eligibility:
+ *   post:
+ *     summary: Check player eligibility for tournament
+ *     description: Check if players meet tournament eligibility requirements
+ *     tags: [Tournaments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - player_ids
+ *             properties:
+ *               player_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Array of player IDs to check
+ *     responses:
+ *       200:
+ *         description: Eligibility check completed
+ *       400:
+ *         description: Invalid request
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament not found
+ */
+// @route   POST /api/tournaments/:id/check-eligibility
+// @desc    Check player eligibility for tournament
+// @access  Private (Admin/Organizer)
+router.post("/:id/check-eligibility", generalLimiter, protect, checkPlayerEligibility);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/register-team:
+ *   post:
+ *     summary: Enhanced team registration
+ *     description: Register a team with enhanced validation and multi-step process
+ *     tags: [Tournaments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - team_id
+ *             properties:
+ *               team_id:
+ *                 type: integer
+ *                 description: ID of the team to register
+ *               player_ids:
+ *                 type: array
+ *                 items:
+ *                   type: integer
+ *                 description: Array of player IDs to register
+ *               auto_confirm:
+ *                 type: boolean
+ *                 description: Whether to auto-confirm registration if eligible
+ *               notes:
+ *                 type: string
+ *                 description: Additional notes for registration
+ *     responses:
+ *       200:
+ *         description: Team registration completed
+ *       400:
+ *         description: Invalid request or validation error
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament not found
+ */
+// @route   POST /api/tournaments/:id/register-team
+// @desc    Enhanced team registration with multi-step validation
+// @access  Private (SchoolAdmin)
+router.post("/:id/register-team", generalLimiter, protect, checkRole(['SchoolAdmin', 'SuperAdmin']), registerTeamEnhanced);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/teams:
+ *   get:
+ *     summary: Get tournament teams
+ *     description: Get all teams registered for a tournament
+ *     tags: [Tournaments]
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament ID
+ *       - in: query
+ *         name: status
+ *         schema:
+ *           type: string
+ *           enum: [pending, registered, rejected, withdrawn, all]
+ *         description: Filter teams by registration status
+ *       - in: query
+ *         name: include_players
+ *         schema:
+ *           type: boolean
+ *         description: Include player details in response
+ *     responses:
+ *       200:
+ *         description: Tournament teams retrieved successfully
+ *       404:
+ *         description: Tournament not found
+ */
+// @route   GET /api/tournaments/:id/teams
+// @desc    Get tournament registered teams with details
+// @access  Public
+router.get("/:id/teams", generalLimiter, getTournamentTeams);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/teams/{teamId}/status:
+ *   patch:
+ *     summary: Update team registration status
+ *     description: Update the registration status of a team
+ *     tags: [Tournaments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament ID
+ *       - in: path
+ *         name: teamId
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament Team ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pending, registered, rejected, withdrawn]
+ *                 description: New registration status
+ *               notes:
+ *                 type: string
+ *                 description: Notes for status change
+ *               seed_order:
+ *                 type: integer
+ *                 description: Seed order for the team
+ *     responses:
+ *       200:
+ *         description: Team registration status updated successfully
+ *       400:
+ *         description: Invalid status or request
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament or team not found
+ */
+// @route   PATCH /api/tournaments/:id/teams/:teamId/status
+// @desc    Update team registration status
+// @access  Private (Admin/Organizer)
+router.patch("/:id/teams/:teamId/status", generalLimiter, protect, checkRole(['SuperAdmin', 'SchoolAdmin']), updateTeamRegistrationStatus);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/teams/bulk-update:
+ *   patch:
+ *     summary: Bulk update team registrations
+ *     description: Update multiple team registrations at once
+ *     tags: [Tournaments]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - updates
+ *             properties:
+ *               updates:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   properties:
+ *                     tournament_team_id:
+ *                       type: integer
+ *                     status:
+ *                       type: string
+ *                       enum: [pending, registered, rejected, withdrawn]
+ *                     seed_order:
+ *                       type: integer
+ *                     notes:
+ *                       type: string
+ *     responses:
+ *       200:
+ *         description: Bulk update completed
+ *       400:
+ *         description: Invalid request
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament not found
+ */
+// @route   PATCH /api/tournaments/:id/teams/bulk-update
+// @desc    Bulk update team registrations
+// @access  Private (Admin/Organizer)
+router.patch("/:id/teams/bulk-update", generalLimiter, protect, checkRole(['SuperAdmin', 'SchoolAdmin']), bulkUpdateTeamRegistrations);
 
 
 // Example of a role-protected route we might add later:

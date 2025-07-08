@@ -2,33 +2,30 @@
 
 /**
  * All API calls related to players (registration, OCR, etc).
- * Uses fetch API. You can switch to axios if preferred.
+ * Uses the centralized apiClient that's configured with withCredentials: true
+ * for cookie-based authentication.
  */
 
-const API_BASE = process.env.REACT_APP_API_BASE || 'http://localhost:5000/api/players';
+import apiClient from './apiClient';
 
 // Register a new player (multipart/form-data)
 export async function registerPlayer(formData, token) {
-  const res = await fetch(`${API_BASE}/register`, {
-    method: 'POST',
+  const res = await apiClient.post('/players/register', formData, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data',
     },
-    body: formData,
   });
-  return res.json();
+  return res.data;
 }
 
 // Run OCR extraction on certificate only (returns extracted fields)
 export async function extractCertificateOCR(certificateFile, token) {
   const formData = new FormData();
   formData.append('certificate', certificateFile);
-  const res = await fetch(`${API_BASE}/ocr`, {
-    method: 'POST',
+  const res = await apiClient.post('/players/ocr', formData, {
     headers: {
-      Authorization: `Bearer ${token}`,
+      'Content-Type': 'multipart/form-data',
     },
-    body: formData,
   });
-  return res.json();
+  return res.data;
 }

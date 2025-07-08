@@ -1,4 +1,4 @@
-const pool = require('../config/db');
+const { pool } = require('../config/db');
 const bcrypt = require('bcryptjs');
 const { generateSchoolCode } = require('../utils/codeGenerator'); // Assuming you have this utility
 const { ApiResponse } = require('../utils/apiResponse');

@@ -48,31 +48,38 @@ exports.register = async (req, res, next) => {
 
     const userExists = await client.query('SELECT id FROM users WHERE email = $1', [adminEmail]);
     if (userExists.rowCount > 0) {
-      const error = new Error('Admin email already exists.');
-      error.statusCode = 409;
-      throw error;
+      const error = new Error('A user with this email already exists.');
+      error.statusCode = 400;
+      return next(error);
     }
-    
+
     const schoolExists = await client.query('SELECT id FROM schools WHERE school_code = $1', [schoolCode]);
     if (schoolExists.rowCount > 0) {
-      const error = new Error('School code already exists.');
-      error.statusCode = 409;
-      throw error;
+      const error = new Error('A school with this code already exists.');
+      error.statusCode = 400;
+      return next(error);
     }
 
-    const schoolQuery = `
-      INSERT INTO schools (school_code, name, address, email, is_active)
-      VALUES ($1, $2, $3, $4, true) RETURNING id;
-    `;
-    const schoolResult = await client.query(schoolQuery, [schoolCode, schoolName, schoolAddress, adminEmail]);
-    const newSchoolId = schoolResult.rows[0].id;
+    const passwordHash = await bcrypt.hash(password, 12);
 
-    const salt = await bcrypt.genSalt(10);
-    const passwordHash = await bcrypt.hash(password, salt);
+    const newSchoolQuery = `
+      INSERT INTO schools (school_name, school_code, school_address, contact_email, contact_phone)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id
+    `;
+    const schoolResult = await client.query(newSchoolQuery, [
+      schoolName,
+      schoolCode,
+      schoolAddress || null,
+      adminEmail,
+      null
+    ]);
+    const newSchoolId = schoolResult.rows[0].id;
 
     const newUserQuery = `
       INSERT INTO users (full_name, email, password_hash, role, school_id)
-      VALUES ($1, $2, $3, 'SchoolAdmin', $4) RETURNING *;
+      VALUES ($1, $2, $3, 'SchoolAdmin', $4)
+      RETURNING id, full_name, email, role, school_id
     `;
     const userResult = await client.query(newUserQuery, [adminFullName, adminEmail, passwordHash, newSchoolId]);
     const newUser = userResult.rows[0];

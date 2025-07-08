@@ -42,10 +42,15 @@ app.get('/', (req, res) => res.send('Athletiq API is running...'));
 app.use('/api/schools', require('./src/routes/schoolRoutes'));
 app.use('/api/players', require('./src/routes/playerRoutes'));
 app.use('/api/tournaments', require('./src/routes/tournamentRoutes'));
+app.use('/api/pre-tournament', require('./src/routes/preTournamentRoutes'));
 app.use('/api/admin', require('./src/routes/adminRoutes'));
 
 app.use('/api/teams', require('./src/routes/teamRoutes'));
 app.use('/api/registrations', require('./src/routes/registrationRoutes'));
+
+// Pre-Tournament Management Routes
+app.use('/api/pre-tournament', require('./src/routes/preTournamentRoutes'));
+console.log('✅ Pre-tournament management routes registered');
 
 // Enhanced AI and Document Processing Routes
 app.use('/api/documents', require('./src/routes/documentRoutes'));

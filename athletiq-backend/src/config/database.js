@@ -45,7 +45,7 @@ let pool = null;
 
 // Function to get or create database pool
 const getPool = () => {
-  if (!pool) {
+  if (!pool || pool.ended) {
     const config = getDbConfig();
     pool = new Pool(config);
     
@@ -77,7 +77,7 @@ const getPool = () => {
 
 // Function to reset pool (useful for tests)
 const resetPool = () => {
-  if (pool) {
+  if (pool && !pool.ended) {
     pool.end();
     pool = null;
   }

@@ -1,0 +1,5757 @@
+{
+  "timestamp": "2025-07-08T02:10:20.196Z",
+  "database_info": {
+    "database_name": "athletiq",
+    "postgres_version": "PostgreSQL 17.5 on x86_64-windows, compiled by msvc-19.43.34808, 64-bit",
+    "connected_user": "postgres",
+    "server_address": "::1",
+    "server_port": 5432
+  },
+  "tables": {
+    "ai_processing_queue": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('ai_processing_queue_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "job_id",
+          "data_type": "uuid",
+          "is_nullable": "YES",
+          "column_default": "uuid_generate_v4()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "uuid"
+        },
+        {
+          "column_name": "job_type",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "entity_type",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "entity_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "priority",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "5",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "payload",
+          "data_type": "jsonb",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'pending'::character varying",
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "attempts",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "0",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "max_attempts",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "3",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "result",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "error_message",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "processing_started_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "processing_completed_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [],
+      "unique_constraints": [
+        {
+          "constraint_name": "ai_processing_queue_job_id_key",
+          "columns": "{job_id}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "ai_processing_queue_status_check",
+          "check_clause": "((status)::text = ANY ((ARRAY['pending'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying, 'retrying'::character varying])::text[]))"
+        },
+        {
+          "constraint_name": "2200_33953_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33953_3_not_null",
+          "check_clause": "job_type IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33953_4_not_null",
+          "check_clause": "entity_type IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33953_5_not_null",
+          "check_clause": "entity_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33953_7_not_null",
+          "check_clause": "payload IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "ai_processing_queue_job_id_key",
+          "columns": "{job_id}",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "ai_processing_queue_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "idx_ai_queue_status",
+          "columns": "{status}",
+          "is_unique": false,
+          "is_primary": false
+        }
+      ],
+      "row_count": 1,
+      "sample_data": [
+        {
+          "id": 1,
+          "job_id": "2da8ae0e-a422-47c6-9014-b619be8b95d4",
+          "job_type": "test_processing",
+          "entity_type": "player",
+          "entity_id": 1,
+          "priority": 5,
+          "payload": {
+            "test": true,
+            "timestamp": "2025-07-05T02:15:07.989Z"
+          },
+          "status": "pending",
+          "attempts": 0,
+          "max_attempts": 3,
+          "result": null,
+          "error_message": null,
+          "processing_started_at": null,
+          "processing_completed_at": null,
+          "created_at": "2025-07-05T02:15:07.996Z",
+          "updated_at": "2025-07-05T02:15:07.996Z"
+        }
+      ]
+    },
+    "analytics_events": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('analytics_events_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "event_id",
+          "data_type": "uuid",
+          "is_nullable": "YES",
+          "column_default": "uuid_generate_v4()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "uuid"
+        },
+        {
+          "column_name": "user_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "organization_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "session_id",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "event_type",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "event_name",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "properties",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "timestamp",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "ip_address",
+          "data_type": "inet",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "inet"
+        },
+        {
+          "column_name": "user_agent",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "platform",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "version",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [],
+      "unique_constraints": [
+        {
+          "constraint_name": "analytics_events_event_id_key",
+          "columns": "{event_id}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_34003_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_34003_6_not_null",
+          "check_clause": "event_type IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_34003_7_not_null",
+          "check_clause": "event_name IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "analytics_events_event_id_key",
+          "columns": "{event_id}",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "analytics_events_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "idx_analytics_events_user",
+          "columns": "{user_id}",
+          "is_unique": false,
+          "is_primary": false
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "audit_logs": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('audit_logs_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "log_id",
+          "data_type": "uuid",
+          "is_nullable": "YES",
+          "column_default": "uuid_generate_v4()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "uuid"
+        },
+        {
+          "column_name": "user_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "organization_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "action",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "entity_type",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "entity_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "old_values",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "new_values",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "ip_address",
+          "data_type": "inet",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "inet"
+        },
+        {
+          "column_name": "user_agent",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "session_id",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id",
+          "constraint_name": "fk_audit_logs_user",
+          "delete_rule": "NO ACTION",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [
+        {
+          "constraint_name": "audit_logs_log_id_key",
+          "columns": "{log_id}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_33972_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33972_5_not_null",
+          "check_clause": "action IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33972_6_not_null",
+          "check_clause": "entity_type IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "audit_logs_log_id_key",
+          "columns": "{log_id}",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "audit_logs_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "idx_audit_logs_user",
+          "columns": "{user_id}",
+          "is_unique": false,
+          "is_primary": false
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "document_uploads": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('document_uploads_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "document_id",
+          "data_type": "uuid",
+          "is_nullable": "YES",
+          "column_default": "uuid_generate_v4()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "uuid"
+        },
+        {
+          "column_name": "entity_type",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "entity_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "document_type",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "original_filename",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "file_path",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 500,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "file_size",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "mime_type",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "processing_status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'pending'::character varying",
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "ocr_text",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "extracted_data",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "ai_analysis",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "verification_status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'pending'::character varying",
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "verified_by",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "verified_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "rejection_reason",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "uploaded_by",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "uploaded_by",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id",
+          "constraint_name": "fk_document_uploads_user",
+          "delete_rule": "NO ACTION",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [
+        {
+          "constraint_name": "document_uploads_document_id_key",
+          "columns": "{document_id}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "document_uploads_processing_status_check",
+          "check_clause": "((processing_status)::text = ANY ((ARRAY['pending'::character varying, 'processing'::character varying, 'completed'::character varying, 'failed'::character varying])::text[]))"
+        },
+        {
+          "constraint_name": "document_uploads_verification_status_check",
+          "check_clause": "((verification_status)::text = ANY ((ARRAY['pending'::character varying, 'verified'::character varying, 'rejected'::character varying, 'requires_review'::character varying])::text[]))"
+        },
+        {
+          "constraint_name": "2200_33935_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33935_3_not_null",
+          "check_clause": "entity_type IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33935_4_not_null",
+          "check_clause": "entity_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33935_5_not_null",
+          "check_clause": "document_type IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33935_6_not_null",
+          "check_clause": "original_filename IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33935_7_not_null",
+          "check_clause": "file_path IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33935_18_not_null",
+          "check_clause": "uploaded_by IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "document_uploads_document_id_key",
+          "columns": "{document_id}",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "document_uploads_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "idx_document_uploads_entity",
+          "columns": "{entity_type,entity_id}",
+          "is_unique": false,
+          "is_primary": false
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "matches": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('matches_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "team1_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "team2_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "sport_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "event_category",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "date",
+          "data_type": "date",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "date"
+        },
+        {
+          "column_name": "location",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 200,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "tournament_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "code",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "round",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 64,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "home_team_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "away_team_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "scheduled_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "venue",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'scheduled'::character varying",
+          "character_maximum_length": 32,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "result",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "team1_id",
+          "foreign_table_name": "teams",
+          "foreign_column_name": "id",
+          "constraint_name": "matches_team1_id_fkey",
+          "delete_rule": "SET NULL",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "team2_id",
+          "foreign_table_name": "teams",
+          "foreign_column_name": "id",
+          "constraint_name": "matches_team2_id_fkey",
+          "delete_rule": "SET NULL",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "sport_id",
+          "foreign_table_name": "sports",
+          "foreign_column_name": "id",
+          "constraint_name": "matches_sport_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "home_team_id",
+          "foreign_table_name": "tournament_teams",
+          "foreign_column_name": "id",
+          "constraint_name": "fk_matches_home_team_id",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "away_team_id",
+          "foreign_table_name": "tournament_teams",
+          "foreign_column_name": "id",
+          "constraint_name": "fk_matches_away_team_id",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [
+        {
+          "constraint_name": "matches_code_key",
+          "columns": "{code}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25670_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25670_11_not_null",
+          "check_clause": "code IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25670_13_not_null",
+          "check_clause": "home_team_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25670_14_not_null",
+          "check_clause": "away_team_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25670_15_not_null",
+          "check_clause": "scheduled_at IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "idx_matches_tournament_id",
+          "columns": "{tournament_id}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "matches_code_key",
+          "columns": "{code}",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "matches_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "notifications": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('notifications_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "notification_id",
+          "data_type": "uuid",
+          "is_nullable": "YES",
+          "column_default": "uuid_generate_v4()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "uuid"
+        },
+        {
+          "column_name": "user_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "organization_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "type",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "title",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 200,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "message",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "data",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "is_read",
+          "data_type": "boolean",
+          "is_nullable": "YES",
+          "column_default": "false",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "bool"
+        },
+        {
+          "column_name": "read_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "priority",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'normal'::character varying",
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "delivery_method",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'in_app'::character varying",
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "scheduled_for",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "sent_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "expires_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id",
+          "constraint_name": "fk_notifications_user",
+          "delete_rule": "NO ACTION",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [
+        {
+          "constraint_name": "notifications_notification_id_key",
+          "columns": "{notification_id}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "notifications_priority_check",
+          "check_clause": "((priority)::text = ANY ((ARRAY['low'::character varying, 'normal'::character varying, 'high'::character varying, 'urgent'::character varying])::text[]))"
+        },
+        {
+          "constraint_name": "notifications_delivery_method_check",
+          "check_clause": "((delivery_method)::text = ANY ((ARRAY['in_app'::character varying, 'email'::character varying, 'sms'::character varying, 'push'::character varying])::text[]))"
+        },
+        {
+          "constraint_name": "2200_33985_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33985_3_not_null",
+          "check_clause": "user_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33985_5_not_null",
+          "check_clause": "type IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33985_6_not_null",
+          "check_clause": "title IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33985_7_not_null",
+          "check_clause": "message IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "idx_notifications_user",
+          "columns": "{user_id}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "notifications_notification_id_key",
+          "columns": "{notification_id}",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "notifications_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "organizations": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('organizations_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "name",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 150,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "address",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "contact_person",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "contact_no",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "email",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "website",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 200,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "logo_url",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25739_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25739_2_not_null",
+          "check_clause": "name IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "organizations_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "player_match_stats": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('player_match_stats_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "player_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "match_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "team_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "stats",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "player_id",
+          "foreign_table_name": "players",
+          "foreign_column_name": "id",
+          "constraint_name": "player_match_stats_player_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "match_id",
+          "foreign_table_name": "matches",
+          "foreign_column_name": "id",
+          "constraint_name": "player_match_stats_match_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "team_id",
+          "foreign_table_name": "teams",
+          "foreign_column_name": "id",
+          "constraint_name": "player_match_stats_team_id_fkey",
+          "delete_rule": "SET NULL",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25695_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "player_match_stats_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "player_sport_participation": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('player_sport_participation_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "player_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "sport_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "team_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "event_category",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "season",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "joined_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "sport_id",
+          "foreign_table_name": "sports",
+          "foreign_column_name": "id",
+          "constraint_name": "player_sport_participation_sport_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "team_id",
+          "foreign_table_name": "teams",
+          "foreign_column_name": "id",
+          "constraint_name": "player_sport_participation_team_id_fkey",
+          "delete_rule": "SET NULL",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "player_id",
+          "foreign_table_name": "players",
+          "foreign_column_name": "id",
+          "constraint_name": "player_sport_participation_player_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25647_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "player_sport_participation_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "players": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('players_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "player_code",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "full_name",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "full_name_nep",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "date_of_birth",
+          "data_type": "date",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "date"
+        },
+        {
+          "column_name": "gender",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "school_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "class",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "section",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "roll_no",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "address",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "address_nep",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "province",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "district",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "municipality",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "ward",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 10,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "contact_no",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "email",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "father_name",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "father_name_nep",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "mother_name",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "mother_name_nep",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "guardian_name",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "guardian_relation",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 30,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "guardian_contact",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "profile_photo_url",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "birth_cert_url",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "registration_status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'pending'::character varying",
+          "character_maximum_length": 30,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "remarks",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "created_by",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "boolean",
+          "is_nullable": "NO",
+          "column_default": "true",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "bool"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "athlete_id",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "nationality",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "height_cm",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "weight_kg",
+          "data_type": "numeric",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 5,
+          "numeric_scale": 2,
+          "udt_name": "numeric"
+        },
+        {
+          "column_name": "eligibility_status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'pending'::character varying",
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "school_id",
+          "foreign_table_name": "schools",
+          "foreign_column_name": "id",
+          "constraint_name": "players_school_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "created_by",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id",
+          "constraint_name": "players_created_by_fkey",
+          "delete_rule": "SET NULL",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "school_id",
+          "foreign_table_name": "schools",
+          "foreign_column_name": "id",
+          "constraint_name": "fk_players_school",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [
+        {
+          "constraint_name": "players_athlete_id_key",
+          "columns": "{athlete_id}"
+        },
+        {
+          "constraint_name": "players_player_code_key",
+          "columns": "{player_code}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25604_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25604_2_not_null",
+          "check_clause": "player_code IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25604_3_not_null",
+          "check_clause": "full_name IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25604_5_not_null",
+          "check_clause": "date_of_birth IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25604_7_not_null",
+          "check_clause": "school_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25604_31_not_null",
+          "check_clause": "is_active IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25604_32_not_null",
+          "check_clause": "created_at IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25604_33_not_null",
+          "check_clause": "updated_at IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "idx_players_athlete_id",
+          "columns": "{athlete_id}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "idx_players_school",
+          "columns": "{school_id}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "players_athlete_id_key",
+          "columns": "{athlete_id}",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "players_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "players_player_code_key",
+          "columns": "{player_code}",
+          "is_unique": true,
+          "is_primary": false
+        }
+      ],
+      "row_count": 204,
+      "sample_data": [
+        {
+          "id": 461,
+          "player_code": "PLY17519402861421",
+          "full_name": "Player Alpha 1",
+          "full_name_nep": null,
+          "date_of_birth": "2006-01-14T18:15:00.000Z",
+          "gender": "Male",
+          "school_id": 18,
+          "class": null,
+          "section": null,
+          "roll_no": null,
+          "address": null,
+          "address_nep": null,
+          "province": null,
+          "district": null,
+          "municipality": null,
+          "ward": null,
+          "contact_no": null,
+          "email": null,
+          "father_name": null,
+          "father_name_nep": null,
+          "mother_name": null,
+          "mother_name_nep": null,
+          "guardian_name": null,
+          "guardian_relation": null,
+          "guardian_contact": null,
+          "profile_photo_url": null,
+          "birth_cert_url": null,
+          "registration_status": "approved",
+          "remarks": null,
+          "created_by": null,
+          "is_active": true,
+          "created_at": "2025-07-08T02:04:46.223Z",
+          "updated_at": "2025-07-08T02:04:46.223Z",
+          "athlete_id": null,
+          "nationality": null,
+          "height_cm": null,
+          "weight_kg": null,
+          "eligibility_status": "pending"
+        },
+        {
+          "id": 462,
+          "player_code": "PLY17519402861422",
+          "full_name": "Player Alpha 2",
+          "full_name_nep": null,
+          "date_of_birth": "2006-03-19T18:15:00.000Z",
+          "gender": "Male",
+          "school_id": 18,
+          "class": null,
+          "section": null,
+          "roll_no": null,
+          "address": null,
+          "address_nep": null,
+          "province": null,
+          "district": null,
+          "municipality": null,
+          "ward": null,
+          "contact_no": null,
+          "email": null,
+          "father_name": null,
+          "father_name_nep": null,
+          "mother_name": null,
+          "mother_name_nep": null,
+          "guardian_name": null,
+          "guardian_relation": null,
+          "guardian_contact": null,
+          "profile_photo_url": null,
+          "birth_cert_url": null,
+          "registration_status": "approved",
+          "remarks": null,
+          "created_by": null,
+          "is_active": true,
+          "created_at": "2025-07-08T02:04:46.223Z",
+          "updated_at": "2025-07-08T02:04:46.223Z",
+          "athlete_id": null,
+          "nationality": null,
+          "height_cm": null,
+          "weight_kg": null,
+          "eligibility_status": "pending"
+        },
+        {
+          "id": 463,
+          "player_code": "PLY17519402861423",
+          "full_name": "Player Beta 1",
+          "full_name_nep": null,
+          "date_of_birth": "2006-02-09T18:15:00.000Z",
+          "gender": "Female",
+          "school_id": 19,
+          "class": null,
+          "section": null,
+          "roll_no": null,
+          "address": null,
+          "address_nep": null,
+          "province": null,
+          "district": null,
+          "municipality": null,
+          "ward": null,
+          "contact_no": null,
+          "email": null,
+          "father_name": null,
+          "father_name_nep": null,
+          "mother_name": null,
+          "mother_name_nep": null,
+          "guardian_name": null,
+          "guardian_relation": null,
+          "guardian_contact": null,
+          "profile_photo_url": null,
+          "birth_cert_url": null,
+          "registration_status": "approved",
+          "remarks": null,
+          "created_by": null,
+          "is_active": true,
+          "created_at": "2025-07-08T02:04:46.223Z",
+          "updated_at": "2025-07-08T02:04:46.223Z",
+          "athlete_id": null,
+          "nationality": null,
+          "height_cm": null,
+          "weight_kg": null,
+          "eligibility_status": "pending"
+        }
+      ]
+    },
+    "schema_migrations": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('schema_migrations_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "version",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "name",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "executed_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "execution_time",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "checksum",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 64,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [],
+      "unique_constraints": [
+        {
+          "constraint_name": "schema_migrations_version_key",
+          "columns": "{version}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_33690_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33690_2_not_null",
+          "check_clause": "version IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33690_3_not_null",
+          "check_clause": "name IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "schema_migrations_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "schema_migrations_version_key",
+          "columns": "{version}",
+          "is_unique": true,
+          "is_primary": false
+        }
+      ],
+      "row_count": 2,
+      "sample_data": [
+        {
+          "id": 1,
+          "version": "1751680085956",
+          "name": "001_create_initial_schema.sql",
+          "executed_at": "2025-07-05T01:48:05.957Z",
+          "execution_time": 1,
+          "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+        },
+        {
+          "id": 2,
+          "version": "1751680295088",
+          "name": "003_fix_schema_and_add_enhancements.sql",
+          "executed_at": "2025-07-05T01:51:34.970Z",
+          "execution_time": 125,
+          "checksum": "7b75cd27a776be0edf9c05a598bf9eb098f2c1db65b4d15b334325fca41d3c69"
+        }
+      ]
+    },
+    "schools": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('schools_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "school_code",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "name",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 150,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "name_en",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 150,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "name_ne",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 150,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "address",
+          "data_type": "text",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "country",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "province",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "district",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "state",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "city",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "postal_code",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "ward",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "phone",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "mobile",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "landline",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "email",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "website",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 200,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "facebook_url",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 200,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "type",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "registration_no",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "pan_number",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "estd_year",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "association",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "principal_name",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "principal_phone",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "principal_email",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "admin_email",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "logo_url",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "registration_doc_url",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "location_lat",
+          "data_type": "numeric",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 9,
+          "numeric_scale": 6,
+          "udt_name": "numeric"
+        },
+        {
+          "column_name": "location_lng",
+          "data_type": "numeric",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 9,
+          "numeric_scale": 6,
+          "udt_name": "numeric"
+        },
+        {
+          "column_name": "place_id",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "created_by",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "onboarding_status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'pending'::character varying",
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "boolean",
+          "is_nullable": "YES",
+          "column_default": "true",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "bool"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "admin_user_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "organization_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "latitude",
+          "data_type": "numeric",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 10,
+          "numeric_scale": 8,
+          "udt_name": "numeric"
+        },
+        {
+          "column_name": "longitude",
+          "data_type": "numeric",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 11,
+          "numeric_scale": 8,
+          "udt_name": "numeric"
+        },
+        {
+          "column_name": "verification_status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'pending'::character varying",
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "created_by",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id",
+          "constraint_name": "schools_created_by_fkey",
+          "delete_rule": "SET NULL",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "admin_user_id",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id",
+          "constraint_name": "schools_admin_user_id_fkey",
+          "delete_rule": "NO ACTION",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "organization_id",
+          "foreign_table_name": "organizations",
+          "foreign_column_name": "id",
+          "constraint_name": "fk_schools_organization",
+          "delete_rule": "NO ACTION",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [
+        {
+          "constraint_name": "schools_school_code_key",
+          "columns": "{school_code}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25575_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25575_2_not_null",
+          "check_clause": "school_code IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25575_3_not_null",
+          "check_clause": "name IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25575_6_not_null",
+          "check_clause": "address IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25575_28_not_null",
+          "check_clause": "admin_email IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25575_37_not_null",
+          "check_clause": "created_at IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25575_38_not_null",
+          "check_clause": "updated_at IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "idx_schools_organization",
+          "columns": "{organization_id}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "schools_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "schools_school_code_key",
+          "columns": "{school_code}",
+          "is_unique": true,
+          "is_primary": false
+        }
+      ],
+      "row_count": 17,
+      "sample_data": [
+        {
+          "id": 1,
+          "school_code": "EDUOUOL5K",
+          "name": "Shree Himalaya Vidyalaya",
+          "name_en": null,
+          "name_ne": null,
+          "address": "Chabahil",
+          "country": " Nepal",
+          "province": "Nepal",
+          "district": "Bagmati",
+          "state": null,
+          "city": "Kathmandu",
+          "postal_code": null,
+          "ward": null,
+          "phone": "014423344",
+          "mobile": null,
+          "landline": null,
+          "email": "info@himalayavidyalaya.edu.np",
+          "website": null,
+          "facebook_url": null,
+          "type": "private",
+          "registration_no": "REG-2024-001",
+          "pan_number": null,
+          "estd_year": null,
+          "association": null,
+          "principal_name": "Sitaram Poudel",
+          "principal_phone": "9841234567",
+          "principal_email": null,
+          "admin_email": "admin.himalaya@athletiq.com",
+          "logo_url": null,
+          "registration_doc_url": null,
+          "location_lat": null,
+          "location_lng": null,
+          "place_id": null,
+          "created_by": 2,
+          "onboarding_status": "pending",
+          "is_active": true,
+          "created_at": "2025-06-26T20:00:50.966Z",
+          "updated_at": "2025-06-26T20:00:50.966Z",
+          "admin_user_id": null,
+          "organization_id": null,
+          "latitude": null,
+          "longitude": null,
+          "verification_status": "pending"
+        },
+        {
+          "id": 2,
+          "school_code": "EDUJ3CA9A",
+          "name": "Pashupati Vidya Mandir",
+          "name_en": null,
+          "name_ne": null,
+          "address": "Gaushala",
+          "country": " Nepal",
+          "province": "Nepal",
+          "district": "Bagmati",
+          "state": null,
+          "city": "Kathmandu",
+          "postal_code": null,
+          "ward": null,
+          "phone": "014470123",
+          "mobile": null,
+          "landline": null,
+          "email": "info@pashupativm.edu.np",
+          "website": null,
+          "facebook_url": null,
+          "type": "private",
+          "registration_no": "REG-2024-002",
+          "pan_number": null,
+          "estd_year": null,
+          "association": null,
+          "principal_name": "Ramesh Shrestha",
+          "principal_phone": "9841000001",
+          "principal_email": null,
+          "admin_email": "admin.pashupati@athletiq.com",
+          "logo_url": null,
+          "registration_doc_url": null,
+          "location_lat": null,
+          "location_lng": null,
+          "place_id": null,
+          "created_by": 3,
+          "onboarding_status": "pending",
+          "is_active": true,
+          "created_at": "2025-06-26T20:00:51.076Z",
+          "updated_at": "2025-06-26T20:00:51.076Z",
+          "admin_user_id": null,
+          "organization_id": null,
+          "latitude": null,
+          "longitude": null,
+          "verification_status": "pending"
+        },
+        {
+          "id": 3,
+          "school_code": "EDUQ5Q296",
+          "name": "Buddha Academy",
+          "name_en": null,
+          "name_ne": null,
+          "address": "New Baneshwor",
+          "country": " Nepal",
+          "province": "Nepal",
+          "district": "Bagmati",
+          "state": null,
+          "city": "Kathmandu",
+          "postal_code": null,
+          "ward": null,
+          "phone": "014478234",
+          "mobile": null,
+          "landline": null,
+          "email": "info@buddhaacademy.edu.np",
+          "website": null,
+          "facebook_url": null,
+          "type": "private",
+          "registration_no": "REG-2024-003",
+          "pan_number": null,
+          "estd_year": null,
+          "association": null,
+          "principal_name": "Buddha Tamang",
+          "principal_phone": "9841000002",
+          "principal_email": null,
+          "admin_email": "admin.buddha@athletiq.com",
+          "logo_url": null,
+          "registration_doc_url": null,
+          "location_lat": null,
+          "location_lng": null,
+          "place_id": null,
+          "created_by": 4,
+          "onboarding_status": "pending",
+          "is_active": true,
+          "created_at": "2025-06-26T20:00:51.183Z",
+          "updated_at": "2025-06-26T20:00:51.183Z",
+          "admin_user_id": null,
+          "organization_id": null,
+          "latitude": null,
+          "longitude": null,
+          "verification_status": "pending"
+        }
+      ]
+    },
+    "scorecards": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('scorecards_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "match_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "data",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "uploaded_by",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "file_url",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 255,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "match_id",
+          "foreign_table_name": "matches",
+          "foreign_column_name": "id",
+          "constraint_name": "scorecards_match_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "uploaded_by",
+          "foreign_table_name": "users",
+          "foreign_column_name": "id",
+          "constraint_name": "scorecards_uploaded_by_fkey",
+          "delete_rule": "SET NULL",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25837_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25837_2_not_null",
+          "check_clause": "match_id IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "idx_scorecards_match_id",
+          "columns": "{match_id}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "scorecards_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "sports": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('sports_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "name",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [],
+      "unique_constraints": [
+        {
+          "constraint_name": "sports_name_key",
+          "columns": "{name}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25595_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25595_2_not_null",
+          "check_clause": "name IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "sports_name_key",
+          "columns": "{name}",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "sports_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 15,
+      "sample_data": [
+        {
+          "id": 1,
+          "name": "Football"
+        },
+        {
+          "id": 2,
+          "name": "Basketball"
+        },
+        {
+          "id": 3,
+          "name": "Cricket"
+        }
+      ]
+    },
+    "teams": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('teams_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "school_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "sport_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "team_name",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "season",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "school_id",
+          "foreign_table_name": "schools",
+          "foreign_column_name": "id",
+          "constraint_name": "teams_school_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "sport_id",
+          "foreign_table_name": "sports",
+          "foreign_column_name": "id",
+          "constraint_name": "teams_sport_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "school_id",
+          "foreign_table_name": "schools",
+          "foreign_column_name": "id",
+          "constraint_name": "fk_teams_school",
+          "delete_rule": "NO ACTION",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25629_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "teams_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 3,
+      "sample_data": [
+        {
+          "id": 3,
+          "school_id": 18,
+          "sport_id": 1,
+          "team_name": "Alpha Football Team 1751940286142",
+          "season": "2024-25",
+          "created_at": "2025-07-08T02:04:46.218Z"
+        },
+        {
+          "id": 4,
+          "school_id": 19,
+          "sport_id": 1,
+          "team_name": "Beta Football Team 1751940286142",
+          "season": "2024-25",
+          "created_at": "2025-07-08T02:04:46.218Z"
+        },
+        {
+          "id": 5,
+          "school_id": 18,
+          "sport_id": 1,
+          "team_name": "Gamma Football Team 1751940286142",
+          "season": "2024-25",
+          "created_at": "2025-07-08T02:04:46.274Z"
+        }
+      ]
+    },
+    "tournament_audit_log": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('tournament_audit_log_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "tournament_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "user_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "action",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "old_values",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "new_values",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "notes",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_41781_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41781_2_not_null",
+          "check_clause": "tournament_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41781_3_not_null",
+          "check_clause": "user_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41781_4_not_null",
+          "check_clause": "action IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "tournament_audit_log_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 1,
+      "sample_data": [
+        {
+          "id": 1,
+          "tournament_id": 4,
+          "user_id": 1,
+          "action": "test_action",
+          "old_values": null,
+          "new_values": {
+            "test": "data"
+          },
+          "notes": "System test audit entry",
+          "created_at": "2025-07-08T01:28:30.713Z"
+        }
+      ]
+    },
+    "tournament_categories": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('tournament_categories_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "tournament_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "category_name",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "category_type",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "boolean",
+          "is_nullable": "YES",
+          "column_default": "true",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "bool"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_41705_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41705_2_not_null",
+          "check_clause": "tournament_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41705_3_not_null",
+          "check_clause": "category_name IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41705_4_not_null",
+          "check_clause": "category_type IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "tournament_categories_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "tournament_matches": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('tournament_matches_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "tournament_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "match_number",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "round_number",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "home_team_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "away_team_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "venue",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 300,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "scheduled_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "match_status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'scheduled'::character varying",
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "home_score",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "0",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "away_score",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "0",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "winner_team_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_41719_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41719_2_not_null",
+          "check_clause": "tournament_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41719_3_not_null",
+          "check_clause": "match_number IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41719_4_not_null",
+          "check_clause": "round_number IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41719_5_not_null",
+          "check_clause": "home_team_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41719_6_not_null",
+          "check_clause": "away_team_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41719_8_not_null",
+          "check_clause": "scheduled_at IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "idx_tournament_matches_tournament",
+          "columns": "{tournament_id}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "tournament_matches_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "tournament_players": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('tournament_players_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "tournament_team_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "player_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "jersey_number",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "position",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 64,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "tournament_team_id",
+          "foreign_table_name": "tournament_teams",
+          "foreign_column_name": "id",
+          "constraint_name": "tournament_players_tournament_team_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "player_id",
+          "foreign_table_name": "players",
+          "foreign_column_name": "id",
+          "constraint_name": "tournament_players_player_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25820_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25820_2_not_null",
+          "check_clause": "tournament_team_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25820_3_not_null",
+          "check_clause": "player_id IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "idx_tournament_players_player_id",
+          "columns": "{player_id}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "tournament_players_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 4,
+      "sample_data": [
+        {
+          "id": 1,
+          "tournament_team_id": 3,
+          "player_id": 461,
+          "jersey_number": 1,
+          "position": null
+        },
+        {
+          "id": 2,
+          "tournament_team_id": 3,
+          "player_id": 462,
+          "jersey_number": 2,
+          "position": null
+        },
+        {
+          "id": 3,
+          "tournament_team_id": 4,
+          "player_id": 463,
+          "jersey_number": 1,
+          "position": null
+        }
+      ]
+    },
+    "tournament_registrations": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('tournament_registrations_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "tournament_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "team_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "player_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "registration_date",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'pending'::character varying",
+          "character_maximum_length": 30,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "team_id",
+          "foreign_table_name": "teams",
+          "foreign_column_name": "id",
+          "constraint_name": "tournament_registrations_team_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        },
+        {
+          "column_name": "player_id",
+          "foreign_table_name": "players",
+          "foreign_column_name": "id",
+          "constraint_name": "tournament_registrations_player_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25773_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "tournament_registrations_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 2,
+      "sample_data": [
+        {
+          "id": 1,
+          "tournament_id": 8,
+          "team_id": 3,
+          "player_id": null,
+          "registration_date": "2025-07-08T02:04:46.255Z",
+          "status": "registered"
+        },
+        {
+          "id": 2,
+          "tournament_id": 8,
+          "team_id": 4,
+          "player_id": null,
+          "registration_date": "2025-07-08T02:04:46.267Z",
+          "status": "registered"
+        }
+      ]
+    },
+    "tournament_sports": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('tournament_sports_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "tournament_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "sport_name",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 64,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "team_size",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "max_teams",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "rules_url",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "config",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_33660_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_33660_3_not_null",
+          "check_clause": "sport_name IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "tournament_sports_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 1,
+      "sample_data": [
+        {
+          "id": 1,
+          "tournament_id": 10,
+          "sport_name": "Football",
+          "team_size": 15,
+          "max_teams": 10,
+          "rules_url": "",
+          "config": null,
+          "created_at": "2025-06-27T23:10:29.260Z",
+          "updated_at": "2025-06-27T23:10:29.260Z"
+        }
+      ]
+    },
+    "tournament_standings": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('tournament_standings_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "tournament_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "team_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "position",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "points",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "0",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "matches_played",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "0",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "wins",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "0",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "draws",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "0",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "losses",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "0",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "goals_for",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "0",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "goals_against",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "0",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "goal_difference",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "0",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "last_updated",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [],
+      "unique_constraints": [
+        {
+          "constraint_name": "unique_team_tournament_standing",
+          "columns": "{tournament_id,team_id}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_41735_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41735_2_not_null",
+          "check_clause": "tournament_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41735_3_not_null",
+          "check_clause": "team_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41735_4_not_null",
+          "check_clause": "position IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "idx_tournament_standings_tournament",
+          "columns": "{tournament_id}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "tournament_standings_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "unique_team_tournament_standing",
+          "columns": "{tournament_id,team_id}",
+          "is_unique": true,
+          "is_primary": false
+        }
+      ],
+      "row_count": 0,
+      "sample_data": []
+    },
+    "tournament_teams": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('tournament_teams_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "tournament_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "team_id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "seed_order",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "registration_status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'registered'::character varying",
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "team_id",
+          "foreign_table_name": "teams",
+          "foreign_column_name": "id",
+          "constraint_name": "tournament_teams_team_id_fkey",
+          "delete_rule": "CASCADE",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25803_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25803_2_not_null",
+          "check_clause": "tournament_id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25803_3_not_null",
+          "check_clause": "team_id IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "idx_tournament_teams_team_id",
+          "columns": "{team_id}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "tournament_teams_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 3,
+      "sample_data": [
+        {
+          "id": 3,
+          "tournament_id": 8,
+          "team_id": 3,
+          "seed_order": 1,
+          "registration_status": "registered"
+        },
+        {
+          "id": 4,
+          "tournament_id": 8,
+          "team_id": 4,
+          "seed_order": null,
+          "registration_status": "registered"
+        },
+        {
+          "id": 5,
+          "tournament_id": 8,
+          "team_id": 5,
+          "seed_order": 3,
+          "registration_status": "registered"
+        }
+      ]
+    },
+    "tournaments": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('tournaments_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "tournament_code",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "name",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 200,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "description",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "sport",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'general'::character varying",
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "tournament_type",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'school'::character varying",
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "format",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'knockout'::character varying",
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "location",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 200,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "start_date",
+          "data_type": "date",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "date"
+        },
+        {
+          "column_name": "end_date",
+          "data_type": "date",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "date"
+        },
+        {
+          "column_name": "status",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'draft'::character varying",
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "organizer_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "created_by",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "CURRENT_TIMESTAMP",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "max_teams",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "16",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "min_teams",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": "2",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "visibility",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'public'::character varying",
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "is_featured",
+          "data_type": "boolean",
+          "is_nullable": "YES",
+          "column_default": "false",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "bool"
+        },
+        {
+          "column_name": "is_active",
+          "data_type": "boolean",
+          "is_nullable": "YES",
+          "column_default": "true",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "bool"
+        },
+        {
+          "column_name": "entry_fee",
+          "data_type": "numeric",
+          "is_nullable": "YES",
+          "column_default": "0.00",
+          "character_maximum_length": null,
+          "numeric_precision": 10,
+          "numeric_scale": 2,
+          "udt_name": "numeric"
+        },
+        {
+          "column_name": "prize_pool",
+          "data_type": "numeric",
+          "is_nullable": "YES",
+          "column_default": "0.00",
+          "character_maximum_length": null,
+          "numeric_precision": 10,
+          "numeric_scale": 2,
+          "udt_name": "numeric"
+        },
+        {
+          "column_name": "age_group",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "gender",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 10,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "category",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'general'::character varying",
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "logo_url",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 500,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "banner_url",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 500,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "registration_start_date",
+          "data_type": "date",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "date"
+        },
+        {
+          "column_name": "registration_end_date",
+          "data_type": "date",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "date"
+        },
+        {
+          "column_name": "eligibility_criteria",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "rules_and_regulations",
+          "data_type": "text",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "text"
+        },
+        {
+          "column_name": "contact_info",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "social_media",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "live_streaming_url",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 500,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "metadata",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        },
+        {
+          "column_name": "approved_by",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "approved_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "published_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "tournament_id",
+          "data_type": "uuid",
+          "is_nullable": "YES",
+          "column_default": "uuid_generate_v4()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "uuid"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [],
+      "unique_constraints": [
+        {
+          "constraint_name": "tournaments_tournament_code_key",
+          "columns": "{tournament_code}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_41764_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41764_2_not_null",
+          "check_clause": "tournament_code IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41764_3_not_null",
+          "check_clause": "name IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_41764_13_not_null",
+          "check_clause": "created_by IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "tournaments_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        },
+        {
+          "index_name": "tournaments_tournament_code_key",
+          "columns": "{tournament_code}",
+          "is_unique": true,
+          "is_primary": false
+        }
+      ],
+      "row_count": 7,
+      "sample_data": [
+        {
+          "id": 1,
+          "tournament_code": "TRN001TEST",
+          "name": "Test Enhanced Tournament",
+          "description": "A test tournament with enhanced features",
+          "sport": "football",
+          "tournament_type": "school",
+          "format": "knockout",
+          "location": null,
+          "start_date": null,
+          "end_date": null,
+          "status": "published",
+          "organizer_id": null,
+          "created_by": 1,
+          "created_at": "2025-07-08T01:10:38.404Z",
+          "updated_at": "2025-07-08T01:10:38.426Z",
+          "max_teams": 16,
+          "min_teams": 4,
+          "visibility": "public",
+          "is_featured": false,
+          "is_active": true,
+          "entry_fee": "0.00",
+          "prize_pool": "0.00",
+          "age_group": null,
+          "gender": null,
+          "category": "general",
+          "logo_url": null,
+          "banner_url": null,
+          "registration_start_date": null,
+          "registration_end_date": null,
+          "eligibility_criteria": null,
+          "rules_and_regulations": null,
+          "contact_info": null,
+          "social_media": null,
+          "live_streaming_url": null,
+          "metadata": null,
+          "approved_by": null,
+          "approved_at": null,
+          "published_at": null,
+          "tournament_id": "49c88371-07e7-40b7-9bd0-e5022ca0ad54"
+        },
+        {
+          "id": 3,
+          "tournament_code": "TRN1751937443615",
+          "name": "Test Enhanced Tournament 1751937443615",
+          "description": "A test tournament with enhanced features",
+          "sport": "football",
+          "tournament_type": "school",
+          "format": "knockout",
+          "location": null,
+          "start_date": null,
+          "end_date": null,
+          "status": "published",
+          "organizer_id": null,
+          "created_by": 1,
+          "created_at": "2025-07-08T01:17:23.672Z",
+          "updated_at": "2025-07-08T01:17:23.680Z",
+          "max_teams": 16,
+          "min_teams": 4,
+          "visibility": "public",
+          "is_featured": false,
+          "is_active": true,
+          "entry_fee": "0.00",
+          "prize_pool": "0.00",
+          "age_group": null,
+          "gender": null,
+          "category": "general",
+          "logo_url": null,
+          "banner_url": null,
+          "registration_start_date": null,
+          "registration_end_date": null,
+          "eligibility_criteria": null,
+          "rules_and_regulations": null,
+          "contact_info": null,
+          "social_media": null,
+          "live_streaming_url": null,
+          "metadata": null,
+          "approved_by": null,
+          "approved_at": null,
+          "published_at": null,
+          "tournament_id": "0013ddb7-9cef-4906-9614-87994bbfe6a8"
+        },
+        {
+          "id": 4,
+          "tournament_code": "TRN1751938110628",
+          "name": "Test Enhanced Tournament 1751938110628",
+          "description": "A test tournament with enhanced features",
+          "sport": "football",
+          "tournament_type": "school",
+          "format": "knockout",
+          "location": null,
+          "start_date": null,
+          "end_date": null,
+          "status": "published",
+          "organizer_id": null,
+          "created_by": 1,
+          "created_at": "2025-07-08T01:28:30.677Z",
+          "updated_at": "2025-07-08T01:28:30.689Z",
+          "max_teams": 16,
+          "min_teams": 4,
+          "visibility": "public",
+          "is_featured": false,
+          "is_active": true,
+          "entry_fee": "0.00",
+          "prize_pool": "0.00",
+          "age_group": null,
+          "gender": null,
+          "category": "general",
+          "logo_url": null,
+          "banner_url": null,
+          "registration_start_date": null,
+          "registration_end_date": null,
+          "eligibility_criteria": null,
+          "rules_and_regulations": null,
+          "contact_info": null,
+          "social_media": null,
+          "live_streaming_url": null,
+          "metadata": null,
+          "approved_by": null,
+          "approved_at": null,
+          "published_at": null,
+          "tournament_id": "b91af094-8b2b-4331-8111-4b6aea40060d"
+        }
+      ]
+    },
+    "users": {
+      "columns": [
+        {
+          "column_name": "id",
+          "data_type": "integer",
+          "is_nullable": "NO",
+          "column_default": "nextval('users_id_seq'::regclass)",
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "full_name",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "email",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "password_hash",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 200,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "role",
+          "data_type": "character varying",
+          "is_nullable": "NO",
+          "column_default": null,
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "school_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "created_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "updated_at",
+          "data_type": "timestamp without time zone",
+          "is_nullable": "YES",
+          "column_default": "now()",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "timestamp"
+        },
+        {
+          "column_name": "organization_id",
+          "data_type": "integer",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": null,
+          "numeric_precision": 32,
+          "numeric_scale": 0,
+          "udt_name": "int4"
+        },
+        {
+          "column_name": "google_id",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 100,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "phone",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 20,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "two_factor_enabled",
+          "data_type": "boolean",
+          "is_nullable": "YES",
+          "column_default": "false",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "bool"
+        },
+        {
+          "column_name": "profile_photo_url",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": null,
+          "character_maximum_length": 500,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "timezone",
+          "data_type": "character varying",
+          "is_nullable": "YES",
+          "column_default": "'UTC'::character varying",
+          "character_maximum_length": 50,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "varchar"
+        },
+        {
+          "column_name": "notification_preferences",
+          "data_type": "jsonb",
+          "is_nullable": "YES",
+          "column_default": "'{}'::jsonb",
+          "character_maximum_length": null,
+          "numeric_precision": null,
+          "numeric_scale": null,
+          "udt_name": "jsonb"
+        }
+      ],
+      "primary_key": [
+        {
+          "column_name": "id",
+          "ordinal_position": 1
+        }
+      ],
+      "foreign_keys": [
+        {
+          "column_name": "organization_id",
+          "foreign_table_name": "organizations",
+          "foreign_column_name": "id",
+          "constraint_name": "fk_users_organization",
+          "delete_rule": "NO ACTION",
+          "update_rule": "NO ACTION"
+        }
+      ],
+      "unique_constraints": [
+        {
+          "constraint_name": "users_email_key",
+          "columns": "{email}"
+        },
+        {
+          "constraint_name": "users_google_id_key",
+          "columns": "{google_id}"
+        },
+        {
+          "constraint_name": "users_phone_key",
+          "columns": "{phone}"
+        }
+      ],
+      "check_constraints": [
+        {
+          "constraint_name": "2200_25564_1_not_null",
+          "check_clause": "id IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25564_2_not_null",
+          "check_clause": "full_name IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25564_3_not_null",
+          "check_clause": "email IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25564_4_not_null",
+          "check_clause": "password_hash IS NOT NULL"
+        },
+        {
+          "constraint_name": "2200_25564_5_not_null",
+          "check_clause": "role IS NOT NULL"
+        }
+      ],
+      "indexes": [
+        {
+          "index_name": "idx_users_email",
+          "columns": "{email}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "idx_users_organization",
+          "columns": "{organization_id}",
+          "is_unique": false,
+          "is_primary": false
+        },
+        {
+          "index_name": "users_email_key",
+          "columns": "{email}",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "users_google_id_key",
+          "columns": "{google_id}",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "users_phone_key",
+          "columns": "{phone}",
+          "is_unique": true,
+          "is_primary": false
+        },
+        {
+          "index_name": "users_pkey",
+          "columns": "{id}",
+          "is_unique": true,
+          "is_primary": true
+        }
+      ],
+      "row_count": 16,
+      "sample_data": [
+        {
+          "id": 12,
+          "full_name": "Test Admin",
+          "email": "test@athletiq.com",
+          "password_hash": "$2a$10$5iUDCOFeGqRwtjdppYTd2eWLwY9gw93HCD.Yv44.b6vSTicL5GRmG",
+          "role": "SuperAdmin",
+          "school_id": null,
+          "created_at": "2025-07-03T00:20:13.873Z",
+          "updated_at": "2025-07-03T00:20:13.873Z",
+          "organization_id": null,
+          "google_id": null,
+          "phone": null,
+          "two_factor_enabled": false,
+          "profile_photo_url": null,
+          "timezone": "UTC",
+          "notification_preferences": {}
+        },
+        {
+          "id": 1,
+          "full_name": "Super Admin",
+          "email": "super@athletiq.com",
+          "password_hash": "$2a$12$K9HbjDGOKQytU81eVUj9RO4oiJ5bjKjK204b7Hxt0s5bMqpp0wNhC",
+          "role": "SuperAdmin",
+          "school_id": null,
+          "created_at": "2025-06-26T19:18:41.095Z",
+          "updated_at": "2025-06-26T19:18:41.095Z",
+          "organization_id": null,
+          "google_id": null,
+          "phone": null,
+          "two_factor_enabled": false,
+          "profile_photo_url": null,
+          "timezone": "UTC",
+          "notification_preferences": {}
+        },
+        {
+          "id": 3,
+          "full_name": "Minu Basnet",
+          "email": "admin.pashupati@athletiq.com",
+          "password_hash": "$2b$10$97lm0nztbsUQCZQJtjTSe.jgw58HORinPckzgZCTBsKnQCjvoJ52S",
+          "role": "SchoolAdmin",
+          "school_id": 2,
+          "created_at": "2025-06-26T20:00:51.075Z",
+          "updated_at": "2025-06-26T20:00:51.075Z",
+          "organization_id": null,
+          "google_id": null,
+          "phone": null,
+          "two_factor_enabled": false,
+          "profile_photo_url": null,
+          "timezone": "UTC",
+          "notification_preferences": {}
+        }
+      ]
+    }
+  },
+  "relationships": {
+    "audit_logs": [
+      {
+        "from": "audit_logs.user_id",
+        "to": "users.id",
+        "constraint": "fk_audit_logs_user",
+        "delete_rule": "NO ACTION",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "document_uploads": [
+      {
+        "from": "document_uploads.uploaded_by",
+        "to": "users.id",
+        "constraint": "fk_document_uploads_user",
+        "delete_rule": "NO ACTION",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "matches": [
+      {
+        "from": "matches.team1_id",
+        "to": "teams.id",
+        "constraint": "matches_team1_id_fkey",
+        "delete_rule": "SET NULL",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "matches.team2_id",
+        "to": "teams.id",
+        "constraint": "matches_team2_id_fkey",
+        "delete_rule": "SET NULL",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "matches.sport_id",
+        "to": "sports.id",
+        "constraint": "matches_sport_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "matches.home_team_id",
+        "to": "tournament_teams.id",
+        "constraint": "fk_matches_home_team_id",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "matches.away_team_id",
+        "to": "tournament_teams.id",
+        "constraint": "fk_matches_away_team_id",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "notifications": [
+      {
+        "from": "notifications.user_id",
+        "to": "users.id",
+        "constraint": "fk_notifications_user",
+        "delete_rule": "NO ACTION",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "player_match_stats": [
+      {
+        "from": "player_match_stats.player_id",
+        "to": "players.id",
+        "constraint": "player_match_stats_player_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "player_match_stats.match_id",
+        "to": "matches.id",
+        "constraint": "player_match_stats_match_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "player_match_stats.team_id",
+        "to": "teams.id",
+        "constraint": "player_match_stats_team_id_fkey",
+        "delete_rule": "SET NULL",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "player_sport_participation": [
+      {
+        "from": "player_sport_participation.sport_id",
+        "to": "sports.id",
+        "constraint": "player_sport_participation_sport_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "player_sport_participation.team_id",
+        "to": "teams.id",
+        "constraint": "player_sport_participation_team_id_fkey",
+        "delete_rule": "SET NULL",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "player_sport_participation.player_id",
+        "to": "players.id",
+        "constraint": "player_sport_participation_player_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "players": [
+      {
+        "from": "players.school_id",
+        "to": "schools.id",
+        "constraint": "players_school_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "players.created_by",
+        "to": "users.id",
+        "constraint": "players_created_by_fkey",
+        "delete_rule": "SET NULL",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "players.school_id",
+        "to": "schools.id",
+        "constraint": "fk_players_school",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "schools": [
+      {
+        "from": "schools.created_by",
+        "to": "users.id",
+        "constraint": "schools_created_by_fkey",
+        "delete_rule": "SET NULL",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "schools.admin_user_id",
+        "to": "users.id",
+        "constraint": "schools_admin_user_id_fkey",
+        "delete_rule": "NO ACTION",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "schools.organization_id",
+        "to": "organizations.id",
+        "constraint": "fk_schools_organization",
+        "delete_rule": "NO ACTION",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "scorecards": [
+      {
+        "from": "scorecards.match_id",
+        "to": "matches.id",
+        "constraint": "scorecards_match_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "scorecards.uploaded_by",
+        "to": "users.id",
+        "constraint": "scorecards_uploaded_by_fkey",
+        "delete_rule": "SET NULL",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "teams": [
+      {
+        "from": "teams.school_id",
+        "to": "schools.id",
+        "constraint": "teams_school_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "teams.sport_id",
+        "to": "sports.id",
+        "constraint": "teams_sport_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "teams.school_id",
+        "to": "schools.id",
+        "constraint": "fk_teams_school",
+        "delete_rule": "NO ACTION",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "tournament_players": [
+      {
+        "from": "tournament_players.tournament_team_id",
+        "to": "tournament_teams.id",
+        "constraint": "tournament_players_tournament_team_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "tournament_players.player_id",
+        "to": "players.id",
+        "constraint": "tournament_players_player_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "tournament_registrations": [
+      {
+        "from": "tournament_registrations.team_id",
+        "to": "teams.id",
+        "constraint": "tournament_registrations_team_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      },
+      {
+        "from": "tournament_registrations.player_id",
+        "to": "players.id",
+        "constraint": "tournament_registrations_player_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "tournament_teams": [
+      {
+        "from": "tournament_teams.team_id",
+        "to": "teams.id",
+        "constraint": "tournament_teams_team_id_fkey",
+        "delete_rule": "CASCADE",
+        "update_rule": "NO ACTION"
+      }
+    ],
+    "users": [
+      {
+        "from": "users.organization_id",
+        "to": "organizations.id",
+        "constraint": "fk_users_organization",
+        "delete_rule": "NO ACTION",
+        "update_rule": "NO ACTION"
+      }
+    ]
+  },
+  "constraints": {},
+  "indexes": {},
+  "sample_data": {}
+}

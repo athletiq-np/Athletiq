@@ -7,7 +7,7 @@
 //
 
 const jwt = require('jsonwebtoken');
-const pool = require('../config/db');
+const { pool } = require('../config/db');
 
 /**
  * @desc    Protect routes by verifying the token from the cookie.

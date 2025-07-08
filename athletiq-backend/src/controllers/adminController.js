@@ -1,7 +1,7 @@
 //
 // 🧠 ATHLETIQ - Admin Controller (Upgraded with Security & Standards)
 //
-const pool = require('../config/db');
+const { pool } = require('../config/db');
 const bcrypt = require('bcryptjs');
 const { ApiResponse, getPaginationInfo } = require('../utils/apiResponse');
 const { logInfo, logError, logSecurityEvent } = require('../utils/logger');
