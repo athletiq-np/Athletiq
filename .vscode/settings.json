@@ -1,0 +1,69 @@
+{
+  // 🚀 VS Code Performance Optimization - 6GB Memory Allocation
+  "typescript.preferences.includePackageJsonAutoImports": "off",
+  "typescript.suggest.autoImports": false,
+  "typescript.disableAutomaticTypeAcquisition": true,
+  "search.followSymlinks": false,
+  "search.useIgnoreFiles": true,
+  "files.watcherExclude": {
+    "**/node_modules/**": true,
+    "**/.git/**": true,
+    "**/dist/**": true,
+    "**/build/**": true,
+    "**/.next/**": true,
+    "**/coverage/**": true,
+    "**/logs/**": true
+  },
+  "files.exclude": {
+    "**/node_modules": true,
+    "**/.git": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.next": true,
+    "**/coverage": true
+  },
+  
+  // 🧠 Memory Management - 6GB Allocation
+  "typescript.tsserver.maxTsServerMemory": 6144,
+  "extensions.autoUpdate": false,
+  "extensions.autoCheckUpdates": false,
+  "workbench.settings.enableNaturalLanguageSearch": false,
+  
+  // 🔍 Search Performance
+  "search.maxResults": 2000,
+  "search.exclude": {
+    "**/node_modules": true,
+    "**/dist": true,
+    "**/build": true,
+    "**/.next": true,
+    "**/coverage": true,
+    "**/logs": true
+  },
+  
+  // 📁 File Performance
+  "files.associations": {
+    "*.js": "javascript",
+    "*.jsx": "javascriptreact",
+    "*.ts": "typescript",
+    "*.tsx": "typescriptreact"
+  },
+  
+  // 🎨 Editor Performance
+  "editor.semanticHighlighting.enabled": false,
+  "editor.minimap.enabled": false,
+  "breadcrumbs.enabled": false,
+  "editor.hover.delay": 1000,
+  "editor.quickSuggestions": {
+    "other": false,
+    "comments": false,
+    "strings": false
+  },
+  
+  // 🔧 Language Server Performance
+  "eslint.enable": false,
+  "emmet.showExpandedAbbreviation": "never",
+  "html.suggest.html5": false,
+  "css.validate": false,
+  "scss.validate": false,
+  "less.validate": false
+}
