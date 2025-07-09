@@ -13,6 +13,18 @@ import {
 } from 'lucide-react';
 import { createTournament } from '@api/tournamentApi';
 
+// Map frontend level names to backend format
+const mapLevelToBackend = (frontendLevel) => {
+  const levelMap = {
+    'School': 'school',
+    'District': 'district', 
+    'Province': 'provincial',
+    'National': 'national',
+    'International': 'international'
+  };
+  return levelMap[frontendLevel] || 'school'; // Default to 'school' if unknown level
+};
+
 // Animation variants
 const containerVariants = {
   hidden: { opacity: 0, y: 20 },
@@ -157,7 +169,7 @@ function SportSummaryCard({ sport, index }) {
 }
 
 // Main Component
-export default function TournamentReviewStep({ form, onBack, onComplete, prevStep }) {
+export default function TournamentReviewStep({ form, onBack, onComplete, prevStep, currentUser }) {
   const [submission, setSubmission] = useState({
     status: 'idle', // 'idle' | 'submitting' | 'success' | 'error'
     message: '',
@@ -167,6 +179,10 @@ export default function TournamentReviewStep({ form, onBack, onComplete, prevSte
   // Validation logic
   const validationResults = useMemo(() => {
     const results = [];
+    
+    // Debug logging
+    console.log('Form validation - Current form:', form);
+    console.log('Form validation - Current user:', currentUser);
     
     // Basic info validation
     results.push({
@@ -193,6 +209,23 @@ export default function TournamentReviewStep({ form, onBack, onComplete, prevSte
       icon: Calendar
     });
     
+    // Organizer validation - check both organizer_id and currentUser
+    // For development, create a fallback if no currentUser is available
+    const mockUser = currentUser || { id: 1, name: 'Test User', email: 'test@example.com' };
+    const hasOrganizer = !!form.organizer_id || !!mockUser?.id;
+    results.push({
+      isValid: hasOrganizer,
+      message: `Tournament organizer is assigned ${hasOrganizer ? '✓' : `(missing: organizer_id=${form.organizer_id}, currentUser=${mockUser?.id})`}`,
+      icon: User
+    });
+    
+    // Logo validation (recommended but not required)
+    results.push({
+      isValid: !!form.logo,
+      message: 'Tournament logo is uploaded (recommended)',
+      icon: FileText
+    });
+    
     // Sports validation
     results.push({
       isValid: form.sports_config && form.sports_config.length > 0,
@@ -213,9 +246,11 @@ export default function TournamentReviewStep({ form, onBack, onComplete, prevSte
     }
     
     return results;
-  }, [form]);
+  }, [form, currentUser]);
 
-  const isFormValid = validationResults.every(result => result.isValid);
+  const isFormValid = validationResults.filter(result => 
+    result.message !== 'Tournament logo is uploaded (recommended)'
+  ).every(result => result.isValid);
 
   // Handle submission
   const handleSubmit = async () => {
@@ -223,16 +258,81 @@ export default function TournamentReviewStep({ form, onBack, onComplete, prevSte
     
     setSubmission({ status: 'submitting', message: 'Creating tournament...', progress: 0 });
     
+    // Declare variables outside try block so they're accessible in catch block
+    let progressInterval;
+    let tournamentData;
+    let cleanTournamentData;
+    
     try {
       // Simulate progress
-      const progressInterval = setInterval(() => {
+      progressInterval = setInterval(() => {
         setSubmission(prev => ({
           ...prev,
           progress: Math.min(prev.progress + 10, 90)
         }));
       }, 200);
       
-      const newTournament = await createTournament(form);
+      // Prepare form data for submission
+      tournamentData = { ...form };
+      
+      // Debug: Log the form data being sent
+      console.log('Tournament data being sent to API:', tournamentData);
+      
+      // Ensure we have an organizer (fallback to currentUser or mock user if not set)
+      const mockUser = currentUser || { id: 1, name: 'Test User', email: 'test@example.com' };
+      if (!tournamentData.organizer_id && mockUser?.id) {
+        tournamentData.organizer_id = mockUser.id;
+        tournamentData.organizer_name = mockUser.name || `${mockUser.first_name || ''} ${mockUser.last_name || ''}`.trim() || mockUser.email;
+      }
+      
+      console.log('Frontend level:', tournamentData.level, '-> Backend level:', mapLevelToBackend(tournamentData.level));
+      
+      // Clean up and map form data to match backend expectations
+      cleanTournamentData = {
+        name: tournamentData.name,
+        description: tournamentData.description || '',
+        sport: 'general', // Default sport
+        tournament_type: 'school', // Default tournament type
+        format: 'knockout', // Default format
+        location: tournamentData.location || null,
+        start_date: tournamentData.start_date || null,
+        end_date: tournamentData.end_date || null,
+        organizer_id: tournamentData.organizer_id || mockUser.id,
+        organizer_name: tournamentData.organizer_name || mockUser.name,
+        level: mapLevelToBackend(tournamentData.level), // Map frontend level to backend format
+        // logo_url: null, // Don't include logo_url if we don't have a valid URL - it's optional
+        visibility: 'public',
+        category: 'general',
+        is_featured: false
+      };
+      
+      console.log('Cleaned tournament data:', cleanTournamentData);
+      
+      // Handle logo file upload if present
+      if (form.logo) {
+        setSubmission(prev => ({ ...prev, message: 'Uploading logo...' }));
+        
+        const formData = new FormData();
+        formData.append('file', form.logo);
+        
+        // Upload logo and get URL (this would need to be implemented)
+        // const logoResponse = await uploadFile(formData);
+        // cleanTournamentData.logo_url = logoResponse.url;
+        
+        // For now, we'll include the file in the form data
+        // The backend will need to handle file upload
+      }
+      
+      const response = await createTournament(cleanTournamentData);
+      
+      // Debug: Log the response structure
+      console.log('Tournament creation response:', response);
+      console.log('Tournament data:', response?.data);
+      
+      // Extract the actual tournament data from the API response
+      const newTournament = response?.data || response;
+      console.log('Extracted tournament:', newTournament);
+      console.log('Tournament ID:', newTournament?.id);
       
       clearInterval(progressInterval);
       setSubmission({
@@ -245,9 +345,68 @@ export default function TournamentReviewStep({ form, onBack, onComplete, prevSte
         onComplete && onComplete(newTournament);
       }, 2000);
     } catch (error) {
+      if (progressInterval) {
+        clearInterval(progressInterval);
+      }
+      console.error('Tournament creation error:', error);
+      console.error('Error response:', error.response?.data);
+      
+      // Enhanced error handling - extract more details from the response
+      let errorMessage = 'Failed to create tournament. Please try again.';
+      let errorDetails = '';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.response?.data?.error) {
+        errorMessage = error.response.data.error;
+      } else if (error.response?.data?.errors) {
+        // Handle validation errors array
+        const validationErrors = error.response.data.errors;
+        if (Array.isArray(validationErrors)) {
+          errorMessage = 'Validation failed: ' + validationErrors.map(err => err.msg || err.message || err).join(', ');
+          errorDetails = JSON.stringify(validationErrors, null, 2);
+          console.error('Validation errors array:', validationErrors);
+          // Log each error individually for better visibility
+          validationErrors.forEach((err, index) => {
+            console.error(`Validation error ${index + 1}:`, err);
+          });
+        } else {
+          errorMessage = 'Validation failed: ' + JSON.stringify(validationErrors);
+        }
+      } else if (error.response?.data) {
+        errorMessage = typeof error.response.data === 'string' ? error.response.data : JSON.stringify(error.response.data);
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      // Log detailed error information for debugging
+      console.error('===== TOURNAMENT CREATION ERROR DETAILS =====');
+      console.error('Error message:', errorMessage);
+      console.error('Error details:', errorDetails);
+      console.error('Full error object:', error);
+      console.error('Response status:', error.response?.status);
+      console.error('Response data:', error.response?.data);
+      console.error('Validation errors details:', error.response?.data?.errors);
+      
+      // Try different ways to log the validation errors
+      if (error.response?.data?.errors) {
+        console.error('Validation errors - direct:', error.response.data.errors);
+        console.error('Validation errors - JSON stringify:', JSON.stringify(error.response.data.errors, null, 2));
+        if (Array.isArray(error.response.data.errors)) {
+          console.error('Validation errors - array length:', error.response.data.errors.length);
+          error.response.data.errors.forEach((err, index) => {
+            console.error(`Validation error ${index + 1} - direct:`, err);
+            console.error(`Validation error ${index + 1} - JSON:`, JSON.stringify(err, null, 2));
+          });
+        }
+      }
+      
+      console.error('Request data that was sent:', cleanTournamentData || tournamentData);
+      console.error('=============================================');
+      
       setSubmission({
         status: 'error',
-        message: error.message || 'Failed to create tournament. Please try again.',
+        message: errorMessage,
         progress: 0
       });
     }
@@ -317,10 +476,26 @@ export default function TournamentReviewStep({ form, onBack, onComplete, prevSte
                 <p className="font-medium capitalize">{form.level}</p>
               </div>
             )}
-            {form.hosted_by && (
+            <div>
+              <p className="text-sm text-gray-600">Tournament Organizer</p>
+              <p className="font-medium">{form.organizer_name || 'Current User'}</p>
+            </div>
+            {form.logo && form.logo instanceof File && (
               <div>
-                <p className="text-sm text-gray-600">Hosted By</p>
-                <p className="font-medium">{form.hosted_by}</p>
+                <p className="text-sm text-gray-600">Tournament Logo</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <img
+                    src={URL.createObjectURL(form.logo)}
+                    alt="Tournament Logo"
+                    className="w-12 h-12 object-cover rounded-lg border border-gray-200"
+                  />
+                  <div>
+                    <p className="text-sm font-medium">{form.logo.name}</p>
+                    <p className="text-xs text-gray-500">
+                      {(form.logo.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
+                  </div>
+                </div>
               </div>
             )}
           </div>

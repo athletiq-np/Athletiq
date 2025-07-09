@@ -6,6 +6,7 @@ import { FaTrophy, FaPlus, FaCalendarAlt, FaEye, FaEdit, FaUsers, FaChartLine, F
 import TournamentRegistrationModal from './TournamentRegistrationModal';
 import TournamentBracket from './TournamentBracket';
 import { toast } from 'react-toastify';
+import apiClient from '@api/apiClient';
 
 // Import tournament creation step components
 import TournamentInfoStep from '../tournament/TournamentInfoStep';
@@ -18,6 +19,7 @@ export default function TournamentManagement({ tournaments, school, onRefresh })
   const [activeTab, setActiveTab] = useState('overview');
   const [showRegistrationModal, setShowRegistrationModal] = useState(false);
   const [selectedTournament, setSelectedTournament] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
   const [tournamentData, setTournamentData] = useState({
     registered: [],
     available: [],
@@ -52,34 +54,39 @@ export default function TournamentManagement({ tournaments, school, onRefresh })
 
   useEffect(() => {
     fetchTournamentData();
+    fetchCurrentUser();
   }, []);
+
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await apiClient.get('/auth/me');
+      if (response.data.success) {
+        setCurrentUser(response.data.data);
+      }
+    } catch (error) {
+      console.error('Error fetching current user:', error);
+    }
+  };
 
   const fetchTournamentData = async () => {
     try {
       setLoading(true);
       
-      // Fetch enhanced tournament data
-      const [tournamentsRes, statsRes, teamsRes, playersRes, managedRes] = await Promise.all([
-        fetch('/api/schools/me/tournaments', { credentials: 'include' }),
-        fetch('/api/schools/me/tournament-stats', { credentials: 'include' }),
-        fetch('/api/schools/me/teams', { credentials: 'include' }),
-        fetch('/api/schools/me/players', { credentials: 'include' }),
-        fetch('/api/tournaments?created_by=me', { credentials: 'include' }) // New: managed tournaments
+      // Fetch enhanced tournament data using apiClient
+      const [tournamentsRes, statsRes, teamsRes, playersRes] = await Promise.all([
+        apiClient.get('/schools/me/tournaments').catch(() => ({ data: { success: false, data: { registered_tournaments: [], available_tournaments: [] } } })),
+        apiClient.get('/schools/me/tournament-stats').catch(() => ({ data: { success: false, data: {} } })),
+        apiClient.get('/schools/me/teams').catch(() => ({ data: { success: false, data: [] } })),
+        apiClient.get('/schools/me/players').catch(() => ({ data: { success: false, data: [] } }))
       ]);
 
-      const tournamentsData = await tournamentsRes.json();
-      const statsData = await statsRes.json();
-      const teamsData = await teamsRes.json();
-      const playersData = await playersRes.json();
-      const managedData = await managedRes.json();
-
       setTournamentData({
-        registered: tournamentsData.success ? tournamentsData.data.registered_tournaments : [],
-        available: tournamentsData.success ? tournamentsData.data.available_tournaments : [],
-        managed: managedData.success ? managedData.data.tournaments : [], // New: managed tournaments
-        stats: statsData.success ? statsData.data : {},
-        teams: teamsData.success ? teamsData.data : [],
-        players: playersData.success ? playersData.data : []
+        registered: tournamentsRes.data?.data?.registered_tournaments || [],
+        available: tournamentsRes.data?.data?.available_tournaments || [],
+        managed: tournamentsRes.data?.data?.registered_tournaments?.filter(t => t.relationship_type === 'organized') || [], // Tournaments organized by school
+        stats: statsRes.data?.data || {},
+        teams: teamsRes.data?.data || [],
+        players: playersRes.data?.data || []
       });
     } catch (error) {
       console.error('Error fetching tournament data:', error);
@@ -453,6 +460,7 @@ export default function TournamentManagement({ tournaments, school, onRefresh })
             step={createStep}
             form={tournamentForm}
             steps={CREATE_STEPS}
+            currentUser={currentUser}
             onNext={() => setCreateStep(prev => Math.min(prev + 1, CREATE_STEPS.length - 1))}
             onBack={() => setCreateStep(prev => Math.max(prev - 1, 0))}
             onFormUpdate={setTournamentForm}
@@ -810,7 +818,7 @@ function BracketView({ tournaments }) {
 }
 
 // Tournament Create Tab Component
-function TournamentCreateTab({ step, form, steps, onNext, onBack, onFormUpdate, onComplete }) {
+function TournamentCreateTab({ step, form, steps, currentUser, onNext, onBack, onFormUpdate, onComplete }) {
   // Step navigation handlers
   const handleNext = () => {
     if (step < steps.length - 1) {
@@ -875,6 +883,7 @@ function TournamentCreateTab({ step, form, steps, onNext, onBack, onFormUpdate, 
             form={form}
             updateForm={handleFormChange}
             nextStep={handleNext}
+            currentUser={currentUser}
           />
         )}
         
@@ -901,6 +910,7 @@ function TournamentCreateTab({ step, form, steps, onNext, onBack, onFormUpdate, 
             form={form}
             prevStep={handleBack}
             onComplete={onComplete}
+            currentUser={currentUser}
           />
         )}
       </div>

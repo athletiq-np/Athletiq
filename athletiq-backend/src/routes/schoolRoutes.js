@@ -65,6 +65,34 @@ router.get('/me/players', generalLimiter, protect, checkRole(['SchoolAdmin']), s
  */
 router.get('/me/tournament-stats', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getMySchoolTournamentStats);
 
+/**
+ * @route   GET /api/schools/houses
+ * @desc    Get houses for the school (mock data for now)
+ * @access  Private (SchoolAdmin)
+ */
+router.get('/houses', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getSchoolHouses);
+
+/**
+ * @route   GET /api/schools/staff
+ * @desc    Get staff for the school (mock data for now)
+ * @access  Private (SchoolAdmin)
+ */
+router.get('/staff', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getSchoolStaff);
+
+/**
+ * @route   GET /api/schools/notifications
+ * @desc    Get notifications for the school (mock data for now)
+ * @access  Private (SchoolAdmin)
+ */
+router.get('/notifications', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getSchoolNotifications);
+
+/**
+ * @route   GET /api/schools/activities
+ * @desc    Get activities for the school (mock data for now)
+ * @access  Private (SchoolAdmin)
+ */
+router.get('/activities', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getSchoolActivities);
+
 // You can add the update route here later, pointing to a controller function
 // router.patch('/:id', protect, upload.fields([...]), schoolController.updateSchool);
 

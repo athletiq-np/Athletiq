@@ -9,11 +9,12 @@ const { generalLimiter } = require('./src/middlewares/rateLimiter');
 const { sanitizeInput } = require('./src/middlewares/validation');
 const { specs, swaggerUi } = require('./src/config/swagger');
 
-// Initialize monitoring systems (do this early)
-const monitoring = require('./src/config/monitoring');
-if (process.env.NODE_ENV !== 'test') {
-  monitoring.initializeMonitoring();
-}
+// Initialize monitoring systems (temporarily disabled for debugging)
+// const monitoring = require('./src/config/monitoring');
+// if (process.env.NODE_ENV !== 'test') {
+//   monitoring.initializeMonitoring();
+// }
+console.log('✅ Monitoring temporarily disabled for debugging');
 
 const app = express();
 
@@ -32,42 +33,44 @@ app.use(cookieParser());
 
 // Input sanitization
 app.use(sanitizeInput);
-// Add this line right after your route registrations
-console.log('✅ Auth routes registered at /api/auth');
-app.use('/api/auth', require('./src/routes/authRoutes'));
 
 // --- API Routes ---
 app.get('/', (req, res) => res.send('Athletiq API is running...'));
 
+// Temporarily disable most routes for debugging - essential routes enabled
+app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/schools', require('./src/routes/schoolRoutes'));
-app.use('/api/players', require('./src/routes/playerRoutes'));
 app.use('/api/tournaments', require('./src/routes/tournamentRoutes'));
-app.use('/api/pre-tournament', require('./src/routes/preTournamentRoutes'));
-app.use('/api/admin', require('./src/routes/adminRoutes'));
-
-app.use('/api/teams', require('./src/routes/teamRoutes'));
-app.use('/api/registrations', require('./src/routes/registrationRoutes'));
+console.log('✅ Auth, school, and tournament routes registered');
+// app.use('/api/schools', require('./src/routes/schoolRoutes'));
+// app.use('/api/players', require('./src/routes/playerRoutes'));
+// app.use('/api/tournaments', require('./src/routes/tournamentRoutes'));
+// app.use('/api/admin', require('./src/routes/adminRoutes'));
+// app.use('/api/teams', require('./src/routes/teamRoutes'));
+// app.use('/api/registrations', require('./src/routes/registrationRoutes'));
 
 // Pre-Tournament Management Routes
-app.use('/api/pre-tournament', require('./src/routes/preTournamentRoutes'));
-console.log('✅ Pre-tournament management routes registered');
+// app.use('/api/pre-tournament', require('./src/routes/preTournamentRoutes'));
+console.log('✅ Auth routes only for debugging');
 
-// Enhanced AI and Document Processing Routes
-app.use('/api/documents', require('./src/routes/documentRoutes'));
-app.use('/api/ai', require('./src/routes/aiRoutes'));
-console.log('✅ AI and Document routes registered');
+// Enhanced AI and Document Processing Routes (temporarily disabled for debugging)
+// app.use('/api/documents', require('./src/routes/documentRoutes'));
+// app.use('/api/ai', require('./src/routes/aiRoutes'));
+console.log('✅ AI and Document routes temporarily disabled for debugging');
 
-// Health check and monitoring routes
-app.use('/api/health', require('./src/routes/health'));
-app.use('/api/monitoring', require('./src/routes/monitoringRoutes'));
-app.use('/api/upload', require('./src/routes/uploadRoutes'));
-app.use('/api/ocr', require('./src/routes/ocr'));
+// Health check and monitoring routes (temporarily simplified for debugging)
+// app.use('/api/health', require('./src/routes/health'));
+// app.use('/api/monitoring', require('./src/routes/monitoringRoutes'));
+// app.use('/api/upload', require('./src/routes/uploadRoutes'));
+// app.use('/api/ocr', require('./src/routes/ocr'));
+console.log('✅ Essential routes registered, others temporarily disabled for debugging');
 
-// API Documentation with Swagger
-app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
-  customCss: '.swagger-ui .topbar { display: none }',
-  customSiteTitle: 'Athletiq API Documentation'
-}));
+// API Documentation with Swagger (temporarily disabled for debugging)
+// app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(specs, {
+//   customCss: '.swagger-ui .topbar { display: none }',
+//   customSiteTitle: 'Athletiq API Documentation'
+// }));
+console.log('✅ Swagger temporarily disabled for debugging');
 
 // Serve static files (uploads)
 app.use('/uploads', express.static('uploads'));

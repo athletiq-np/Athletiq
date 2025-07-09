@@ -10,13 +10,15 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Calendar, MapPin, Trophy, Users, Info, CheckCircle2, 
   Clock, Star, Sparkles, AlertCircle, ArrowRight,
-  Building, Globe, Hash, FileText
+  Building, Globe, Hash, FileText, Upload, Image, X
 } from 'lucide-react';
 
-const TournamentInfoStep = ({ form, updateForm, nextStep }) => {
+const TournamentInfoStep = ({ form, updateForm, nextStep, currentUser }) => {
   const [errors, setErrors] = useState({});
   const [isValidating, setIsValidating] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
+  const [schools, setSchools] = useState([]);
+  const [loadingSchools, setLoadingSchools] = useState(false);
 
   // Auto-generate tournament code based on name
   useEffect(() => {
@@ -31,6 +33,39 @@ const TournamentInfoStep = ({ form, updateForm, nextStep }) => {
       }
     }
   }, [form.name]);
+
+  // Set current user as organizer by default
+  useEffect(() => {
+    const userToSet = currentUser || { id: 1, name: 'Test User', email: 'test@example.com' };
+    if (userToSet && !form.organizer_id) {
+      updateForm({ 
+        organizer_id: userToSet.id,
+        organizer_name: userToSet.name || `${userToSet.first_name || ''} ${userToSet.last_name || ''}`.trim() || userToSet.email
+      });
+    }
+  }, [currentUser, form.organizer_id]);
+
+  // Load schools for SuperAdmin
+  useEffect(() => {
+    if (currentUser?.role === 'super_admin') {
+      fetchSchools();
+    }
+  }, [currentUser]);
+
+  const fetchSchools = async () => {
+    try {
+      setLoadingSchools(true);
+      // This would need to be implemented based on your schools API
+      // const response = await fetch('/api/schools');
+      // const data = await response.json();
+      // setSchools(data);
+      setSchools([]); // Placeholder for now
+    } catch (error) {
+      console.error('Failed to fetch schools:', error);
+    } finally {
+      setLoadingSchools(false);
+    }
+  };
 
   // Location suggestions for Nepal
   const locationSuggestions = [
@@ -57,6 +92,58 @@ const TournamentInfoStep = ({ form, updateForm, nextStep }) => {
       setSuggestions(filtered);
     } else {
       setSuggestions([]);
+    }
+  };
+
+  const handleLogoChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        setErrors({
+          ...errors,
+          logo: 'Please select a valid image file'
+        });
+        return;
+      }
+      
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        setErrors({
+          ...errors,
+          logo: 'Image must be smaller than 5MB'
+        });
+        return;
+      }
+
+      updateForm({ logo: file });
+      // Clear any previous logo errors
+      if (errors.logo) {
+        setErrors({
+          ...errors,
+          logo: null
+        });
+      }
+    }
+  };
+
+  const handleOrganizerChange = (selectedId) => {
+    const userToSet = currentUser || { id: 1, name: 'Test User', email: 'test@example.com' };
+    if (selectedId === userToSet?.id) {
+      // Set current user as organizer
+      updateForm({ 
+        organizer_id: userToSet.id,
+        organizer_name: userToSet.name || `${userToSet.first_name || ''} ${userToSet.last_name || ''}`.trim() || userToSet.email
+      });
+    } else {
+      // Find the selected school
+      const selectedSchool = schools.find(school => school.id === selectedId);
+      if (selectedSchool) {
+        updateForm({ 
+          organizer_id: selectedSchool.id,
+          organizer_name: selectedSchool.name
+        });
+      }
     }
   };
 
@@ -180,20 +267,53 @@ const TournamentInfoStep = ({ form, updateForm, nextStep }) => {
             </AnimatePresence>
           </motion.div>
 
-          {/* Hosted By */}
-          <motion.div variants={inputVariants} className="space-y-2">
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              <Building className="w-4 h-4 inline mr-2" />
-              Organized By
-            </label>
-            <input
-              type="text"
-              value={form.hosted_by || ''}
-              onChange={(e) => handleInputChange('hosted_by', e.target.value)}
-              className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
-              placeholder="Organization or school name..."
-            />
-          </motion.div>
+          {/* Organizer Selection (SuperAdmin only) */}
+          {currentUser?.role === 'super_admin' && (
+            <motion.div variants={inputVariants} className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <Building className="w-4 h-4 inline mr-2" />
+                Tournament Organizer
+              </label>
+              <select
+                value={form.organizer_id || ''}
+                onChange={(e) => handleOrganizerChange(e.target.value)}
+                className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
+              >
+                <option value={(currentUser || { id: 1 }).id}>Myself (SuperAdmin)</option>
+                {schools.map((school) => (
+                  <option key={school.id} value={school.id}>
+                    {school.name}
+                  </option>
+                ))}
+              </select>
+              <p className="text-sm text-gray-500">
+                Select who will organize this tournament. Leave as "Myself" if you want to organize it directly.
+              </p>
+            </motion.div>
+          )}
+
+          {/* Tournament Organizer (display only for non-SuperAdmin) */}
+          {currentUser?.role !== 'super_admin' && (
+            <motion.div variants={inputVariants} className="space-y-2">
+              <label className="block text-sm font-semibold text-gray-700 mb-3">
+                <Building className="w-4 h-4 inline mr-2" />
+                Tournament Organizer
+              </label>
+              <div className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-xl bg-gray-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 bg-blue-500 rounded-full flex items-center justify-center text-white font-bold">
+                    {currentUser?.name?.charAt(0) || currentUser?.email?.charAt(0) || 'U'}
+                  </div>
+                  <div>
+                    <p className="font-medium text-gray-900">
+                      {currentUser?.name || currentUser?.email || 'Current User'}
+                    </p>
+                    <p className="text-sm text-gray-600">Tournament Organizer</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          )}
 
           {/* Description */}
           <motion.div variants={inputVariants} className="space-y-2">
@@ -393,19 +513,80 @@ const TournamentInfoStep = ({ form, updateForm, nextStep }) => {
             </motion.div>
           )}
 
-          {/* Logo URL */}
+          {/* Logo Upload */}
           <motion.div variants={inputVariants} className="space-y-2">
             <label className="block text-sm font-semibold text-gray-700 mb-3">
-              <Sparkles className="w-4 h-4 inline mr-2" />
-              Logo URL (Optional)
+              <Image className="w-4 h-4 inline mr-2" />
+              Tournament Logo
             </label>
-            <input
-              type="url"
-              value={form.logo_url || ''}
-              onChange={(e) => handleInputChange('logo_url', e.target.value)}
-              className="w-full px-6 py-4 text-lg border-2 border-gray-200 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 hover:border-gray-300"
-              placeholder="https://example.com/logo.png"
-            />
+            <div className="space-y-4">
+              <div className="flex items-center justify-center w-full">
+                <label
+                  htmlFor="logo-upload"
+                  className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-xl cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors"
+                >
+                  <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                    <Upload className="w-8 h-8 mb-4 text-gray-500" />
+                    <p className="mb-2 text-sm text-gray-500">
+                      <span className="font-semibold">Click to upload</span> or drag and drop
+                    </p>
+                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                  </div>
+                  <input
+                    id="logo-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleLogoChange}
+                    className="hidden"
+                  />
+                </label>
+              </div>
+              
+              {/* Logo Preview */}
+              {form.logo && form.logo instanceof File && (
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  className="relative"
+                >
+                  <div className="flex items-center gap-4 p-4 bg-green-50 border border-green-200 rounded-xl">
+                    <img
+                      src={URL.createObjectURL(form.logo)}
+                      alt="Logo Preview"
+                      className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                    />
+                    <div className="flex-1">
+                      <p className="font-medium text-green-800">{form.logo.name}</p>
+                      <p className="text-sm text-green-600">
+                        {(form.logo.size / 1024 / 1024).toFixed(2)} MB
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => updateForm({ logo: null })}
+                      className="p-2 text-red-600 hover:bg-red-100 rounded-lg transition-colors"
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+              
+              {/* Logo Error */}
+              <AnimatePresence>
+                {errors.logo && (
+                  <motion.p 
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -10 }}
+                    className="text-red-600 text-sm flex items-center gap-2"
+                  >
+                    <AlertCircle className="w-4 h-4" />
+                    {errors.logo}
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </div>
           </motion.div>
         </div>
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import axios from "axios";
 
 /**
@@ -12,13 +12,34 @@ import axios from "axios";
 export default function AddTournamentModal({ open, onClose, user, onAdded }) {
   // State for form fields
   const [name, setName] = useState("");
-  const [logo, setLogo] = useState(null);      // File input
+  const [logo, setLogo] = useState(null);      // File input (now required)
   const [organizerId, setOrganizerId] = useState(""); // Only super admin
+  const [schools, setSchools] = useState([]); // For super admin dropdown
+  const [loadingSchools, setLoadingSchools] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [err, setErr] = useState("");
 
-  // TODO: For real system, fetch users/organizations if assigning as super admin
-  // For now, keep organizerId empty or self
+  // Fetch schools/organizations for SuperAdmin dropdown
+  useEffect(() => {
+    if (open && user?.role === "super_admin") {
+      fetchSchools();
+    }
+  }, [open, user]);
+
+  const fetchSchools = async () => {
+    try {
+      setLoadingSchools(true);
+      const response = await axios.get("http://localhost:5000/api/schools", {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      setSchools(response.data.data || []);
+    } catch (error) {
+      console.error("Failed to fetch schools:", error);
+      setSchools([]);
+    } finally {
+      setLoadingSchools(false);
+    }
+  };
 
   if (!open) return null;
 

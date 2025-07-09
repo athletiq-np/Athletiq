@@ -103,11 +103,11 @@ export default function GlobalSchoolDashboard() {
         activitiesRes
       ] = await Promise.all([
         apiClient.get('/schools/me'),
-        apiClient.get('/schools/dashboard-stats').catch(() => ({ data: { data: {} } })),
-        apiClient.get('/schools/students?limit=100&page=1').catch(() => ({ data: { data: [] } })),
+        apiClient.get('/schools/me/tournament-stats').catch(() => ({ data: { data: {} } })),
+        apiClient.get('/schools/me/players?limit=100&page=1').catch(() => ({ data: { data: [] } })),
         apiClient.get('/schools/houses').catch(() => ({ data: { data: [] } })),
         apiClient.get('/schools/staff').catch(() => ({ data: { data: [] } })),
-        apiClient.get('/schools/tournaments?limit=100&page=1').catch(() => ({ data: { data: [] } })),
+        apiClient.get('/schools/me/tournaments?limit=100&page=1').catch(() => ({ data: { data: [] } })),
         apiClient.get('/schools/notifications?limit=20').catch(() => ({ data: { data: [] } })),
         apiClient.get('/schools/activities?limit=50').catch(() => ({ data: { data: [] } })),
       ]);

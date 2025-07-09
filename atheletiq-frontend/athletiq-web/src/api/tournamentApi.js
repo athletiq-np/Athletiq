@@ -12,19 +12,48 @@ import apiClient from './apiClient';
  */
 export const createTournament = async (tournamentData) => {
   try {
-    // 2. The function is now cleaner and only worries about the specific endpoint and data.
+    // Check if we have a logo file to upload
+    if (tournamentData.logo instanceof File) {
+      // First upload the logo
+      const formData = new FormData();
+      formData.append('file', tournamentData.logo);
+      
+      const uploadResponse = await apiClient.post('/upload', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      
+      // Replace the file with the uploaded URL
+      tournamentData.logo_url = uploadResponse.data.url;
+      delete tournamentData.logo;
+    }
+    
+    // Create the tournament
     const response = await apiClient.post('/tournaments', tournamentData);
     return response.data;
   } catch (error) {
-    // 3. Improved, robust error handling.
-    // We now inspect the error object and return a consistent, meaningful message
-    // instead of just the generic "Error creating tournament".
+    // Enhanced error handling that preserves the original response for debugging
+    console.error('API Error in createTournament:', error);
+    console.error('Error response:', error.response);
+    console.error('Error response data:', error.response?.data);
+    console.error('Error response status:', error.response?.status);
+    
     if (error.response && error.response.data && error.response.data.message) {
-      // Throw an error with the specific message from the backend
-      throw new Error(error.response.data.message);
+      // Create a new error but preserve the original response
+      const newError = new Error(error.response.data.message);
+      newError.response = error.response;
+      throw newError;
+    } else if (error.response && error.response.data) {
+      // Handle cases where there's response data but no specific message
+      const newError = new Error('Validation failed');
+      newError.response = error.response;
+      throw newError;
     } else {
       // Handle network errors or other unexpected issues
-      throw new Error('An unexpected network error occurred. Please try again.');
+      const newError = new Error('An unexpected network error occurred. Please try again.');
+      newError.response = error.response;
+      throw newError;
     }
   }
 };

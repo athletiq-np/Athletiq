@@ -24,7 +24,7 @@
   },
   
   // 🧠 Memory Management - 6GB Allocation
-  "typescript.tsserver.maxTsServerMemory": 6144,
+  "typescript.tsserver.maxTsServerMemory": 8144,
   "extensions.autoUpdate": false,
   "extensions.autoCheckUpdates": false,
   "workbench.settings.enableNaturalLanguageSearch": false,
