@@ -48,7 +48,7 @@ console.log('✅ Auth, school, tournament, certificate, PDF, and scoresheet rout
 // app.use('/api/schools', require('./src/routes/schoolRoutes'));
 // app.use('/api/players', require('./src/routes/playerRoutes'));
 // app.use('/api/tournaments', require('./src/routes/tournamentRoutes'));
-// app.use('/api/admin', require('./src/routes/adminRoutes'));
+app.use('/api/admin', require('./src/routes/adminRoutes'));
 // app.use('/api/teams', require('./src/routes/teamRoutes'));
 // app.use('/api/registrations', require('./src/routes/registrationRoutes'));
 

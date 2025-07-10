@@ -19,33 +19,33 @@ const {
 // Correctly import the 'protect' and 'checkRole' middleware
 const { protect, checkRole } = require('../middlewares/authMiddleware');
 
-// Define a constant for the required role to keep the code clean
-const SUPER_ADMIN_ONLY = checkRole(['SuperAdmin']);
+// Define a constant for the required roles to keep the code clean
+const ADMIN_ROLES = checkRole(['SuperAdmin', 'admin']);
 
 // --- Route Definitions ---
 
 // @route  POST /api/admin/register-superadmin
-router.post('/register-superadmin', protect, SUPER_ADMIN_ONLY, registerSuperAdmin);
+router.post('/register-superadmin', protect, ADMIN_ROLES, registerSuperAdmin);
 
 // @route  GET /api/admin/dashboard-stats
-router.get('/dashboard-stats', protect, SUPER_ADMIN_ONLY, getDashboardStats);
+router.get('/dashboard-stats', protect, ADMIN_ROLES, getDashboardStats);
 
 // @route  GET /api/admin/players
-router.get('/players', protect, SUPER_ADMIN_ONLY, getAllPlayers);
+router.get('/players', protect, ADMIN_ROLES, getAllPlayers);
 
 // @route  GET /api/admin/schools
-router.get('/schools', protect, SUPER_ADMIN_ONLY, getAllSchools);
+router.get('/schools', protect, ADMIN_ROLES, getAllSchools);
 
 // @route  GET /api/admin/tournaments
-router.get('/tournaments', protect, SUPER_ADMIN_ONLY, getAllTournaments);
+router.get('/tournaments', protect, ADMIN_ROLES, getAllTournaments);
 
 // @route  GET /api/admin/notifications
-router.get('/notifications', protect, SUPER_ADMIN_ONLY, getNotifications);
+router.get('/notifications', protect, ADMIN_ROLES, getNotifications);
 
 // @route  GET /api/admin/activities
-router.get('/activities', protect, SUPER_ADMIN_ONLY, getActivities);
+router.get('/activities', protect, ADMIN_ROLES, getActivities);
 
 // @route  PUT /api/admin/schools/:id/change-password
-router.put('/schools/:id/change-password', protect, SUPER_ADMIN_ONLY, changeSchoolPassword);
+router.put('/schools/:id/change-password', protect, ADMIN_ROLES, changeSchoolPassword);
 
 module.exports = router;

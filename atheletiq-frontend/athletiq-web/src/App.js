@@ -26,6 +26,9 @@ import SchoolDashboard from '@/pages/school/SchoolDashboard';
 // Tournament creation component
 import TournamentCreate from '@/pages/admin/tournaments/TournamentCreate';
 
+// Test pages
+import PDFTestPage from '@/pages/PDFTestPage';
+
 // Loading component
 const PageLoader = ({ message = 'Loading...' }) => (
   <div className="flex items-center justify-center h-screen bg-gray-50">
@@ -65,6 +68,9 @@ function App() {
           <Route path="/" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          
+          {/* --- Test Routes --- */}
+          <Route path="/test/pdf" element={<PDFTestPage />} />
 
           {/* --- Protected Admin Routes --- */}
           <Route

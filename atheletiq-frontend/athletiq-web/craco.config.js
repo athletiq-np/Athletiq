@@ -28,6 +28,48 @@ module.exports = {
         path.resolve(__dirname, 'src'),
         'node_modules'
       ];
+
+      // Exclude Node.js modules from browser bundle
+      webpackConfig.resolve.fallback = {
+        ...webpackConfig.resolve.fallback,
+        "fs": false,
+        "path": false,
+        "stream": false,
+        "util": false,
+        "buffer": false,
+        "crypto": false,
+        "os": false,
+        "child_process": false,
+        "http": false,
+        "https": false,
+        "url": false,
+        "zlib": false,
+        "querystring": false,
+        "net": false,
+        "tls": false,
+        "dns": false,
+        "readline": false,
+        "perf_hooks": false,
+        "worker_threads": false,
+        "async_hooks": false,
+        "cluster": false,
+        "dgram": false,
+        "module": false,
+        "timers": false,
+        "events": false,
+        "process": false,
+        "assert": false
+      };
+
+      // Ignore Node.js specific modules that shouldn't be bundled
+      webpackConfig.externals = {
+        ...webpackConfig.externals,
+        "puppeteer": "puppeteer",
+        "puppeteer-core": "puppeteer-core",
+        "basic-ftp": "basic-ftp",
+        "nodemailer": "nodemailer",
+        "sharp": "sharp"
+      };
       
       return webpackConfig;
     }

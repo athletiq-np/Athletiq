@@ -95,6 +95,17 @@ function RoundRobinBracket({ matches }) {
 }
 
 function MatchCard({ match }) {
+  // Handle case where match is undefined or null
+  if (!match) {
+    return (
+      <div className="bg-gray-100 border border-gray-200 rounded-lg p-4">
+        <div className="text-center text-gray-500">
+          <p>Match data not available</p>
+        </div>
+      </div>
+    );
+  }
+
   const getStatusColor = (status) => {
     switch (status) {
       case 'scheduled':
@@ -127,10 +138,10 @@ function MatchCard({ match }) {
     <div className="bg-white border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
       <div className="flex items-center justify-between mb-3">
         <span className="text-sm font-medium text-gray-500">
-          {match.code}
+          {match.code || 'Match'}
         </span>
-        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(match.status)}`}>
-          {match.status}
+        <span className={`px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(match.status || 'scheduled')}`}>
+          {match.status || 'scheduled'}
         </span>
       </div>
 

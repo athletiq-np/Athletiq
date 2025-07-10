@@ -18,7 +18,6 @@ import athletiqLogo from '@/assets/logos/athletiq-logo.png';
 
 // Import/Create school-specific components
 import SchoolSidebar from './SchoolSidebar';
-import SchoolStatsCards from './SchoolStatsCards';
 import SchoolOverview from './SchoolOverview';
 import StudentRoster from './StudentRoster';
 import HouseManagement from './HouseManagement';
@@ -376,13 +375,8 @@ export default function GlobalSchoolDashboard() {
             </div>
           </header>
 
-          {/* Stats Cards */}
-          <div className="p-6">
-            <SchoolStatsCards summary={summary} />
-          </div>
-
           {/* Main Content */}
-          <main className="p-6 pt-0">
+          <main className="p-6">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}

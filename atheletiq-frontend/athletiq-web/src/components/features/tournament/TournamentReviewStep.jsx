@@ -11,7 +11,7 @@ import {
   ArrowLeft, Send, Loader, Check, X, Edit, Eye, Info,
   FileText, Globe, Award, Shield, Hash, User
 } from 'lucide-react';
-import { createTournament } from '@api/tournamentApi';
+import { createTournament } from '../../../api/tournamentApi';
 
 // Map frontend level names to backend format
 const mapLevelToBackend = (frontendLevel) => {
