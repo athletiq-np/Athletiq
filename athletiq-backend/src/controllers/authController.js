@@ -42,6 +42,7 @@ exports.register = async (req, res, next) => {
     return next(error);
   }
 
+  const pool = getPool();
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
@@ -106,17 +107,21 @@ exports.login = async (req, res, next) => {
   }
 
   try {
+    console.log('🔐 Login attempt for email:', email);
     const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userResult.rows[0];
 
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
+      console.log('❌ Invalid credentials for email:', email);
       const error = new Error('Invalid credentials.');
       error.statusCode = 401;
       return next(error);
     }
     
+    console.log('✅ User authenticated successfully:', user.email);
     sendTokenResponse(user, 200, res);
   } catch (error) {
+    console.error('🚫 Login error:', error.message);
     next(error);
   }
 };

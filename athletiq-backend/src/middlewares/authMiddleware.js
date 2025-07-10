@@ -23,6 +23,7 @@ const protect = async (req, res, next) => {
 
   // 2. Make sure a token exists
   if (!token) {
+    console.log('🔒 No token found in cookies for route:', req.path);
     // Using next() with an error allows our central errorHandler to handle it
     const error = new Error('Not authorized, no token provided.');
     error.statusCode = 401;
@@ -32,6 +33,7 @@ const protect = async (req, res, next) => {
   try {
     // 3. Verify the token's signature
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    console.log('🔑 Token decoded successfully for user ID:', decoded.user.id);
 
     // 4. Fetch the user from the database using the ID from the token.
     // This ensures the user data is always current and prevents issues
@@ -42,6 +44,7 @@ const protect = async (req, res, next) => {
     );
 
     if (userResult.rows.length === 0) {
+      console.log('❌ User not found in database for ID:', decoded.user.id);
       const error = new Error('User not found, authorization denied.');
       error.statusCode = 401;
       return next(error);
@@ -49,9 +52,11 @@ const protect = async (req, res, next) => {
 
     // 5. Attach the user object to the request for use in subsequent routes
     req.user = userResult.rows[0];
+    console.log('✅ User authenticated:', req.user.email, 'Role:', req.user.role);
     
     next(); // Proceed to the next middleware or controller
   } catch (error) {
+    console.log('🚫 JWT verification failed:', error.message);
     const authError = new Error('Not authorized, token failed verification.');
     authError.statusCode = 401;
     next(authError);

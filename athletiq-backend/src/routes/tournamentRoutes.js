@@ -41,6 +41,18 @@ const {
   bulkUpdateTeamRegistrations,
 } = require("../controllers/tournamentController");
 
+// Import certificate controller functions
+const {
+  createCertificateTemplate,
+  getCertificateTemplates,
+  generateCertificate,
+  getCertificate,
+  downloadCertificate,
+  verifyCertificate,
+  getTournamentCertificates,
+  bulkGenerateCertificates,
+} = require("../controllers/certificateController");
+
 // --- Route Definitions ---
 
 /**
@@ -927,6 +939,251 @@ router.patch("/:id/teams/:teamId/status", generalLimiter, protect, checkRole(['S
 // @access  Private (Admin/Organizer)
 router.patch("/:id/teams/bulk-update", generalLimiter, protect, checkRole(['SuperAdmin', 'SchoolAdmin']), bulkUpdateTeamRegistrations);
 
+// =====================================================
+// CERTIFICATE MANAGEMENT ROUTES
+// =====================================================
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/certificates/templates:
+ *   post:
+ *     summary: Create a certificate template for a tournament
+ *     tags: [Tournaments, Certificates]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - name
+ *               - template_type
+ *               - template_data
+ *             properties:
+ *               name:
+ *                 type: string
+ *                 description: Template name
+ *               template_type:
+ *                 type: string
+ *                 enum: [participation, winner, runner_up, achievement]
+ *                 description: Type of certificate
+ *               template_data:
+ *                 type: object
+ *                 description: Template configuration
+ *     responses:
+ *       201:
+ *         description: Certificate template created successfully
+ *       400:
+ *         description: Invalid request
+ *       401:
+ *         description: Unauthorized
+ */
+// @route   POST /api/tournaments/:id/certificates/templates
+// @desc    Create a certificate template for a tournament
+// @access  Private (Admin/Organizer)
+router.post("/:id/certificates/templates", generalLimiter, protect, checkRole(['SuperAdmin', 'SchoolAdmin']), createCertificateTemplate);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/certificates/templates:
+ *   get:
+ *     summary: Get certificate templates for a tournament
+ *     tags: [Tournaments, Certificates]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament ID
+ *     responses:
+ *       200:
+ *         description: Certificate templates retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament not found
+ */
+// @route   GET /api/tournaments/:id/certificates/templates
+// @desc    Get certificate templates for a tournament
+// @access  Private
+router.get("/:id/certificates/templates", generalLimiter, protect, getCertificateTemplates);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/certificates/generate:
+ *   post:
+ *     summary: Generate a certificate for a participant
+ *     tags: [Tournaments, Certificates]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - participant_id
+ *               - participant_type
+ *               - template_id
+ *               - certificate_type
+ *             properties:
+ *               participant_id:
+ *                 type: integer
+ *                 description: ID of the participant (player or team)
+ *               participant_type:
+ *                 type: string
+ *                 enum: [player, team]
+ *                 description: Type of participant
+ *               template_id:
+ *                 type: integer
+ *                 description: Certificate template ID
+ *               certificate_type:
+ *                 type: string
+ *                 enum: [participation, winner, runner_up, achievement]
+ *                 description: Type of certificate
+ *               achievement_details:
+ *                 type: object
+ *                 description: Additional achievement information
+ *     responses:
+ *       201:
+ *         description: Certificate generated successfully
+ *       400:
+ *         description: Invalid request
+ *       401:
+ *         description: Unauthorized
+ */
+// @route   POST /api/tournaments/:id/certificates/generate
+// @desc    Generate a certificate for a participant
+// @access  Private (Admin/Organizer)
+router.post("/:id/certificates/generate", generalLimiter, protect, checkRole(['SuperAdmin', 'SchoolAdmin']), generateCertificate);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/certificates:
+ *   get:
+ *     summary: Get all certificates for a tournament
+ *     tags: [Tournaments, Certificates]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament ID
+ *       - name: participant_type
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [player, team]
+ *         description: Filter by participant type
+ *       - name: certificate_type
+ *         in: query
+ *         schema:
+ *           type: string
+ *           enum: [participation, winner, runner_up, achievement]
+ *         description: Filter by certificate type
+ *     responses:
+ *       200:
+ *         description: Certificates retrieved successfully
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Tournament not found
+ */
+// @route   GET /api/tournaments/:id/certificates
+// @desc    Get all certificates for a tournament
+// @access  Private
+router.get("/:id/certificates", generalLimiter, protect, getTournamentCertificates);
+
+/**
+ * @swagger
+ * /api/tournaments/{id}/certificates/bulk-generate:
+ *   post:
+ *     summary: Bulk generate certificates for tournament participants
+ *     tags: [Tournaments, Certificates]
+ *     security:
+ *       - cookieAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: Tournament ID
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - certificate_requests
+ *             properties:
+ *               certificate_requests:
+ *                 type: array
+ *                 items:
+ *                   type: object
+ *                   required:
+ *                     - participant_id
+ *                     - participant_type
+ *                     - template_id
+ *                     - certificate_type
+ *                   properties:
+ *                     participant_id:
+ *                       type: integer
+ *                     participant_type:
+ *                       type: string
+ *                       enum: [player, team]
+ *                     template_id:
+ *                       type: integer
+ *                     certificate_type:
+ *                       type: string
+ *                       enum: [participation, winner, runner_up, achievement]
+ *                     achievement_details:
+ *                       type: object
+ *     responses:
+ *       201:
+ *         description: Certificates generated successfully
+ *       400:
+ *         description: Invalid request
+ *       401:
+ *         description: Unauthorized
+ */
+// @route   POST /api/tournaments/:id/certificates/bulk-generate
+// @desc    Bulk generate certificates for tournament participants
+// @access  Private (Admin/Organizer)
+router.post("/:id/certificates/bulk-generate", generalLimiter, protect, checkRole(['SuperAdmin', 'SchoolAdmin']), bulkGenerateCertificates);
+
+// =====================================================
+// CERTIFICATE ROUTES (Global - outside tournament context)
+// =====================================================
+
+/**
+ * These routes need to be mounted separately in the main app
+ * as they are not tournament-specific
+ */
 
 // Example of a role-protected route we might add later:
 // router.delete("/:id", protect, checkRole(['SuperAdmin']), deleteTournament);

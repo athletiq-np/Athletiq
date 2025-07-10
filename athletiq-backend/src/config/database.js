@@ -61,6 +61,10 @@ const getPool = () => {
 
     pool.on('error', (err) => {
       dbLogger.error('Database pool error:', err);
+      // Don't end the pool on error in development
+      if (process.env.NODE_ENV !== 'development') {
+        pool = null; // Force recreation on next getPool call
+      }
     });
 
     pool.on('remove', () => {
@@ -70,6 +74,16 @@ const getPool = () => {
         waitingCount: pool ? pool.waitingCount : 0
       });
     });
+    
+    // Prevent accidental pool ending in development
+    if (process.env.NODE_ENV === 'development') {
+      const originalEnd = pool.end.bind(pool);
+      pool.end = (...args) => {
+        dbLogger.warn('Pool.end() called in development mode - ignoring');
+        return Promise.resolve();
+      };
+      pool._originalEnd = originalEnd;
+    }
   }
   
   return pool;
@@ -77,8 +91,17 @@ const getPool = () => {
 
 // Function to reset pool (useful for tests)
 const resetPool = () => {
+  dbLogger.warn('resetPool() called');
   if (pool && !pool.ended) {
-    pool.end();
+    if (process.env.NODE_ENV === 'development') {
+      dbLogger.warn('resetPool() ignored in development mode');
+      return;
+    }
+    if (pool._originalEnd) {
+      pool._originalEnd();
+    } else {
+      pool.end();
+    }
     pool = null;
   }
 };

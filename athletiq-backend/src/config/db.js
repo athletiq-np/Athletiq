@@ -1,9 +1,65 @@
 // db.js - Enhanced Production-Ready Database Configuration
 require('dotenv').config();
-const { getPool, dbLogger } = require('./database');
+const { Pool } = require('pg');
+const winston = require('winston');
 
-// Get the database pool (handles test vs production automatically)
-const pool = getPool();
+// Configure logger
+const dbLogger = winston.createLogger({
+  level: process.env.LOG_LEVEL || 'info',
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.errors({ stack: true }),
+    winston.format.json()
+  ),
+  defaultMeta: { service: 'database' },
+  transports: [
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple()
+      )
+    })
+  ]
+});
+
+// Database configuration
+const getDbConfig = () => {
+  const isTest = process.env.NODE_ENV === 'test';
+  
+  return {
+    user: process.env.DB_USER || 'postgres',
+    host: process.env.DB_HOST || 'localhost',
+    port: parseInt(process.env.DB_PORT || '5432'),
+    password: process.env.DB_PASSWORD || 'Ardnepu8',
+    database: isTest ? (process.env.DB_NAME || 'athletiq_test') : (process.env.DB_NAME || 'athletiq'),
+    max: isTest ? 5 : 20,
+    idleTimeoutMillis: 30000,
+    connectionTimeoutMillis: 2000,
+    ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+  };
+};
+
+// Create a single pool instance
+const config = getDbConfig();
+const pool = new Pool(config);
+
+// Pool event handlers
+pool.on('connect', () => {
+  dbLogger.info('New client connected');
+});
+
+pool.on('error', (err) => {
+  dbLogger.error('Database pool error:', err);
+});
+
+// Prevent pool from being ended in development
+if (process.env.NODE_ENV === 'development') {
+  const originalEnd = pool.end.bind(pool);
+  pool.end = () => {
+    dbLogger.warn('pool.end() called in development - ignoring');
+    return Promise.resolve();
+  };
+}
 
 // Health Check Function
 const healthCheck = async () => {
@@ -36,9 +92,9 @@ const healthCheck = async () => {
 const initializeDatabase = async () => {
   try {
     dbLogger.info('Initializing database connection...', {
-      database: process.env.DB_NAME || (process.env.NODE_ENV === 'test' ? 'athletiq_test' : 'athletiq'),
-      user: process.env.DB_USER || 'postgres',
-      host: process.env.DB_HOST || 'localhost',
+      database: config.database,
+      user: config.user,
+      host: config.host,
       environment: process.env.NODE_ENV || 'development'
     });
     
@@ -62,35 +118,15 @@ const initializeDatabase = async () => {
       error: error.message,
       stack: error.stack,
       config: {
-        host: process.env.DB_HOST || 'localhost',
-        database: process.env.DB_NAME || (process.env.NODE_ENV === 'test' ? 'athletiq_test' : 'athletiq'),
-        user: process.env.DB_USER || 'postgres',
-        port: process.env.DB_PORT || 5432
+        host: config.host,
+        database: config.database,
+        user: config.user,
+        port: config.port
       }
     });
     throw error;
   }
 };
-
-// Graceful Shutdown Handler
-const shutdown = async () => {
-  dbLogger.info('Shutting down database connections...');
-  try {
-    // Check if pool is already ended to avoid "Called end on pool more than once" error
-    if (pool && !pool.ended) {
-      await pool.end();
-      dbLogger.info('Database connections closed successfully');
-    } else {
-      dbLogger.info('Database pool already closed or not initialized');
-    }
-  } catch (error) {
-    dbLogger.error('Error during database shutdown', { error: error.message });
-  }
-};
-
-// Handle process termination
-process.on('SIGTERM', shutdown);
-process.on('SIGINT', shutdown);
 
 // Transaction Helper
 const withTransaction = async (callback) => {
@@ -147,6 +183,5 @@ module.exports = {
   query,
   withTransaction,
   healthCheck,
-  shutdown,
   logger: dbLogger
 };
