@@ -701,3 +701,533 @@ exports.getSchoolActivities = async (req, res) => {
     ApiResponse.error(res, "Server error while fetching school activities.", 500);
   }
 };
+
+// ==========================================
+// TEAM MANAGEMENT FUNCTIONS
+// ==========================================
+
+/**
+ * @desc    Create a new team for the school
+ * @route   POST /api/schools/me/teams
+ * @access  Private (SchoolAdmin)
+ */
+exports.createSchoolTeam = async (req, res) => {
+  try {
+    const { name, sport, coach, gender, age_group, description, status = "active" } = req.body;
+
+    if (!name || !sport || !gender || !age_group) {
+      return ApiResponse.error(res, "Team name, sport, gender, and age group are required.", 400);
+    }
+
+    // Mock response for now - will be replaced with actual database implementation
+    const mockTeam = {
+      id: Math.floor(Math.random() * 1000),
+      name,
+      sport,
+      coach: coach || null,
+      gender,
+      age_group,
+      description: description || null,
+      status,
+      school_id: 1, // Mock school ID
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      players: []
+    };
+
+    ApiResponse.success(res, mockTeam, "Team created successfully", 201);
+  } catch (err) {
+    console.error("Create school team error:", err);
+    ApiResponse.error(res, "Server error while creating team.", 500);
+  }
+};
+
+/**
+ * @desc    Update a team for the school
+ * @route   PATCH /api/schools/me/teams/:id
+ * @access  Private (SchoolAdmin)
+ */
+exports.updateSchoolTeam = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updateData = req.body;
+
+    // Mock response for now
+    const mockUpdatedTeam = {
+      id: parseInt(id),
+      ...updateData,
+      updated_at: new Date().toISOString()
+    };
+
+    ApiResponse.success(res, mockUpdatedTeam, "Team updated successfully");
+  } catch (err) {
+    console.error("Update school team error:", err);
+    ApiResponse.error(res, "Server error while updating team.", 500);
+  }
+};
+
+/**
+ * @desc    Delete a team for the school
+ * @route   DELETE /api/schools/me/teams/:id
+ * @access  Private (SchoolAdmin)
+ */
+exports.deleteSchoolTeam = async (req, res) => {
+  try {
+    const { id } = req.params;
+    // Mock deletion
+    ApiResponse.success(res, null, "Team deleted successfully");
+  } catch (err) {
+    console.error("Delete school team error:", err);
+    ApiResponse.error(res, "Server error while deleting team.", 500);
+  }
+};
+
+/**
+ * @desc    Get a specific team with players
+ * @route   GET /api/schools/me/teams/:id
+ * @access  Private (SchoolAdmin)
+ */
+exports.getSchoolTeam = async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Mock team data
+    const mockTeam = {
+      id: parseInt(id),
+      name: "School Eagles",
+      sport: "football",
+      coach: "John Doe",
+      gender: "male",
+      age_group: "u16",
+      description: "Main school football team",
+      status: "active",
+      players: []
+    };
+
+    ApiResponse.success(res, mockTeam, "Team retrieved successfully");
+  } catch (err) {
+    console.error("Get school team error:", err);
+    ApiResponse.error(res, "Server error while fetching team.", 500);
+  }
+};
+
+/**
+ * @desc    Add a player to a team
+ * @route   POST /api/schools/me/teams/:id/players
+ * @access  Private (SchoolAdmin)
+ */
+exports.addPlayerToTeam = async (req, res) => {
+  try {
+    const { id: teamId } = req.params;
+    const { student_id, position } = req.body;
+
+    if (!student_id) {
+      return ApiResponse.error(res, "Student ID is required.", 400);
+    }
+
+    // Mock response
+    const mockResult = {
+      team_id: parseInt(teamId),
+      player_id: student_id,
+      position: position || null,
+      created_at: new Date().toISOString()
+    };
+
+    ApiResponse.success(res, mockResult, "Player added to team successfully", 201);
+  } catch (err) {
+    console.error("Add player to team error:", err);
+    ApiResponse.error(res, "Server error while adding player to team.", 500);
+  }
+};
+
+/**
+ * @desc    Remove a player from a team
+ * @route   DELETE /api/schools/me/teams/:id/players/:playerId
+ * @access  Private (SchoolAdmin)
+ */
+exports.removePlayerFromTeam = async (req, res) => {
+  try {
+    const { id: teamId, playerId } = req.params;
+    // Mock removal
+    ApiResponse.success(res, null, "Player removed from team successfully");
+  } catch (err) {
+    console.error("Remove player from team error:", err);
+    ApiResponse.error(res, "Server error while removing player from team.", 500);
+  }
+};
+
+/**
+ * @desc    Update a players position in a team
+ * @route   PATCH /api/schools/me/teams/:id/players/:playerId
+ * @access  Private (SchoolAdmin)
+ */
+exports.updatePlayerPosition = async (req, res) => {
+  try {
+    const { id: teamId, playerId } = req.params;
+    const { position } = req.body;
+
+    // Mock response
+// =====================================================
+// TEAM MANAGEMENT FUNCTIONS
+// =====================================================
+
+/**
+ * @desc    Get all teams for the authenticated school
+ * @route   GET /api/schools/me/teams
+ * @access  Private (SchoolAdmin)
+ */
+exports.getSchoolTeams = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+
+    const query = `
+      SELECT 
+        st.*,
+        COUNT(tp.player_id) as player_count,
+        coach.full_name as coach_name,
+        captain_player.full_name as captain_name,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', tp.id,
+              'player_id', tp.player_id,
+              'name', p.full_name,
+              'grade', p.class,
+              'position', tp.position,
+              'jersey_number', tp.jersey_number,
+              'is_starter', tp.is_starter,
+              'is_captain', tp.is_captain,
+              'is_vice_captain', tp.is_vice_captain
+            ) ORDER BY tp.jersey_number NULLS LAST
+          ) FILTER (WHERE tp.id IS NOT NULL), 
+          '[]'::json
+        ) as players
+      FROM school_teams st
+      LEFT JOIN team_players tp ON st.id = tp.team_id AND tp.status = 'active'
+      LEFT JOIN players p ON tp.player_id = p.id
+      LEFT JOIN users coach ON st.coach_id = coach.id
+      LEFT JOIN team_players captain_tp ON st.team_captain_id = captain_tp.id
+      LEFT JOIN players captain_player ON captain_tp.player_id = captain_player.id
+      WHERE st.school_id = $1 AND st.status = 'active'
+      GROUP BY st.id, coach.full_name, captain_player.full_name
+      ORDER BY st.created_at DESC
+    `;
+
+    const result = await pool.query(query, [schoolId]);
+    ApiResponse.success(res, result.rows, "Teams retrieved successfully");
+  } catch (err) {
+    console.error("Get teams error:", err);
+    ApiResponse.error(res, "Server error while fetching teams.", 500);
+  }
+};
+
+/**
+ * @desc    Get sports configuration
+ * @route   GET /api/schools/me/teams/sports
+ * @access  Private (SchoolAdmin)
+ */
+exports.getSportsConfig = async (req, res) => {
+  try {
+    const query = `
+      SELECT sport_code as id, sport_name as name, max_players_per_team as maxPlayers, 
+             min_players_per_team as minPlayers, positions
+      FROM sports_config 
+      WHERE is_active = true
+      ORDER BY sport_name
+    `;
+
+    const result = await pool.query(query);
+    ApiResponse.success(res, result.rows, "Sports configuration retrieved successfully");
+  } catch (err) {
+    console.error("Get sports config error:", err);
+    ApiResponse.error(res, "Server error while fetching sports configuration.", 500);
+  }
+};
+
+/**
+ * @desc    Create a new team
+ * @route   POST /api/schools/me/teams
+ * @access  Private (SchoolAdmin)
+ */
+exports.createSchoolTeam = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+    const createdBy = req.user.user_id;
+    const { name, sport, maxPlayers, minPlayers } = req.body;
+
+    if (!name || !sport) {
+      return ApiResponse.error(res, "Team name and sport are required.", 400);
+    }
+
+    // Check for duplicate team name within school and sport
+    const existingTeam = await pool.query(
+      'SELECT id FROM school_teams WHERE school_id = $1 AND LOWER(name) = LOWER($2) AND sport = $3 AND status = $4',
+      [schoolId, name, sport, 'active']
+    );
+
+    if (existingTeam.rows.length > 0) {
+      return ApiResponse.error(res, "A team with this name already exists for this sport.", 409);
+    }
+
+    const query = `
+      INSERT INTO school_teams (school_id, name, sport, max_players, min_players, created_by)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      RETURNING *, 0 as player_count, '[]'::json as players
+    `;
+
+    const result = await pool.query(query, [schoolId, name, sport, maxPlayers || 11, minPlayers || 7, createdBy]);
+    ApiResponse.success(res, result.rows[0], "Team created successfully", 201);
+  } catch (err) {
+    console.error("Create team error:", err);
+    ApiResponse.error(res, "Server error while creating team.", 500);
+  }
+};
+
+/**
+ * @desc    Update a team
+ * @route   PUT /api/schools/me/teams/:teamId
+ * @access  Private (SchoolAdmin)
+ */
+exports.updateSchoolTeam = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+    const { teamId } = req.params;
+    const { name, sport, maxPlayers, minPlayers } = req.body;
+
+    if (!name || !sport) {
+      return ApiResponse.error(res, "Team name and sport are required.", 400);
+    }
+
+    // Check if team belongs to school
+    const teamCheck = await pool.query(
+      'SELECT id FROM school_teams WHERE id = $1 AND school_id = $2',
+      [teamId, schoolId]
+    );
+
+    if (teamCheck.rows.length === 0) {
+      return ApiResponse.error(res, "Team not found or access denied.", 404);
+    }
+
+    const query = `
+      UPDATE school_teams 
+      SET name = $1, sport = $2, max_players = $3, min_players = $4, updated_at = CURRENT_TIMESTAMP
+      WHERE id = $5 AND school_id = $6
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [name, sport, maxPlayers, minPlayers, teamId, schoolId]);
+    ApiResponse.success(res, result.rows[0], "Team updated successfully");
+  } catch (err) {
+    console.error("Update team error:", err);
+    ApiResponse.error(res, "Server error while updating team.", 500);
+  }
+};
+
+/**
+ * @desc    Delete a team
+ * @route   DELETE /api/schools/me/teams/:teamId
+ * @access  Private (SchoolAdmin)
+ */
+exports.deleteSchoolTeam = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+    const { teamId } = req.params;
+
+    // Check if team belongs to school
+    const teamCheck = await pool.query(
+      'SELECT id FROM school_teams WHERE id = $1 AND school_id = $2',
+      [teamId, schoolId]
+    );
+
+    if (teamCheck.rows.length === 0) {
+      return ApiResponse.error(res, "Team not found or access denied.", 404);
+    }
+
+    // Soft delete - update status to inactive
+    await pool.query(
+      'UPDATE school_teams SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE id = $2',
+      ['inactive', teamId]
+    );
+
+    // Also update all team players to inactive
+    await pool.query(
+      'UPDATE team_players SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE team_id = $2',
+      ['inactive', teamId]
+    );
+
+    ApiResponse.success(res, { id: teamId }, "Team deleted successfully");
+  } catch (err) {
+    console.error("Delete team error:", err);
+    ApiResponse.error(res, "Server error while deleting team.", 500);
+  }
+};
+
+/**
+ * @desc    Add a player to a team
+ * @route   POST /api/schools/me/teams/:teamId/players
+ * @access  Private (SchoolAdmin)
+ */
+exports.addPlayerToTeam = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+    const { teamId } = req.params;
+    const { name, studentId, grade, position } = req.body;
+
+    if (!name || !studentId) {
+      return ApiResponse.error(res, "Player name and student ID are required.", 400);
+    }
+
+    // Check if team belongs to school
+    const teamCheck = await pool.query(
+      'SELECT id, max_players FROM school_teams WHERE id = $1 AND school_id = $2',
+      [teamId, schoolId]
+    );
+
+    if (teamCheck.rows.length === 0) {
+      return ApiResponse.error(res, "Team not found or access denied.", 404);
+    }
+
+    const maxPlayers = teamCheck.rows[0].max_players;
+
+    // Check current player count
+    const playerCount = await pool.query(
+      'SELECT COUNT(*) as count FROM team_players WHERE team_id = $1 AND status = $2',
+      [teamId, 'active']
+    );
+
+    if (parseInt(playerCount.rows[0].count) >= maxPlayers) {
+      return ApiResponse.error(res, `Team is full. Maximum ${maxPlayers} players allowed.`, 409);
+    }
+
+    // Check if player already exists in school
+    let playerId;
+    const existingPlayer = await pool.query(
+      'SELECT id FROM players WHERE (player_code = $1 OR roll_no = $1) AND school_id = $2',
+      [studentId, schoolId]
+    );
+
+    if (existingPlayer.rows.length > 0) {
+      playerId = existingPlayer.rows[0].id;
+      
+      // Check if player is already in this team
+      const playerInTeam = await pool.query(
+        'SELECT id FROM team_players WHERE team_id = $1 AND player_id = $2 AND status = $3',
+        [teamId, playerId, 'active']
+      );
+
+      if (playerInTeam.rows.length > 0) {
+        return ApiResponse.error(res, "Player is already in this team.", 409);
+      }
+    } else {
+      // Create new player record
+      const createPlayerQuery = `
+        INSERT INTO players (player_code, full_name, class, school_id, created_by, registration_status)
+        VALUES ($1, $2, $3, $4, $5, 'active')
+        RETURNING id
+      `;
+      const newPlayer = await pool.query(createPlayerQuery, [studentId, name, grade, schoolId, req.user.user_id]);
+      playerId = newPlayer.rows[0].id;
+    }
+
+    // Add player to team
+    const addPlayerQuery = `
+      INSERT INTO team_players (team_id, player_id, position)
+      VALUES ($1, $2, $3)
+      RETURNING *, $4 as name, $5 as grade
+    `;
+
+    const result = await pool.query(addPlayerQuery, [teamId, playerId, position, name, grade]);
+    ApiResponse.success(res, result.rows[0], "Player added to team successfully", 201);
+  } catch (err) {
+    console.error("Add player error:", err);
+    ApiResponse.error(res, "Server error while adding player to team.", 500);
+  }
+};
+
+/**
+ * @desc    Remove a player from a team
+ * @route   DELETE /api/schools/me/teams/:teamId/players/:playerId
+ * @access  Private (SchoolAdmin)
+ */
+exports.removePlayerFromTeam = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+    const { teamId, playerId } = req.params;
+
+    // Check if team belongs to school
+    const teamCheck = await pool.query(
+      'SELECT id FROM school_teams WHERE id = $1 AND school_id = $2',
+      [teamId, schoolId]
+    );
+
+    if (teamCheck.rows.length === 0) {
+      return ApiResponse.error(res, "Team not found or access denied.", 404);
+    }
+
+    // Remove player from team
+    const result = await pool.query(
+      'UPDATE team_players SET status = $1, updated_at = CURRENT_TIMESTAMP WHERE team_id = $2 AND player_id = $3 RETURNING *',
+      ['inactive', teamId, playerId]
+    );
+
+    if (result.rows.length === 0) {
+      return ApiResponse.error(res, "Player not found in team.", 404);
+    }
+
+    ApiResponse.success(res, { playerId }, "Player removed from team successfully");
+  } catch (err) {
+    console.error("Remove player error:", err);
+    ApiResponse.error(res, "Server error while removing player from team.", 500);
+  }
+};
+
+/**
+ * @desc    Update player positions in team
+ * @route   PUT /api/schools/me/teams/:teamId/players/positions
+ * @access  Private (SchoolAdmin)
+ */
+exports.updatePlayerPositions = async (req, res) => {
+  try {
+    const schoolId = req.user.school_id;
+    const { teamId } = req.params;
+    const { updates } = req.body;
+
+    if (!Array.isArray(updates)) {
+      return ApiResponse.error(res, "Updates must be an array.", 400);
+    }
+
+    // Check if team belongs to school
+    const teamCheck = await pool.query(
+      'SELECT id FROM school_teams WHERE id = $1 AND school_id = $2',
+      [teamId, schoolId]
+    );
+
+    if (teamCheck.rows.length === 0) {
+      return ApiResponse.error(res, "Team not found or access denied.", 404);
+    }
+
+    // Update positions for each player
+    const client = await pool.connect();
+    try {
+      await client.query('BEGIN');
+
+      for (const update of updates) {
+        await client.query(
+          'UPDATE team_players SET jersey_number = $1, updated_at = CURRENT_TIMESTAMP WHERE team_id = $2 AND player_id = $3',
+          [update.position, teamId, update.id]
+        );
+      }
+
+      await client.query('COMMIT');
+      ApiResponse.success(res, { teamId, updates }, "Player positions updated successfully");
+    } catch (err) {
+      await client.query('ROLLBACK');
+      throw err;
+    } finally {
+      client.release();
+    }
+  } catch (err) {
+    console.error("Update player positions error:", err);
+    ApiResponse.error(res, "Server error while updating player positions.", 500);
+  }
+};

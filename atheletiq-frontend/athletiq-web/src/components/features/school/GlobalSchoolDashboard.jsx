@@ -20,6 +20,7 @@ import athletiqLogo from '@/assets/logos/athletiq-logo.png';
 import SchoolSidebar from './SchoolSidebar';
 import SchoolOverview from './SchoolOverview';
 import StudentRoster from './StudentRoster';
+import TeamsManagement from './TeamsManagement';
 import HouseManagement from './HouseManagement';
 import StaffManagement from './StaffManagement';
 import TournamentManagement from './TournamentManagement';
@@ -188,6 +189,7 @@ export default function GlobalSchoolDashboard() {
   const tabs = [
     { id: 'overview', label: 'Overview', icon: MdDashboard },
     { id: 'students', label: 'Student Roster', icon: FaUserGraduate },
+    { id: 'teams', label: 'Teams', icon: MdSports },
     { id: 'houses', label: 'Houses & Teams', icon: FaBuilding },
     { id: 'staff', label: 'Staff & Coaches', icon: FaUsers },
     { id: 'tournaments', label: 'Tournaments', icon: FaTrophy },
@@ -250,6 +252,14 @@ export default function GlobalSchoolDashboard() {
             filters={filters}
             setFilters={setFilters}
             globalSearch={globalSearch}
+          />
+        );
+      case 'teams':
+        return (
+          <TeamsManagement
+            students={students}
+            school={school}
+            onRefresh={fetchSchoolData}
           />
         );
       case 'houses':

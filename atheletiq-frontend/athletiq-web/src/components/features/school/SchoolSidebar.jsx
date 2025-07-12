@@ -245,6 +245,31 @@ export default function SchoolSidebar({
             </AnimatePresence>
           </button>
 
+          {/* Teams */}
+          <button
+            onClick={() => setActiveTab('teams')}
+            className={`w-full flex items-center space-x-3 p-3 rounded-lg transition-colors ${
+              activeTab === 'teams'
+                ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+                : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+            }`}
+          >
+            <MdSports size={20} />
+            <AnimatePresence mode="wait">
+              {!collapsed && (
+                <motion.span
+                  key="teams"
+                  initial={{ opacity: 0, x: -20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  className="text-sm font-medium"
+                >
+                  Team Management
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </button>
+
           {/* Tournaments */}
           <button
             onClick={() => setActiveTab('tournaments')}

@@ -49,7 +49,56 @@ router.get('/me/tournaments', generalLimiter, protect, checkRole(['SchoolAdmin']
  * @desc    Get teams for the school
  * @access  Private (SchoolAdmin)
  */
-router.get('/me/teams', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getMySchoolTeams);
+router.get('/me/teams', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getSchoolTeams);
+
+/**
+ * @route   GET /api/schools/me/teams/sports
+ * @desc    Get sports configuration
+ * @access  Private (SchoolAdmin)
+ */
+router.get('/me/teams/sports', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getSportsConfig);
+
+/**
+ * @route   POST /api/schools/me/teams
+ * @desc    Create a new team
+ * @access  Private (SchoolAdmin)
+ */
+router.post('/me/teams', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.createSchoolTeam);
+
+/**
+ * @route   PUT /api/schools/me/teams/:teamId
+ * @desc    Update a team
+ * @access  Private (SchoolAdmin)
+ */
+router.put('/me/teams/:teamId', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.updateSchoolTeam);
+
+/**
+ * @route   DELETE /api/schools/me/teams/:teamId
+ * @desc    Delete a team
+ * @access  Private (SchoolAdmin)
+ */
+router.delete('/me/teams/:teamId', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.deleteSchoolTeam);
+
+/**
+ * @route   POST /api/schools/me/teams/:teamId/players
+ * @desc    Add a player to a team
+ * @access  Private (SchoolAdmin)
+ */
+router.post('/me/teams/:teamId/players', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.addPlayerToTeam);
+
+/**
+ * @route   DELETE /api/schools/me/teams/:teamId/players/:playerId
+ * @desc    Remove a player from a team
+ * @access  Private (SchoolAdmin)
+ */
+router.delete('/me/teams/:teamId/players/:playerId', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.removePlayerFromTeam);
+
+/**
+ * @route   PUT /api/schools/me/teams/:teamId/players/positions
+ * @desc    Update player positions in team
+ * @access  Private (SchoolAdmin)
+ */
+router.put('/me/teams/:teamId/players/positions', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.updatePlayerPositions);
 
 /**
  * @route   GET /api/schools/me/players
