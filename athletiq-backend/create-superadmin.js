@@ -1,12 +1,12 @@
 // Create SuperAdmin user with correct schema
 const bcrypt = require('bcryptjs');
-const { getPool } = require('./src/config/database');
+const { pool } = require('./src/config/db');
 
 async function createSuperAdmin() {
   try {
     console.log('🔍 Creating SuperAdmin user...');
     
-    const pool = getPool();
+    // pool is already imported
     
     // Check if SuperAdmin exists
     const existing = await pool.query(

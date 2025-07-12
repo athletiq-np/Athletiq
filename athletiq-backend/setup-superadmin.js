@@ -2,13 +2,13 @@
 const bcrypt = require('bcryptjs');
 
 // Database connection (using your existing database setup)
-const { getPool } = require('./src/config/database');
+const { pool } = require('./src/config/db');
 
 async function checkAndCreateSuperAdmin() {
   try {
     console.log('🔍 Checking for SuperAdmin user...');
     
-    const pool = getPool();
+    // pool is already imported
     
     // Check if SuperAdmin exists
     const result = await pool.query(
@@ -53,7 +53,7 @@ async function checkAdminUser() {
   try {
     console.log('\n🔍 Checking admin@test.com user...');
     
-    const pool = getPool();
+    // pool is already imported
     
     const result = await pool.query(
       'SELECT * FROM users WHERE email = $1',

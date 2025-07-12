@@ -1,7 +1,7 @@
 const path = require('path');
 const dotenv = require('dotenv');
 const { TestDatabase, testPool } = require('./testDb');
-const { resetPool } = require('../src/config/database');
+const { pool } = require('../src/config/db');
 
 // Load test environment variables
 dotenv.config({ path: path.resolve(__dirname, '..', '.env.test') });
@@ -46,7 +46,7 @@ afterAll(async () => {
     await testPool.end();
     
     // Reset the main pool to ensure clean state
-    resetPool();
+    // In development mode, pool ending is prevented, so this is not needed
     
     console.log('Test environment teardown complete');
   } catch (error) {

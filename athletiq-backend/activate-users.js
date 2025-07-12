@@ -1,11 +1,11 @@
 // Activate SuperAdmin and Admin users
-const { getPool } = require('./src/config/database');
+const { pool } = require('./src/config/db');
 
 async function activateUsers() {
   try {
     console.log('🔧 Activating SuperAdmin and Admin users...');
     
-    const pool = getPool();
+    // pool is already imported
     
     // Activate SuperAdmin
     await pool.query(

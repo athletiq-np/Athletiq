@@ -1,11 +1,11 @@
 // Check users table structure
-const { getPool } = require('./src/config/database');
+const { pool } = require('./src/config/db');
 
 async function checkUsersTable() {
   try {
     console.log('🔍 Checking users table structure...');
     
-    const pool = getPool();
+    // pool is already imported
     
     // Get table structure
     const result = await pool.query(`
