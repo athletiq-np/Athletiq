@@ -867,6 +867,13 @@ exports.updatePlayerPosition = async (req, res) => {
     const { position } = req.body;
 
     // Mock response
+    ApiResponse.success(res, null, "Player position updated successfully");
+  } catch (err) {
+    console.error("Update player position error:", err);
+    ApiResponse.error(res, "Server error while updating player position.", 500);
+  }
+};
+
 // =====================================================
 // TEAM MANAGEMENT FUNCTIONS
 // =====================================================
@@ -1230,4 +1237,28 @@ exports.updatePlayerPositions = async (req, res) => {
     console.error("Update player positions error:", err);
     ApiResponse.error(res, "Server error while updating player positions.", 500);
   }
+};
+
+module.exports = {
+  registerSchool,
+  getAllSchools,
+  getMySchoolProfile,
+  updateMySchoolProfile,
+  getMySchoolTournaments,
+  getMySchoolTeams: getSchoolTeams, // Alias for consistency
+  getMySchoolPlayers,
+  getMySchoolTournamentStats,
+  getSchoolHouses,
+  getSchoolStaff,
+  getSchoolNotifications,
+  getSchoolActivities,
+  createSchoolTeam,
+  updateSchoolTeam,
+  deleteSchoolTeam,
+  getSchoolTeam,
+  addPlayerToTeam,
+  removePlayerFromTeam,
+  updatePlayerPositions: updatePlayerPosition, // Alias for route consistency
+  getSchoolTeams,
+  getSportsConfig
 };
