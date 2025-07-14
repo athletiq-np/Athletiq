@@ -75,7 +75,7 @@ const validateUserLogin = [
 /**
  * Validation rules for player registration
  */
-const validatePlayerRegistration = [
+const validateAthleteRegistration = [
   body('full_name')
     .notEmpty()
     .withMessage('Full name is required')
@@ -90,9 +90,8 @@ const validatePlayerRegistration = [
     .custom((value) => {
       const date = new Date(value);
       const now = new Date();
-      const age = now.getFullYear() - date.getFullYear();
-      if (age < 5 || age > 25) {
-        throw new Error('Player age must be between 5 and 25 years');
+      const age = now.getFullYear() - date.getFullYear();        if (age < 5 || age > 25) {
+        throw new Error('Athlete age must be between 5 and 25 years');
       }
       return true;
     }),
@@ -277,14 +276,389 @@ const validateTournamentId = [
   validateRequest
 ];
 
+/**
+ * Validation rules for athlete registration via school admin
+ */
+const validateSchoolAthleteRegistration = [
+  body('full_name')
+    .notEmpty()
+    .withMessage('Full name is required')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Full name must be between 2 and 100 characters')
+    .matches(/^[a-zA-Z\s]+$/)
+    .withMessage('Full name can only contain letters and spaces'),
+  
+  body('date_of_birth')
+    .isDate()
+    .withMessage('Valid date of birth is required')
+    .custom((value) => {
+      const date = new Date(value);
+      const now = new Date();
+      const age = now.getFullYear() - date.getFullYear();
+      if (age < 5 || age > 25) {
+        throw new Error('Athlete age must be between 5 and 25 years');
+      }
+      return true;
+    }),
+  
+  body('school_id')
+    .isInt({ min: 1 })
+    .withMessage('Valid school ID is required'),
+
+  body('gender')
+    .optional()
+    .isIn(['Male', 'Female', 'Other'])
+    .withMessage('Gender must be Male, Female, or Other'),
+
+  body('class')
+    .optional()
+    .isLength({ min: 1, max: 10 })
+    .withMessage('Class must be between 1 and 10 characters'),
+
+  body('section')
+    .optional()
+    .isLength({ min: 1, max: 5 })
+    .withMessage('Section must be between 1 and 5 characters'),
+
+  body('guardian_name')
+    .optional()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Guardian name must be between 2 and 100 characters'),
+
+  body('guardian_phone')
+    .optional()
+    .matches(/^[\d\s\-\+\(\)]+$/)
+    .withMessage('Guardian phone must be a valid phone number'),
+
+  body('guardian_email')
+    .optional()
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Guardian email must be valid'),
+
+  body('address')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Address must not exceed 500 characters'),
+
+  body('interested_sports')
+    .optional()
+    .isArray()
+    .withMessage('Interested sports must be an array'),
+
+  validateRequest
+];
+
+/**
+ * Validation rules for guardian/parent self-registration
+ */
+const validateGuardianAthleteRegistration = [
+  body('athlete_name')
+    .notEmpty()
+    .withMessage('Athlete name is required')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Athlete name must be between 2 and 100 characters')
+    .matches(/^[a-zA-Z\s]+$/)
+    .withMessage('Athlete name can only contain letters and spaces'),
+  
+  body('athlete_dob')
+    .isDate()
+    .withMessage('Valid date of birth is required'),
+
+  body('guardian_name')
+    .notEmpty()
+    .withMessage('Guardian name is required')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Guardian name must be between 2 and 100 characters'),
+
+  body('guardian_phone')
+    .notEmpty()
+    .withMessage('Guardian phone is required')
+    .matches(/^[\d\s\-\+\(\)]+$/)
+    .withMessage('Guardian phone must be a valid phone number'),
+
+  body('guardian_email')
+    .notEmpty()
+    .withMessage('Guardian email is required')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Guardian email must be valid'),
+
+  body('school_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Valid school ID is required'),
+
+  body('registration_code')
+    .optional()
+    .isLength({ min: 6, max: 20 })
+    .withMessage('Registration code must be between 6 and 20 characters'),
+
+  validateRequest
+];
+
+/**
+ * Validation rules for direct athlete self-registration
+ */
+const validateDirectAthleteRegistration = [
+  body('full_name')
+    .notEmpty()
+    .withMessage('Full name is required')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Full name must be between 2 and 100 characters'),
+  
+  body('date_of_birth')
+    .isDate()
+    .withMessage('Valid date of birth is required')
+    .custom((value) => {
+      const date = new Date(value);
+      const now = new Date();
+      const age = now.getFullYear() - date.getFullYear();
+      if (age < 13) {
+        throw new Error('Direct registration requires athlete to be at least 13 years old');
+      }
+      return true;
+    }),
+
+  body('email')
+    .notEmpty()
+    .withMessage('Email is required')
+    .isEmail()
+    .normalizeEmail()
+    .withMessage('Valid email is required'),
+
+  body('phone')
+    .optional()
+    .matches(/^[\d\s\-\+\(\)]+$/)
+    .withMessage('Phone must be a valid phone number'),
+
+  body('school_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Valid school ID is required'),
+
+  body('invitation_code')
+    .optional()
+    .isLength({ min: 6, max: 20 })
+    .withMessage('Invitation code must be between 6 and 20 characters'),
+
+  validateRequest
+];
+
+/**
+ * Validation rules for athlete profile claim
+ */
+const validateAthleteProfileClaim = [
+  body('claim_code')
+    .notEmpty()
+    .withMessage('Claim code is required')
+    .isLength({ min: 8, max: 32 })
+    .withMessage('Claim code must be between 8 and 32 characters'),
+
+  body('verification_method')
+    .isIn(['sms', 'email', 'guardian_phone'])
+    .withMessage('Invalid verification method'),
+
+  validateRequest
+];
+
+/**
+ * Validation rules for athlete profile update
+ */
+const validateAthleteProfileUpdate = [
+  body('guardian_contacts')
+    .optional()
+    .isArray()
+    .withMessage('Guardian contacts must be an array'),
+
+  body('medical_notes')
+    .optional()
+    .isLength({ max: 1000 })
+    .withMessage('Medical notes must not exceed 1000 characters'),
+
+  body('interested_sports')
+    .optional()
+    .isArray()
+    .withMessage('Interested sports must be an array'),
+
+  body('privacy_settings')
+    .optional()
+    .isObject()
+    .withMessage('Privacy settings must be an object'),
+
+  body('emergency_contact')
+    .optional()
+    .isObject()
+    .withMessage('Emergency contact must be an object'),
+
+  validateRequest
+];
+
+/**
+ * Validation rules for sports and team assignment
+ */
+const validateSportsAssignment = [
+  body('athlete_id')
+    .notEmpty()
+    .withMessage('Athlete ID is required')
+    .isLength({ min: 10, max: 15 })
+    .withMessage('Invalid athlete ID format'),
+
+  body('sport_id')
+    .isInt({ min: 1 })
+    .withMessage('Valid sport ID is required'),
+
+  body('age_group')
+    .optional()
+    .isIn(['U-10', 'U-12', 'U-14', 'U-16', 'U-18', 'U-21', 'Open'])
+    .withMessage('Invalid age group'),
+
+  body('team_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Valid team ID is required'),
+
+  body('skill_level')
+    .optional()
+    .isIn(['Beginner', 'Intermediate', 'Advanced', 'Elite'])
+    .withMessage('Invalid skill level'),
+
+  body('position')
+    .optional()
+    .isLength({ max: 50 })
+    .withMessage('Position must not exceed 50 characters'),
+
+  validateRequest
+];
+
+/**
+ * Validation rules for tournament/event nomination
+ */
+const validateEventNomination = [
+  body('athlete_ids')
+    .isArray({ min: 1 })
+    .withMessage('At least one athlete ID is required'),
+
+  body('event_id')
+    .isInt({ min: 1 })
+    .withMessage('Valid event ID is required'),
+
+  body('nomination_type')
+    .isIn(['individual', 'team', 'relay'])
+    .withMessage('Invalid nomination type'),
+
+  body('coach_approval')
+    .optional()
+    .isBoolean()
+    .withMessage('Coach approval must be boolean'),
+
+  validateRequest
+];
+
+/**
+ * Validation rules for athlete stats input
+ */
+const validateAthleteStats = [
+  body('athlete_id')
+    .notEmpty()
+    .withMessage('Athlete ID is required'),
+
+  body('match_id')
+    .isInt({ min: 1 })
+    .withMessage('Valid match ID is required'),
+
+  body('stats')
+    .isObject()
+    .withMessage('Stats must be an object'),
+
+  body('stats.*.value')
+    .optional()
+    .isNumeric()
+    .withMessage('Stat values must be numeric'),
+
+  validateRequest
+];
+
+/**
+ * Validation rules for athlete transfer request
+ */
+const validateAthleteTransfer = [
+  body('athlete_id')
+    .notEmpty()
+    .withMessage('Athlete ID is required'),
+
+  body('current_school_id')
+    .isInt({ min: 1 })
+    .withMessage('Valid current school ID is required'),
+
+  body('target_school_id')
+    .isInt({ min: 1 })
+    .withMessage('Valid target school ID is required'),
+
+  body('transfer_reason')
+    .notEmpty()
+    .withMessage('Transfer reason is required')
+    .isLength({ min: 10, max: 500 })
+    .withMessage('Transfer reason must be between 10 and 500 characters'),
+
+  body('guardian_approval')
+    .isBoolean()
+    .withMessage('Guardian approval is required'),
+
+  body('effective_date')
+    .optional()
+    .isISO8601()
+    .withMessage('Effective date must be valid'),
+
+  validateRequest
+];
+
+/**
+ * Validation rules for bulk athlete upload
+ */
+const validateBulkAthleteUpload = [
+  body('athletes')
+    .isArray({ min: 1, max: 100 })
+    .withMessage('Athletes array must contain 1-100 entries'),
+
+  body('athletes.*.full_name')
+    .notEmpty()
+    .withMessage('Full name is required for each athlete'),
+
+  body('athletes.*.date_of_birth')
+    .isDate()
+    .withMessage('Valid date of birth is required for each athlete'),
+
+  body('school_id')
+    .isInt({ min: 1 })
+    .withMessage('Valid school ID is required'),
+
+  body('auto_generate_codes')
+    .optional()
+    .isBoolean()
+    .withMessage('Auto generate codes must be boolean'),
+
+  validateRequest
+];
+
 module.exports = {
   validateRequest,
   validateUserRegistration,
   validateUserLogin,
-  validatePlayerRegistration,
+  validateAthleteRegistration,
   validateSchoolRegistration,
   validateTournamentCreation,
   validateTournament,
   validateTournamentId,
-  sanitizeInput
+  sanitizeInput,
+  validateSchoolAthleteRegistration,
+  validateGuardianAthleteRegistration,
+  validateDirectAthleteRegistration,
+  validateAthleteProfileClaim,
+  validateAthleteProfileUpdate,
+  validateSportsAssignment,
+  validateEventNomination,
+  validateAthleteStats,
+  validateAthleteTransfer,
+  validateBulkAthleteUpload
 };

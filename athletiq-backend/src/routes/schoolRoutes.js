@@ -14,7 +14,8 @@ const upload = multer({ dest: 'uploads/' });
  * @desc    Public route for a new school to register itself and an admin user.
  * @access  Public
  */
-router.post('/register', generalLimiter, validateSchoolRegistration, schoolController.registerSchool);
+// Temporarily commented out for debugging
+// router.post('/register', generalLimiter, validateSchoolRegistration, schoolController.registerSchool);
 
 /**
  * @route   GET /api/schools
@@ -101,11 +102,11 @@ router.delete('/me/teams/:teamId/players/:playerId', generalLimiter, protect, ch
 router.put('/me/teams/:teamId/players/positions', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.updatePlayerPositions);
 
 /**
- * @route   GET /api/schools/me/players
- * @desc    Get players for the school
+ * @route   GET /api/schools/me/athletes
+ * @desc    Get athletes for the school
  * @access  Private (SchoolAdmin)
  */
-router.get('/me/players', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getMySchoolPlayers);
+router.get('/me/athletes', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getMySchoolAthletes);
 
 /**
  * @route   GET /api/schools/me/tournament-stats

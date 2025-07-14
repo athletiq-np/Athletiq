@@ -4,15 +4,15 @@ const pool = require('../config/db');
 const multer = require('multer');
 const { generateShortCode } = require('../utils/codeGenerator');
 const { protect, checkRole } = require('../middlewares/authMiddleware');
-const { validatePlayerRegistration } = require('../middlewares/validation');
+const { validateAthleteRegistration } = require('../middlewares/validation');
 const { generalLimiter } = require('../middlewares/rateLimiter');
 const apiResponse = require('../utils/apiResponse');
 
 // --- Multer Setup for file uploads ---
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => cb(null, 'uploads/players/'), // Use a dedicated subfolder
+  destination: (req, file, cb) => cb(null, 'uploads/athletes/'), // Use a dedicated subfolder
   filename: (req, file, cb) =>
-    cb(null, `player-${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`)
+    cb(null, `athlete-${Date.now()}-${file.originalname.replace(/\s+/g, "_")}`)
 });
 const upload = multer({ storage });
 
@@ -32,7 +32,7 @@ router.post(
     { name: "profile_photo_url", maxCount: 1 },
     { name: "birth_cert_url", maxCount: 1 }
   ]), 
-  validatePlayerRegistration,
+  validateAthleteRegistration,
   async (req, res, next) => {
     try {
       const { full_name, date_of_birth, school_id } = req.body;

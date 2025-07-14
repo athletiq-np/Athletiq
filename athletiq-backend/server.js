@@ -40,17 +40,13 @@ app.get('/', (req, res) => res.send('Athletiq API is running...'));
 // Temporarily disable most routes for debugging - essential routes enabled
 app.use('/api/auth', require('./src/routes/authRoutes'));
 app.use('/api/schools', require('./src/routes/schoolRoutes'));
+app.use('/api/athletes', require('./src/routes/athleteRoutes'));
 app.use('/api/tournaments', require('./src/routes/tournamentRoutes'));
 app.use('/api/certificates', require('./src/routes/certificateRoutes'));
 app.use('/api/pdf', require('./src/routes/pdfRoutes'));
 app.use('/api/scoresheets', require('./src/routes/scoresheetRoutes'));
-console.log('✅ Auth, school, tournament, certificate, PDF, and scoresheet routes registered');
-// app.use('/api/schools', require('./src/routes/schoolRoutes'));
-// app.use('/api/players', require('./src/routes/playerRoutes'));
-// app.use('/api/tournaments', require('./src/routes/tournamentRoutes'));
+console.log('✅ Auth, school, athlete, tournament, certificate, PDF, and scoresheet routes registered');
 app.use('/api/admin', require('./src/routes/adminRoutes'));
-// app.use('/api/teams', require('./src/routes/teamRoutes'));
-// app.use('/api/registrations', require('./src/routes/registrationRoutes'));
 
 // Pre-Tournament Management Routes
 // app.use('/api/pre-tournament', require('./src/routes/preTournamentRoutes'));

@@ -367,19 +367,19 @@ exports.getMySchoolTeams = async (req, res) => {
         t.team_name as name,
         s.name as sport,
         t.season,
-        COUNT(psp.player_id) as player_count,
+        COUNT(psp.athlete_id) as athlete_count,
         json_agg(
           json_build_object(
             'id', p.id,
             'name', p.full_name,
-            'player_code', p.player_code,
+            'athlete_code', p.athlete_id,
             'position', psp.event_category
           )
-        ) FILTER (WHERE p.id IS NOT NULL) as players
+        ) FILTER (WHERE p.id IS NOT NULL) as athletes
       FROM teams t
       LEFT JOIN sports s ON t.sport_id = s.id
       LEFT JOIN player_sport_participation psp ON t.id = psp.team_id
-      LEFT JOIN players p ON psp.player_id = p.id
+      LEFT JOIN players p ON psp.athlete_id = p.id
       WHERE t.school_id = $1
       GROUP BY t.id, t.team_name, s.name, t.season
       ORDER BY t.team_name, t.season DESC
@@ -394,11 +394,11 @@ exports.getMySchoolTeams = async (req, res) => {
 };
 
 /**
- * @desc    Get school players
- * @route   GET /api/schools/me/players
+ * @desc    Get school athletes
+ * @route   GET /api/schools/me/athletes
  * @access  Private (SchoolAdmin)
  */
-exports.getMySchoolPlayers = async (req, res) => {
+exports.getMySchoolAthletes = async (req, res) => {
   try {
     // Development mode: Allow testing without full authentication
     let schoolId = req.user?.school_id;
@@ -415,7 +415,7 @@ exports.getMySchoolPlayers = async (req, res) => {
     const { rows } = await pool.query(`
       SELECT 
         p.id,
-        p.player_code,
+        p.athlete_id,
         p.full_name,
         p.date_of_birth,
         p.gender,
@@ -434,19 +434,19 @@ exports.getMySchoolPlayers = async (req, res) => {
           )
         ) FILTER (WHERE s.id IS NOT NULL) as sports_participation
       FROM players p
-      LEFT JOIN player_sport_participation psp ON p.id = psp.player_id
+      LEFT JOIN player_sport_participation psp ON p.id = psp.athlete_id
       LEFT JOIN sports s ON psp.sport_id = s.id
       LEFT JOIN teams t ON psp.team_id = t.id
       WHERE p.school_id = $1
-      GROUP BY p.id, p.player_code, p.full_name, p.date_of_birth, p.gender, p.class, p.section, p.contact_no, p.email, p.registration_status, p.is_active, p.created_at
+      GROUP BY p.id, p.athlete_id, p.full_name, p.date_of_birth, p.gender, p.class, p.section, p.contact_no, p.email, p.registration_status, p.is_active, p.created_at
       ORDER BY p.full_name
     `, [schoolId]);
     
-    ApiResponse.success(res, rows, 'School players retrieved successfully');
+    ApiResponse.success(res, rows, 'School athletes retrieved successfully');
     
   } catch (err) {
-    console.error("Get school players error:", err);
-    ApiResponse.error(res, "Server error while fetching school players.", 500);
+    console.error("Get school athletes error:", err);
+    ApiResponse.error(res, "Server error while fetching school athletes.", 500);
   }
 };
 
@@ -481,7 +481,7 @@ exports.getMySchoolTournamentStats = async (req, res) => {
               ((m.home_team_id = tt.id AND m.home_score > m.away_score) OR 
                (m.away_team_id = tt.id AND m.away_score > m.home_score)) 
               THEN m.id END) as matches_won,
-        COUNT(DISTINCT players.id) as total_players
+        COUNT(DISTINCT players.id) as total_athletes
       FROM schools s
       LEFT JOIN teams teams ON s.id = teams.school_id
       LEFT JOIN tournament_teams tt ON teams.id = tt.team_id
@@ -498,7 +498,7 @@ exports.getMySchoolTournamentStats = async (req, res) => {
       total_teams_registered: 0,
       total_matches_played: 0,
       matches_won: 0,
-      total_players: 0
+      total_athletes: 0
     };
     
     // Calculate win rate
@@ -629,8 +629,8 @@ exports.getSchoolNotifications = async (req, res) => {
       },
       {
         id: 2,
-        title: 'New Player Registration',
-        message: '5 new players have registered for cricket team.',
+        title: 'New Athlete Registration',
+        message: '5 new athletes have registered for cricket team.',
         type: 'registration',
         priority: 'medium',
         read: false,
@@ -732,7 +732,7 @@ exports.createSchoolTeam = async (req, res) => {
       school_id: 1, // Mock school ID
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
-      players: []
+      athletes: []
     };
 
     ApiResponse.success(res, mockTeam, "Team created successfully", 201);
@@ -783,7 +783,7 @@ exports.deleteSchoolTeam = async (req, res) => {
 };
 
 /**
- * @desc    Get a specific team with players
+ * @desc    Get a specific team with athletes
  * @route   GET /api/schools/me/teams/:id
  * @access  Private (SchoolAdmin)
  */
@@ -801,7 +801,7 @@ exports.getSchoolTeam = async (req, res) => {
       age_group: "u16",
       description: "Main school football team",
       status: "active",
-      players: []
+      athletes: []
     };
 
     ApiResponse.success(res, mockTeam, "Team retrieved successfully");
@@ -812,31 +812,31 @@ exports.getSchoolTeam = async (req, res) => {
 };
 
 /**
- * @desc    Add a player to a team
- * @route   POST /api/schools/me/teams/:id/players
+ * @desc    Add an athlete to a team
+ * @route   POST /api/schools/me/teams/:id/athletes
  * @access  Private (SchoolAdmin)
  */
-exports.addPlayerToTeam = async (req, res) => {
+exports.addAthleteToTeam = async (req, res) => {
   try {
     const { id: teamId } = req.params;
-    const { student_id, position } = req.body;
+    const { athlete_id, position } = req.body;
 
-    if (!student_id) {
-      return ApiResponse.error(res, "Student ID is required.", 400);
+    if (!athlete_id) {
+      return ApiResponse.error(res, "Athlete ID is required.", 400);
     }
 
     // Mock response
     const mockResult = {
       team_id: parseInt(teamId),
-      player_id: student_id,
+      athlete_id: athlete_id,
       position: position || null,
       created_at: new Date().toISOString()
     };
 
-    ApiResponse.success(res, mockResult, "Player added to team successfully", 201);
+    ApiResponse.success(res, mockResult, "Athlete added to team successfully", 201);
   } catch (err) {
-    console.error("Add player to team error:", err);
-    ApiResponse.error(res, "Server error while adding player to team.", 500);
+    console.error("Add athlete to team error:", err);
+    ApiResponse.error(res, "Server error while adding athlete to team.", 500);
   }
 };
 
@@ -845,32 +845,32 @@ exports.addPlayerToTeam = async (req, res) => {
  * @route   DELETE /api/schools/me/teams/:id/players/:playerId
  * @access  Private (SchoolAdmin)
  */
-exports.removePlayerFromTeam = async (req, res) => {
+exports.removeAthleteFromTeam = async (req, res) => {
   try {
-    const { id: teamId, playerId } = req.params;
+    const { id: teamId, athleteId } = req.params;
     // Mock removal
-    ApiResponse.success(res, null, "Player removed from team successfully");
+    ApiResponse.success(res, null, "Athlete removed from team successfully");
   } catch (err) {
-    console.error("Remove player from team error:", err);
-    ApiResponse.error(res, "Server error while removing player from team.", 500);
+    console.error("Remove athlete from team error:", err);
+    ApiResponse.error(res, "Server error while removing athlete from team.", 500);
   }
 };
 
 /**
- * @desc    Update a players position in a team
- * @route   PATCH /api/schools/me/teams/:id/players/:playerId
+ * @desc    Update an athlete's position in a team
+ * @route   PATCH /api/schools/me/teams/:id/athletes/:athleteId
  * @access  Private (SchoolAdmin)
  */
-exports.updatePlayerPosition = async (req, res) => {
+exports.updateAthletePosition = async (req, res) => {
   try {
-    const { id: teamId, playerId } = req.params;
+    const { id: teamId, athleteId } = req.params;
     const { position } = req.body;
 
     // Mock response
-    ApiResponse.success(res, null, "Player position updated successfully");
+    ApiResponse.success(res, null, "Athlete position updated successfully");
   } catch (err) {
-    console.error("Update player position error:", err);
-    ApiResponse.error(res, "Server error while updating player position.", 500);
+    console.error("Update athlete position error:", err);
+    ApiResponse.error(res, "Server error while updating athlete position.", 500);
   }
 };
 
@@ -898,6 +898,7 @@ exports.getSchoolTeams = async (req, res) => {
             json_build_object(
               'id', tp.id,
               'player_id', tp.player_id,
+              'athlete_id', p.athlete_id,
               'name', p.full_name,
               'grade', p.class,
               'position', tp.position,
@@ -1239,26 +1240,27 @@ exports.updatePlayerPositions = async (req, res) => {
   }
 };
 
-module.exports = {
-  registerSchool,
-  getAllSchools,
-  getMySchoolProfile,
-  updateMySchoolProfile,
-  getMySchoolTournaments,
-  getMySchoolTeams: getSchoolTeams, // Alias for consistency
-  getMySchoolPlayers,
-  getMySchoolTournamentStats,
-  getSchoolHouses,
-  getSchoolStaff,
-  getSchoolNotifications,
-  getSchoolActivities,
-  createSchoolTeam,
-  updateSchoolTeam,
-  deleteSchoolTeam,
-  getSchoolTeam,
-  addPlayerToTeam,
-  removePlayerFromTeam,
-  updatePlayerPositions: updatePlayerPosition, // Alias for route consistency
-  getSchoolTeams,
-  getSportsConfig
-};
+// Export handled by individual exports.functionName above
+// module.exports = {
+//   // registerSchool, // Temporarily disabled for debugging
+//   getAllSchools,
+//   getMySchoolProfile,
+//   updateMySchoolProfile,
+//   getMySchoolTournaments,
+//   getMySchoolTeams: getSchoolTeams, // Alias for consistency
+//   getMySchoolPlayers,
+//   getMySchoolTournamentStats,
+//   getSchoolHouses,
+//   getSchoolStaff,
+//   getSchoolNotifications,
+//   getSchoolActivities,
+//   createSchoolTeam,
+//   updateSchoolTeam,
+//   deleteSchoolTeam,
+//   getSchoolTeam,
+//   addPlayerToTeam,
+//   removePlayerFromTeam,
+//   updatePlayerPositions: updatePlayerPosition, // Alias for route consistency
+//   getSchoolTeams,
+//   getSportsConfig
+// };

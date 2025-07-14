@@ -1,0 +1,377 @@
+2025-07-13 09:07:36:736 [31merror[39m: [31muncaughtException: Unexpected end of input[39m
+[31me:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1234[39m
+
+
+
+[31mSyntaxError: Unexpected end of input[39m
+[31m    at wrapSafe (node:internal/modules/cjs/loader:1662:18)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1704:20)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+[31m    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)[39m
+[31m    at Module.require (node:internal/modules/cjs/loader:1487:12)[39m
+[31m    at require (node:internal/modules/helpers:135:16)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)[39m
+e:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1234
+
+
+
+SyntaxError: Unexpected end of input
+    at wrapSafe (node:internal/modules/cjs/loader:1662:18)
+    at Module._compile (node:internal/modules/cjs/loader:1704:20)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)
+2025-07-13 09:08:00:80 [31merror[39m: [31muncaughtException: Unexpected end of input[39m
+[31me:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1234[39m
+
+
+
+[31mSyntaxError: Unexpected end of input[39m
+[31m    at wrapSafe (node:internal/modules/cjs/loader:1662:18)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1704:20)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+[31m    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)[39m
+[31m    at Module.require (node:internal/modules/cjs/loader:1487:12)[39m
+[31m    at require (node:internal/modules/helpers:135:16)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)[39m
+e:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1234
+
+
+
+SyntaxError: Unexpected end of input
+    at wrapSafe (node:internal/modules/cjs/loader:1662:18)
+    at Module._compile (node:internal/modules/cjs/loader:1704:20)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)
+2025-07-13 09:08:55:855 [31merror[39m: [31muncaughtException: Unexpected end of input[39m
+[31me:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1234[39m
+
+
+
+[31mSyntaxError: Unexpected end of input[39m
+[31m    at wrapSafe (node:internal/modules/cjs/loader:1662:18)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1704:20)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+[31m    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)[39m
+[31m    at Module.require (node:internal/modules/cjs/loader:1487:12)[39m
+[31m    at require (node:internal/modules/helpers:135:16)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)[39m
+e:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1234
+
+
+
+SyntaxError: Unexpected end of input
+    at wrapSafe (node:internal/modules/cjs/loader:1662:18)
+    at Module._compile (node:internal/modules/cjs/loader:1704:20)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)
+2025-07-13 09:09:24:924 [31merror[39m: [31muncaughtException: listen EADDRINUSE: address already in use :::5000[39m
+[31mError: listen EADDRINUSE: address already in use :::5000[39m
+[31m    at Server.setupListenHandle [as _listen2] (node:net:1939:16)[39m
+[31m    at listenInCluster (node:net:1996:12)[39m
+[31m    at Server.listen (node:net:2101:7)[39m
+[31m    at Function.listen (e:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\server.js:109:5)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+Error: listen EADDRINUSE: address already in use :::5000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (e:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\server.js:109:5)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+2025-07-13 09:09:45:945 [31merror[39m: [31muncaughtException: listen EADDRINUSE: address already in use :::5000[39m
+[31mError: listen EADDRINUSE: address already in use :::5000[39m
+[31m    at Server.setupListenHandle [as _listen2] (node:net:1939:16)[39m
+[31m    at listenInCluster (node:net:1996:12)[39m
+[31m    at Server.listen (node:net:2101:7)[39m
+[31m    at Function.listen (e:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\server.js:109:5)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+Error: listen EADDRINUSE: address already in use :::5000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (e:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\server.js:109:5)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+2025-07-13 09:12:36:1236 [31merror[39m: [31muncaughtException: listen EADDRINUSE: address already in use :::5000[39m
+[31mError: listen EADDRINUSE: address already in use :::5000[39m
+[31m    at Server.setupListenHandle [as _listen2] (node:net:1939:16)[39m
+[31m    at listenInCluster (node:net:1996:12)[39m
+[31m    at Server.listen (node:net:2101:7)[39m
+[31m    at Function.listen (e:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\server.js:115:5)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+Error: listen EADDRINUSE: address already in use :::5000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (e:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\server.js:115:5)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+2025-07-13 09:13:38:1338 [31merror[39m: [31muncaughtException: listen EADDRINUSE: address already in use :::5000[39m
+[31mError: listen EADDRINUSE: address already in use :::5000[39m
+[31m    at Server.setupListenHandle [as _listen2] (node:net:1939:16)[39m
+[31m    at listenInCluster (node:net:1996:12)[39m
+[31m    at Server.listen (node:net:2101:7)[39m
+[31m    at Function.listen (e:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\server.js:117:5)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+Error: listen EADDRINUSE: address already in use :::5000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (e:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\server.js:117:5)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+2025-07-13 09:14:01:141 [31merror[39m: [31muncaughtException: listen EADDRINUSE: address already in use :::5000[39m
+[31mError: listen EADDRINUSE: address already in use :::5000[39m
+[31m    at Server.setupListenHandle [as _listen2] (node:net:1939:16)[39m
+[31m    at listenInCluster (node:net:1996:12)[39m
+[31m    at Server.listen (node:net:2101:7)[39m
+[31m    at Function.listen (e:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\server.js:110:5)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+Error: listen EADDRINUSE: address already in use :::5000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (e:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\server.js:110:5)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+2025-07-13 09:15:35:1535 [31merror[39m: [31muncaughtException: Unexpected end of input[39m
+[31me:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1234[39m
+
+
+
+[31mSyntaxError: Unexpected end of input[39m
+[31m    at wrapSafe (node:internal/modules/cjs/loader:1662:18)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1704:20)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+[31m    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)[39m
+[31m    at Module.require (node:internal/modules/cjs/loader:1487:12)[39m
+[31m    at require (node:internal/modules/helpers:135:16)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)[39m
+e:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1234
+
+
+
+SyntaxError: Unexpected end of input
+    at wrapSafe (node:internal/modules/cjs/loader:1662:18)
+    at Module._compile (node:internal/modules/cjs/loader:1704:20)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)
+2025-07-13 09:31:05:315 [31merror[39m: [31muncaughtException: registerSchool is not defined[39m
+[31mReferenceError: registerSchool is not defined[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+[31m    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)[39m
+[31m    at Module.require (node:internal/modules/cjs/loader:1487:12)[39m
+[31m    at require (node:internal/modules/helpers:135:16)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)[39m
+ReferenceError: registerSchool is not defined
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)
+2025-07-13 09:32:20:3220 [31merror[39m: [31muncaughtException: registerSchool is not defined[39m
+[31mReferenceError: registerSchool is not defined[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+[31m    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)[39m
+[31m    at Module.require (node:internal/modules/cjs/loader:1487:12)[39m
+[31m    at require (node:internal/modules/helpers:135:16)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)[39m
+ReferenceError: registerSchool is not defined
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)
+2025-07-13 13:20:16:2016 [31merror[39m: [31muncaughtException: registerSchool is not defined[39m
+[31mReferenceError: registerSchool is not defined[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+[31m    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)[39m
+[31m    at Module.require (node:internal/modules/cjs/loader:1487:12)[39m
+[31m    at require (node:internal/modules/helpers:135:16)[39m
+[31m    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)[39m
+ReferenceError: registerSchool is not defined
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (e:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)
+2025-07-13 17:01:07:17 [31merror[39m: [31muncaughtException: registerSchool is not defined[39m
+[31mReferenceError: registerSchool is not defined[39m
+[31m    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+[31m    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)[39m
+[31m    at Module.require (node:internal/modules/cjs/loader:1487:12)[39m
+[31m    at require (node:internal/modules/helpers:135:16)[39m
+[31m    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)[39m
+ReferenceError: registerSchool is not defined
+    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)
+2025-07-13 17:13:07:137 [31merror[39m: [31muncaughtException: registerSchool is not defined[39m
+[31mReferenceError: registerSchool is not defined[39m
+[31m    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+[31m    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)[39m
+[31m    at Module.require (node:internal/modules/cjs/loader:1487:12)[39m
+[31m    at require (node:internal/modules/helpers:135:16)[39m
+[31m    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)[39m
+ReferenceError: registerSchool is not defined
+    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)
+2025-07-13 17:18:08:188 [31merror[39m: [31muncaughtException: registerSchool is not defined[39m
+[31mReferenceError: registerSchool is not defined[39m
+[31m    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+[31m    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)[39m
+[31m    at Module.require (node:internal/modules/cjs/loader:1487:12)[39m
+[31m    at require (node:internal/modules/helpers:135:16)[39m
+[31m    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)[39m
+ReferenceError: registerSchool is not defined
+    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\controllers\schoolController.js:1243:3)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Module.require (node:internal/modules/cjs/loader:1487:12)
+    at require (node:internal/modules/helpers:135:16)
+    at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)
