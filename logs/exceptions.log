@@ -375,3 +375,26 @@ ReferenceError: registerSchool is not defined
     at Module.require (node:internal/modules/cjs/loader:1487:12)
     at require (node:internal/modules/helpers:135:16)
     at Object.<anonymous> (E:\Athletiq\athletiq-backend\src\routes\schoolRoutes.js:3:26)
+2025-07-14 07:03:06:36 [31merror[39m: [31muncaughtException: listen EADDRINUSE: address already in use :::5000[39m
+[31mError: listen EADDRINUSE: address already in use :::5000[39m
+[31m    at Server.setupListenHandle [as _listen2] (node:net:1939:16)[39m
+[31m    at listenInCluster (node:net:1996:12)[39m
+[31m    at Server.listen (node:net:2101:7)[39m
+[31m    at Function.listen (E:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)[39m
+[31m    at Object.<anonymous> (E:\Athletiq\athletiq-backend\server.js:84:5)[39m
+[31m    at Module._compile (node:internal/modules/cjs/loader:1730:14)[39m
+[31m    at Object..js (node:internal/modules/cjs/loader:1895:10)[39m
+[31m    at Module.load (node:internal/modules/cjs/loader:1465:32)[39m
+[31m    at Function._load (node:internal/modules/cjs/loader:1282:12)[39m
+[31m    at TracingChannel.traceSync (node:diagnostics_channel:322:14)[39m
+Error: listen EADDRINUSE: address already in use :::5000
+    at Server.setupListenHandle [as _listen2] (node:net:1939:16)
+    at listenInCluster (node:net:1996:12)
+    at Server.listen (node:net:2101:7)
+    at Function.listen (E:\Athletiq\athletiq-backend\node_modules\express\lib\application.js:635:24)
+    at Object.<anonymous> (E:\Athletiq\athletiq-backend\server.js:84:5)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
