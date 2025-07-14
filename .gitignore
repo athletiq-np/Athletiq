@@ -22,3 +22,25 @@ yarn-error.log*
 
 # Secret Keys Folder
 keys/
+
+# Prevent test and temporary files from being recreated
+*test*.js
+*debug*.js
+*temp*.js
+*demo*.js
+comprehensive-*.ps1
+*cleanup*.ps1
+stable-*.js
+atheletiq-*
+*-test-*.js
+*diagnostic*.js
+test-*.js
+debug-*.js
+
+# Prevent temporary documentation from cluttering root
+/*_COMPLETE.md
+/*_ROADMAP.md
+/*_STATUS.md
+/*_INTEGRATION*.md
+/*PHASE*.md
+/*SUMMARY*.md
