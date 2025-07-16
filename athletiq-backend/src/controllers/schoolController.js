@@ -336,8 +336,6 @@ exports.getMySchoolTournaments = async (req, res) => {
     
   } catch (err) {
     console.error("Get school tournaments error:", err);
-    console.error("Error details:", err.message);
-    console.error("Error stack:", err.stack);
     ApiResponse.error(res, `Server error while fetching school tournaments: ${err.message}`, 500);
   }
 };
@@ -394,11 +392,12 @@ exports.getMySchoolTeams = async (req, res) => {
 };
 
 /**
- * @desc    Get school athletes
+ * @desc    Get school athletes/players with comprehensive data
  * @route   GET /api/schools/me/athletes
  * @access  Private (SchoolAdmin)
  */
 exports.getMySchoolAthletes = async (req, res) => {
+  console.log('🔍 DEBUG: getMySchoolAthletes called - version 2025-07-14 latest');
   try {
     // Development mode: Allow testing without full authentication
     let schoolId = req.user?.school_id;
@@ -411,41 +410,188 @@ exports.getMySchoolAthletes = async (req, res) => {
         return ApiResponse.error(res, "No school associated with this user.", 404);
       }
     }
+
+    // Handle pagination
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 100;
+    const offset = (page - 1) * limit;
+
+    // Handle filters
+    const { grade, house, sport, status, search } = req.query;
+    let whereConditions = ['p.school_id = $1'];
+    let queryParams = [schoolId];
+    let paramIndex = 2;
+
+    if (grade && grade !== 'all') {
+      whereConditions.push(`p.grade = $${paramIndex}`);
+      queryParams.push(grade);
+      paramIndex++;
+    }
+
+    if (sport && sport !== 'all') {
+      whereConditions.push(`p.registered_sports ? $${paramIndex}`);
+      queryParams.push(sport);
+      paramIndex++;
+    }
+
+    if (status && status !== 'all') {
+      whereConditions.push(`p.active_status = $${paramIndex}`);
+      queryParams.push(status);
+      paramIndex++;
+    }
+
+    if (search) {
+      whereConditions.push(`(p.full_name ILIKE $${paramIndex} OR p.full_name_nepali ILIKE $${paramIndex})`);
+      queryParams.push(`%${search}%`);
+      paramIndex++;
+    }
+
+    const whereClause = whereConditions.join(' AND ');
+    
+    console.log('🔍 DEBUG: About to execute query with whereClause:', whereClause);
+    console.log('🔍 DEBUG: Query params:', queryParams);
     
     const { rows } = await pool.query(`
       SELECT 
         p.id,
         p.athlete_id,
         p.full_name,
-        p.date_of_birth,
+        p.full_name_nepali,
+        p.profile_photo_url,
         p.gender,
-        p.class,
+        p.date_of_birth,
+        p.nationality,
+        p.citizenship_no,
+        p.grade,
         p.section,
-        p.contact_no,
-        p.email,
-        p.registration_status,
-        p.is_active,
+        p.guardian_name,
+        p.relationship_to_player,
+        p.guardian_phone,
+        p.guardian_email,
+        p.address,
+        p.province,
+        p.district,
+        p.municipality_or_rural_municipality,
+        p.ward_no,
+        p.school_name,
+        p.school_code,
+        p.admission_no,
+        p.enrollment_status,
+        p.registered_sports,
+        p.primary_sport,
+        p.player_position,
+        p.jersey_number,
+        p.team_ids,
+        p.tournaments_participated,
+        p.birth_certificate_url,
+        p.citizenship_certificate_url,
+        p.parent_national_id_url,
+        p.photo_verified,
+        p.document_verified,
+        p.registration_method,
+        p.verification_status,
+        p.blood_group,
+        p.medical_conditions,
+        p.allergies,
+        p.emergency_contact,
+        p.parental_consent,
+        p.nickname,
+        p.bio,
+        p.achievements,
+        p.social_links,
+        p.profile_completion,
+        p.active_status,
+        p.profile_status,
         p.created_at,
-        json_agg(
-          json_build_object(
-            'sport', s.name,
-            'team', t.team_name,
-            'position', psp.event_category
-          )
-        ) FILTER (WHERE s.id IS NOT NULL) as sports_participation
+        p.updated_at
       FROM players p
-      LEFT JOIN player_sport_participation psp ON p.id = psp.athlete_id
-      LEFT JOIN sports s ON psp.sport_id = s.id
-      LEFT JOIN teams t ON psp.team_id = t.id
-      WHERE p.school_id = $1
-      GROUP BY p.id, p.athlete_id, p.full_name, p.date_of_birth, p.gender, p.class, p.section, p.contact_no, p.email, p.registration_status, p.is_active, p.created_at
+      WHERE ${whereClause}
       ORDER BY p.full_name
-    `, [schoolId]);
-    
-    ApiResponse.success(res, rows, 'School athletes retrieved successfully');
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `, [...queryParams, limit, offset]);
+
+    // Get total count for pagination
+    const countResult = await pool.query(`
+      SELECT COUNT(*) as total
+      FROM players p
+      WHERE ${whereClause}
+    `, queryParams);
+
+    const total = parseInt(countResult.rows[0].total);
+    const totalPages = Math.ceil(total / limit);
+
+    ApiResponse.success(res, {
+      players: rows,
+      pagination: {
+        page,
+        limit,
+        total,
+        totalPages,
+        hasNext: page < totalPages,
+        hasPrev: page > 1
+      }
+    }, 'School athletes retrieved successfully');
     
   } catch (err) {
     console.error("Get school athletes error:", err);
+    console.error("Error details:", err.stack);
+    
+    // Return mock data in development mode if database query fails
+    if (process.env.NODE_ENV === 'development') {
+      const mockPlayers = [
+        {
+          id: 1,
+          athlete_id: 'uuid-1',
+          full_name: 'Ram Bahadur Thapa',
+          full_name_nepali: 'राम बहादुर थापा',
+          profile_photo_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
+          gender: 'Male',
+          date_of_birth: '2008-03-15',
+          grade: '10',
+          section: 'A',
+          guardian_name: 'Gopal Thapa',
+          guardian_phone: '+977-9841234567',
+          address: 'Kathmandu, Nepal',
+          registered_sports: ['Football', 'Athletics'],
+          primary_sport: 'Football',
+          verification_status: 'Approved',
+          active_status: 'Active',
+          profile_completion: 85
+        },
+        {
+          id: 2,
+          athlete_id: 'uuid-2',
+          full_name: 'Sita Kumari Poudel',
+          full_name_nepali: 'सीता कुमारी पौडेल',
+          profile_photo_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=150&h=150&fit=crop&crop=face',
+          gender: 'Female',
+          date_of_birth: '2009-07-22',
+          grade: '9',
+          section: 'B',
+          guardian_name: 'Krishna Poudel',
+          guardian_phone: '+977-9851234567',
+          address: 'Lalitpur, Nepal',
+          registered_sports: ['Basketball', 'Volleyball'],
+          primary_sport: 'Basketball',
+          verification_status: 'Approved',
+          active_status: 'Active',
+          profile_completion: 90
+        }
+      ];
+
+      return ApiResponse.success(res, {
+        players: mockPlayers,
+        pagination: {
+          page: 1,
+          limit: 100,
+          total: mockPlayers.length,
+          totalPages: 1,
+          hasNext: false,
+          hasPrev: false
+        }
+      }, 'Mock school athletes data (development mode)');
+    }
+    
     ApiResponse.error(res, "Server error while fetching school athletes.", 500);
   }
 };
@@ -1237,6 +1383,73 @@ exports.updatePlayerPositions = async (req, res) => {
   } catch (err) {
     console.error("Update player positions error:", err);
     ApiResponse.error(res, "Server error while updating player positions.", 500);
+  }
+};
+
+
+/**
+ * @desc    Export school data as Excel file
+ * @route   GET /api/schools/me/export
+ * @access  Private (SchoolAdmin)
+ */
+exports.exportSchoolData = async (req, res) => {
+  try {
+    let schoolId = req.user?.school_id;
+    
+    if (!schoolId) {
+      if (process.env.NODE_ENV === 'development') {
+        schoolId = 1;
+      } else {
+        return ApiResponse.error(res, "No school associated with this user.", 404);
+      }
+    }
+
+    // For now, return a mock Excel export response
+    // In the future, this would generate an actual Excel file using a library like xlsx or exceljs
+    const exportData = {
+      school_info: {
+        name: "Mock School",
+        code: "MSC001",
+        address: "123 School Street",
+        phone: "+977-1-1234567",
+        email: "info@mockschool.edu.np"
+      },
+      summary: {
+        total_students: 150,
+        total_teams: 8,
+        total_staff: 25,
+        active_tournaments: 3
+      },
+      students: [
+        { id: 1, name: "John Doe", class: "10", section: "A", sports: ["Football", "Cricket"] },
+        { id: 2, name: "Jane Smith", class: "9", section: "B", sports: ["Basketball"] }
+      ],
+      teams: [
+        { id: 1, name: "School Eagles", sport: "Football", players: 11 },
+        { id: 2, name: "Cricket Warriors", sport: "Cricket", players: 15 }
+      ],
+      tournaments: [
+        { id: 1, name: "Inter-House Football", status: "active", teams: 4 },
+        { id: 2, name: "District Basketball", status: "completed", teams: 8 }
+      ]
+    };
+
+    // Set headers for Excel download
+    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+    res.setHeader('Content-Disposition', `attachment; filename="school_data_export_${Date.now()}.xlsx"`);
+    
+    // For mock implementation, return JSON data
+    // In production, this would be an actual Excel file buffer
+    res.json({
+      success: true,
+      message: "Export data prepared successfully",
+      data: exportData,
+      note: "This is a mock implementation. In production, this would download an Excel file."
+    });
+    
+  } catch (err) {
+    console.error("Export school data error:", err);
+    ApiResponse.error(res, "Server error while exporting school data.", 500);
   }
 };
 

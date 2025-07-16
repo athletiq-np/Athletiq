@@ -24,12 +24,16 @@ import NotFoundPage from '@/pages/public/NotFoundPage';
 // Import admin components directly (simple and clean)
 import AdminDashboard from '@/pages/admin/AdminDashboard';
 import Settings from '@/pages/admin/Settings';
+import NepalAthleteMonitor from '@/pages/admin/NepalAthleteMonitor'; // Nepal Athlete System Monitor
 import SchoolDashboard from '@/pages/school/SchoolDashboard';
 
 // Import athlete components
 import AthleteRegister from '@/pages/athlete/AthleteRegister';
 import AthleteList from '@/pages/athlete/AthleteList';
 import AthleteProfile from '@/pages/athlete/AthleteProfile';
+
+// Import guardian components
+import GuardianClaimPortal from '@/pages/guardian/GuardianClaimPortal';
 
 // Tournament creation component
 import TournamentCreate from '@/pages/admin/tournaments/TournamentCreate';
@@ -78,6 +82,9 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
+            {/* --- Guardian Routes --- */}
+            <Route path="/guardian/claim/:claimCode" element={<GuardianClaimPortal />} />
+            
             {/* --- Test Routes --- */}
             <Route path="/test/pdf" element={<PDFTestPage />} />
 
@@ -118,6 +125,16 @@ function App() {
               <ErrorBoundary title="Admin Dashboard Error">
                 <ProtectedRoute roles={['SuperAdmin']}>
                   <Settings />
+                </ProtectedRoute>
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/admin/nepal-athlete-monitor"
+            element={
+              <ErrorBoundary title="Nepal Athlete Monitor Error">
+                <ProtectedRoute roles={['SuperAdmin']}>
+                  <NepalAthleteMonitor />
                 </ProtectedRoute>
               </ErrorBoundary>
             }

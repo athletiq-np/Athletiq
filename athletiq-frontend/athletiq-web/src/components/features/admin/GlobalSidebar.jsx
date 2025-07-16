@@ -116,6 +116,7 @@ export default function GlobalSidebar({
       icon: MdSettings,
       items: [
         { id: 'settings', label: t('sidebar.items.settings'), icon: FaCogs },
+        { id: 'nepal-monitor', label: 'Nepal Athlete Monitor', icon: FaChartLine, isExternal: true, href: '/admin/nepal-athlete-monitor' },
         { id: 'notifications', label: t('sidebar.items.notifications'), icon: MdNotifications },
         { id: 'preferences', label: t('sidebar.items.preferences'), icon: FaCogs },
       ]
@@ -271,57 +272,111 @@ export default function GlobalSidebar({
                             show={collapsed}
                             position="right"
                           >
-                            <button
-                              onClick={() => setActiveTab(item.id)}
-                              className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 group ${
-                                activeTab === item.id
-                                  ? 'bg-gradient-to-r from-athletiq-green to-green-500 text-white shadow-lg'
-                                  : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
-                              }`}
-                            >
-                              <div className="flex items-center space-x-3">
-                                <item.icon
-                                  className={`transition-colors ${
-                                    activeTab === item.id
-                                      ? 'text-white'
-                                      : 'text-gray-500 dark:text-gray-400 group-hover:text-athletiq-green'
-                                  }`}
-                                  size={18}
-                                />
+                            {item.isExternal ? (
+                              <Link
+                                to={item.href}
+                                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 group ${
+                                  activeTab === item.id
+                                    ? 'bg-gradient-to-r from-athletiq-green to-green-500 text-white shadow-lg'
+                                    : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                                }`}
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <item.icon
+                                    className={`transition-colors ${
+                                      activeTab === item.id
+                                        ? 'text-white'
+                                        : 'text-gray-500 dark:text-gray-400 group-hover:text-athletiq-green'
+                                    }`}
+                                    size={18}
+                                  />
+                                  <AnimatePresence mode="wait">
+                                    {!collapsed && (
+                                      <motion.span
+                                        key={`item-${item.id}`}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="text-sm font-medium"
+                                      >
+                                        {item.label}
+                                      </motion.span>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                                
+                                {/* Badge */}
                                 <AnimatePresence mode="wait">
-                                  {!collapsed && (
+                                  {!collapsed && item.badge && (
                                     <motion.span
-                                      key={`item-${item.id}`}
-                                      initial={{ opacity: 0, x: -20 }}
-                                      animate={{ opacity: 1, x: 0 }}
-                                      exit={{ opacity: 0, x: -20 }}
-                                      className="text-sm font-medium"
+                                      key={`badge-${item.id}`}
+                                      initial={{ opacity: 0, scale: 0.8 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0.8 }}
+                                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                        activeTab === item.id
+                                          ? 'bg-white/20 text-white'
+                                          : 'bg-athletiq-green/20 text-athletiq-green'
+                                      }`}
                                     >
-                                      {item.label}
+                                      {item.badge}
                                     </motion.span>
                                   )}
                                 </AnimatePresence>
-                              </div>
-                              
-                              {/* Badge */}
-                              <AnimatePresence mode="wait">
-                                {!collapsed && item.badge && (
-                                  <motion.span
-                                    key={`badge-${item.id}`}
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.8 }}
-                                    className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                              </Link>
+                            ) : (
+                              <button
+                                onClick={() => setActiveTab(item.id)}
+                                className={`w-full flex items-center justify-between p-3 rounded-lg transition-all duration-200 group ${
+                                  activeTab === item.id
+                                    ? 'bg-gradient-to-r from-athletiq-green to-green-500 text-white shadow-lg'
+                                    : 'hover:bg-gray-100 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-300'
+                                }`}
+                              >
+                                <div className="flex items-center space-x-3">
+                                  <item.icon
+                                    className={`transition-colors ${
                                       activeTab === item.id
-                                        ? 'bg-white/20 text-white'
-                                        : 'bg-athletiq-green/20 text-athletiq-green'
+                                        ? 'text-white'
+                                        : 'text-gray-500 dark:text-gray-400 group-hover:text-athletiq-green'
                                     }`}
-                                  >
-                                    {item.badge}
-                                  </motion.span>
-                                )}
-                              </AnimatePresence>
-                            </button>
+                                    size={18}
+                                  />
+                                  <AnimatePresence mode="wait">
+                                    {!collapsed && (
+                                      <motion.span
+                                        key={`item-${item.id}`}
+                                        initial={{ opacity: 0, x: -20 }}
+                                        animate={{ opacity: 1, x: 0 }}
+                                        exit={{ opacity: 0, x: -20 }}
+                                        className="text-sm font-medium"
+                                      >
+                                        {item.label}
+                                      </motion.span>
+                                    )}
+                                  </AnimatePresence>
+                                </div>
+                                
+                                {/* Badge */}
+                                <AnimatePresence mode="wait">
+                                  {!collapsed && item.badge && (
+                                    <motion.span
+                                      key={`badge-${item.id}`}
+                                      initial={{ opacity: 0, scale: 0.8 }}
+                                      animate={{ opacity: 1, scale: 1 }}
+                                      exit={{ opacity: 0, scale: 0.8 }}
+                                      className={`px-2 py-1 text-xs font-semibold rounded-full ${
+                                        activeTab === item.id
+                                          ? 'bg-white/20 text-white'
+                                          : 'bg-athletiq-green/20 text-athletiq-green'
+                                      }`}
+                                    >
+                                      {item.badge}
+                                    </motion.span>
+                                  )}
+                                </AnimatePresence>
+                              </button>
+                            )}
                           </Tooltip>
                         ))}
                       </div>

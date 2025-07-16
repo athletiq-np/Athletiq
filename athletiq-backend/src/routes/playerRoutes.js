@@ -8,6 +8,10 @@ const { validatePlayerRegistration } = require('../middlewares/validation');
 const { generalLimiter } = require('../middlewares/rateLimiter');
 const apiResponse = require('../utils/apiResponse');
 
+// Import Nepal Athlete ID Generator
+const AthleteIdGenerator = require('../services/ai/athleteIdGenerator');
+const GuardianNotificationService = require('../services/guardianNotificationService');
+
 // --- Multer Setup for file uploads ---
 const storage = multer.diskStorage({
   destination: (req, file, cb) => cb(null, 'uploads/players/'), // Use a dedicated subfolder
@@ -61,7 +65,12 @@ router.post(
         throw error;
       }
 
-      // Generate both player_code and athlete_id
+      // Generate Nepal Athlete ID using the new system
+      const athleteIdGenerator = new AthleteIdGenerator();
+      const athleteCode = athleteIdGenerator.generateAlphanumericCode(); // 6 chars
+      const athlete_id = `NP${athleteCode}`; // NP + 6 chars = 8 total
+      
+      // Also generate traditional player_code for compatibility
       const player_code = await generateShortCode('PL', 8);
 
       const photo_url = req.files?.profile_photo_url?.[0]?.filename || null;
@@ -70,18 +79,45 @@ router.post(
       const insertQuery = `
         INSERT INTO players (
           player_code, athlete_id, full_name, date_of_birth, school_id, 
-          profile_photo_url, birth_cert_url, created_by, is_active
-        ) VALUES ($1, generate_athlete_id(), $2, $3, $4, $5, $6, $7, TRUE)
+          profile_photo_url, birth_cert_url, created_by, is_active, registration_status
+        ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, TRUE, 'active')
         RETURNING *;
       `;
-      const values = [player_code, full_name.trim(), date_of_birth, school_id, photo_url, birth_cert_url, created_by];
+      const values = [player_code, athlete_id, full_name.trim(), date_of_birth, school_id, photo_url, birth_cert_url, created_by];
       
       const result = await pool.query(insertQuery, values);
+      const newAthlete = result.rows[0];
+
+      // Send guardian notification if contact information provided
+      const guardianNotificationService = new GuardianNotificationService();
+      let notificationResult = null;
+
+      if (req.body.guardian_phone || req.body.guardian_email) {
+        try {
+          // Get school name for notification
+          const schoolQuery = 'SELECT name FROM schools WHERE id = $1';
+          const schoolResult = await pool.query(schoolQuery, [school_id]);
+          const schoolName = schoolResult.rows[0]?.name || 'Your School';
+
+          const athleteForNotification = {
+            ...newAthlete,
+            guardian_phone: req.body.guardian_phone,
+            guardian_email: req.body.guardian_email,
+            school_name: schoolName
+          };
+
+          notificationResult = await guardianNotificationService.sendRegistrationNotification(athleteForNotification);
+        } catch (notificationError) {
+          console.error('Guardian notification failed:', notificationError);
+          // Don't fail the registration if notification fails
+        }
+      }
 
       res.status(201).json({
         success: true,
         message: "Athlete registered successfully.",
-        player: result.rows[0]
+        player: newAthlete,
+        guardian_notification: notificationResult || { message: 'No guardian contact provided' }
       });
 
     } catch (err) {

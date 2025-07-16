@@ -9,7 +9,7 @@ export default function StaffManagement({ staff, onRefresh }) {
     { id: 3, name: 'Bob Johnson', role: 'Coach', email: 'bob@school.edu', phone: '9861234569', subjects: ['Cricket', 'Athletics'], photo: null },
   ];
 
-  const displayStaff = staff.length > 0 ? staff : mockStaff;
+  const displayStaff = (staff && staff.length > 0) ? staff : mockStaff;
 
   return (
     <div className="space-y-6">
@@ -67,11 +67,15 @@ export default function StaffManagement({ staff, onRefresh }) {
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex flex-wrap gap-1">
-                      {member.subjects.map((subject, index) => (
+                      {(member.subjects && Array.isArray(member.subjects)) ? member.subjects.map((subject, index) => (
                         <span key={index} className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
                           {subject}
                         </span>
-                      ))}
+                      )) : (
+                        <span className="px-2 py-1 text-xs bg-gray-100 text-gray-800 rounded">
+                          No subjects assigned
+                        </span>
+                      )}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

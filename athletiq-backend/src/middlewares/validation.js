@@ -641,6 +641,36 @@ const validateBulkAthleteUpload = [
   validateRequest
 ];
 
+/**
+ * Validation rules for player registration (alias for athlete registration)
+ */
+const validatePlayerRegistration = [
+  body('full_name')
+    .notEmpty()
+    .withMessage('Full name is required')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('Full name must be between 2 and 100 characters'),
+  
+  body('date_of_birth')
+    .isDate()
+    .withMessage('Valid date of birth is required')
+    .custom((value) => {
+      const date = new Date(value);
+      const now = new Date();
+      const age = now.getFullYear() - date.getFullYear();
+      if (age < 5 || age > 25) {
+        throw new Error('Player age must be between 5 and 25 years');
+      }
+      return true;
+    }),
+  
+  body('school_id')
+    .isInt({ min: 1 })
+    .withMessage('Valid school ID is required'),
+
+  validateRequest
+];
+
 module.exports = {
   validateRequest,
   validateUserRegistration,
@@ -651,6 +681,7 @@ module.exports = {
   validateTournament,
   validateTournamentId,
   sanitizeInput,
+  validatePlayerRegistration,
   validateSchoolAthleteRegistration,
   validateGuardianAthleteRegistration,
   validateDirectAthleteRegistration,

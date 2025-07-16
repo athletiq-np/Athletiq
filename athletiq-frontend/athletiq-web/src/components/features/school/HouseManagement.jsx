@@ -11,7 +11,7 @@ export default function HouseManagement({ houses, students, onRefresh }) {
     { id: 4, name: 'Yellow House', color: '#F59E0B', students: 30, captain: 'Maya Gurung', logo: null },
   ];
 
-  const displayHouses = houses.length > 0 ? houses : mockHouses;
+  const displayHouses = (houses && houses.length > 0) ? houses : mockHouses;
 
   return (
     <div className="space-y-6">

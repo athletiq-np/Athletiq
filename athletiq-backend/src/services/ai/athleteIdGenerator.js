@@ -6,9 +6,10 @@ const { logger } = require('../../config/db');
 
 class AthleteIdGenerator {
   constructor() {
-    this.prefix = 'ATH';
-    this.checksumLength = 2;
-    this.idLength = 10; // Total length including prefix
+    this.prefix = 'NP';  // Nepal country code prefix
+    this.checksumLength = 0; // No checksum for 8-char limit
+    this.idLength = 8; // Total length: NP + 6 alphanumeric = 8 characters
+    this.codeLength = 6; // Length of alphanumeric part after NP
   }
 
   /**
@@ -16,20 +17,11 @@ class AthleteIdGenerator {
    */
   async generateAthleteId(playerData) {
     try {
-      // Create a unique identifier based on player data
-      const uniqueString = this.createUniqueString(playerData);
+      // Generate 6-character alphanumeric code
+      const alphanumericCode = this.generateAlphanumericCode();
       
-      // Generate sequential number
-      const sequentialNumber = await this.getNextSequentialNumber();
-      
-      // Create the base ID (without checksum)
-      const baseId = `${this.prefix}${sequentialNumber.toString().padStart(5, '0')}`;
-      
-      // Calculate checksum
-      const checksum = this.calculateChecksum(baseId, uniqueString);
-      
-      // Final athlete ID
-      const athleteId = `${baseId}${checksum}`;
+      // Final athlete ID: NP + 6 alphanumeric = 8 characters total
+      const athleteId = `${this.prefix}${alphanumericCode}`;
       
       // Verify uniqueness
       const isUnique = await this.verifyUniqueness(athleteId);
@@ -48,9 +40,10 @@ class AthleteIdGenerator {
         athleteId,
         metadata: {
           generatedAt: new Date().toISOString(),
-          sequentialNumber,
-          checksum,
-          uniqueString: uniqueString.substring(0, 20) + '...' // Truncated for privacy
+          format: 'NP + 6 alphanumeric',
+          totalLength: athleteId.length,
+          prefix: this.prefix,
+          codeLength: this.codeLength
         }
       };
       
@@ -59,6 +52,137 @@ class AthleteIdGenerator {
         error: error.message,
         playerData: { ...playerData, sensitive: 'redacted' }
       });
+      throw error;
+    }
+  }
+
+  /**
+   * Generate multiple unique athlete IDs in batch
+   * @param {Array} playersData - Array of player data objects
+   * @param {number} maxRetries - Maximum retry attempts per ID (default: 5)
+   * @returns {Array} Array of athlete ID objects
+   */
+  async generateBatchAthleteIds(playersData, maxRetries = 5) {
+    try {
+      logger.info('Starting batch athlete ID generation', { 
+        count: playersData.length 
+      });
+      
+      const results = [];
+      const generated = new Set(); // Track generated IDs in this batch
+      
+      for (let i = 0; i < playersData.length; i++) {
+        const playerData = playersData[i];
+        let attempts = 0;
+        let athleteId;
+        let isUnique = false;
+        
+        while (!isUnique && attempts < maxRetries) {
+          const alphanumericCode = this.generateAlphanumericCode();
+          athleteId = `${this.prefix}${alphanumericCode}`;
+          
+          // Check database uniqueness and batch uniqueness
+          const dbUnique = await this.verifyUniqueness(athleteId);
+          const batchUnique = !generated.has(athleteId);
+          
+          isUnique = dbUnique && batchUnique;
+          attempts++;
+          
+          if (!isUnique && attempts < maxRetries) {
+            logger.warn('Batch ID collision, retrying', { 
+              athleteId, 
+              attempt: attempts,
+              playerIndex: i 
+            });
+          }
+        }
+        
+        if (!isUnique) {
+          throw new Error(`Failed to generate unique athlete ID for player ${i} after ${maxRetries} attempts`);
+        }
+        
+        generated.add(athleteId);
+        results.push({
+          athleteId,
+          playerData,
+          metadata: {
+            generatedAt: new Date().toISOString(),
+            format: 'NP + 6 alphanumeric',
+            totalLength: athleteId.length,
+            prefix: this.prefix,
+            codeLength: this.codeLength,
+            batchIndex: i
+          }
+        });
+      }
+      
+      logger.info('Batch athlete ID generation completed', { 
+        total: results.length,
+        successful: results.length,
+        failed: 0
+      });
+      
+      return results;
+      
+    } catch (error) {
+      logger.error('Batch athlete ID generation failed', { 
+        error: error.message,
+        playersCount: playersData.length
+      });
+      throw error;
+    }
+  }
+
+  /**
+   * Pre-generate and reserve athlete IDs for future use
+   * @param {number} count - Number of IDs to pre-generate
+   * @returns {Array} Array of reserved athlete IDs
+   */
+  async preGenerateAthleteIds(count) {
+    try {
+      logger.info('Pre-generating athlete IDs', { count });
+      
+      const preGenerated = [];
+      const generated = new Set();
+      let attempts = 0;
+      const maxTotalAttempts = count * 10; // Safety limit
+      
+      while (preGenerated.length < count && attempts < maxTotalAttempts) {
+        const alphanumericCode = this.generateAlphanumericCode();
+        const athleteId = `${this.prefix}${alphanumericCode}`;
+        
+        if (!generated.has(athleteId)) {
+          const isUnique = await this.verifyUniqueness(athleteId);
+          if (isUnique) {
+            generated.add(athleteId);
+            preGenerated.push({
+              athleteId,
+              reservedAt: new Date().toISOString(),
+              status: 'reserved'
+            });
+          }
+        }
+        
+        attempts++;
+      }
+      
+      if (preGenerated.length < count) {
+        logger.warn('Could not pre-generate all requested IDs', {
+          requested: count,
+          generated: preGenerated.length,
+          attempts
+        });
+      }
+      
+      logger.info('Pre-generation completed', {
+        requested: count,
+        generated: preGenerated.length
+      });
+      
+      return preGenerated;
+      
+    } catch (error) {
+      logger.error('Pre-generation failed', { error: error.message, count });
       throw error;
     }
   }
@@ -434,6 +558,22 @@ class AthleteIdGenerator {
       logger.error('Batch ID generation failed', { error: error.message });
       throw error;
     }
+  }
+
+  /**
+   * Generate a 6-character alphanumeric code
+   * Uses uppercase letters and numbers, excludes ambiguous characters
+   */
+  generateAlphanumericCode() {
+    // Character set without ambiguous characters (no I, O, 0, 1)
+    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+    let code = '';
+    
+    for (let i = 0; i < this.codeLength; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length));
+    }
+    
+    return code;
   }
 }
 

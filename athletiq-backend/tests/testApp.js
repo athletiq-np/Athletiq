@@ -46,10 +46,15 @@ const createTestApp = () => {
   app.use('/api/teams', require('../src/routes/teamRoutes'));
   app.use('/api/registrations', require('../src/routes/registrationRoutes'));
   app.use('/api/documents', require('../src/routes/documentRoutes'));
-  app.use('/api/ai', require('../src/routes/aiRoutes'));
+  
+  // Only load AI routes if OpenAI key is available (skip in tests)
+  if (process.env.OPENAI_API_KEY) {
+    app.use('/api/ai', require('../src/routes/aiRoutes'));
+    app.use('/api/ocr', require('../src/routes/ocr'));
+  }
+  
   app.use('/api/health', require('../src/routes/health'));
   app.use('/api/upload', require('../src/routes/uploadRoutes'));
-  app.use('/api/ocr', require('../src/routes/ocr'));
 
   // Error sanitization before error handler
   app.use(sanitizeError);

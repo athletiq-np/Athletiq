@@ -9,6 +9,8 @@ const sendTokenResponse = (user, statusCode, res) => {
     user: { id: user.id, role: user.role, school_id: user.school_id },
   };
 
+  console.log('JWT_SECRET check:', process.env.JWT_SECRET ? 'Found' : 'Missing', process.env.JWT_SECRET?.length || 0, 'characters');
+  
   const token = jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: '7d',
   });

@@ -1,0 +1,23 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"typescript.preferences.includePackageJsonAutoImports": "off",
+		"typescript.disableAutomaticTypeAcquisition": true,
+		"search.followSymlinks": false,
+		"typescript.tsserver.maxTsServerMemory": 8144,
+		"workbench.settings.enableNaturalLanguageSearch": false,
+		"search.maxResults": 2000,
+		"files.associations": {
+			"*.js": "javascript",
+			"*.jsx": "javascriptreact",
+			"*.ts": "typescript",
+			"*.tsx": "typescriptreact"
+		},
+		"breadcrumbs.enabled": false,
+		"emmet.showExpandedAbbreviation": "never"
+	}
+}
