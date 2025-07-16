@@ -1,53 +1,52 @@
 // src/pages/admin/tournaments/TournamentCreate.jsx
 
-// 🧠 ATHLETIQ - Create Tournament Page (Modern UX Version)
-// Multi-step tournament creation wizard with enhanced navigation and modern design
+// 🧠 ATHLETIQ - Enterprise Tournament Creation Page
+// Multi-step tournament creation wizard with robust validation and API integration
 
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   ChevronLeft, ChevronRight, Check, Trophy, Users, Settings, 
-  FileText, Calendar, MapPin, Save, AlertCircle, Info, Star
+  FileText, Calendar, MapPin, Save, AlertCircle, Info, Star,
+  Clock, Shield, Database
 } from "lucide-react";
-import axios from "axios";
 
-// Import the step components
+// Import enterprise components and hooks
 import TournamentInfoStep from "../../../components/features/tournament/TournamentInfoStep";
 import TournamentSportsStep from "../../../components/features/tournament/TournamentSportsStep";
 import TournamentConfigStep from "../../../components/features/tournament/TournamentConfigStep";
 import TournamentReviewStep from "../../../components/features/tournament/TournamentReviewStep";
-import TournamentTemplateSelector from "../../../components/features/tournament/TournamentTemplateSelector";
+import { useTournamentCreation } from "../../../hooks/useTournamentCreation";
 
-// Import hooks and utilities
-import { useToast } from "../../../components/common/ErrorHandling";
-import { useAutoSave } from "../../../hooks/usePerformance";
-
-// Step configuration
+// Step configuration with enterprise features
 const STEPS = [
   { 
     id: 'info', 
     title: 'Tournament Info', 
     icon: FileText, 
-    description: 'Basic tournament information' 
+    description: 'Basic tournament information',
+    color: 'blue'
   },
   { 
     id: 'sports', 
     title: 'Sports & Format', 
     icon: Trophy, 
-    description: 'Select sports and formats' 
+    description: 'Select sports and formats',
+    color: 'yellow' 
   },
   { 
     id: 'config', 
-    title: 'Configure & Fixtures', 
+    title: 'Configuration', 
     icon: Settings, 
-    description: 'Configure tournament settings' 
+    description: 'Configure tournament settings',
+    color: 'purple'
   },
   { 
     id: 'review', 
     title: 'Review & Create', 
     icon: Check, 
-    description: 'Review and submit tournament' 
+    description: 'Review and submit tournament',
+    color: 'green'
   }
 ];
 
@@ -57,7 +56,7 @@ const containerVariants = {
   visible: {
     opacity: 1,
     y: 0,
-    transition: { duration: 0.5 }
+    transition: { duration: 0.5, staggerChildren: 0.1 }
   }
 };
 
@@ -75,15 +74,61 @@ const stepVariants = {
   }
 };
 
-// Step Progress Component
-function StepProgress({ currentStep, steps, onStepClick }) {
+// Enterprise Status Indicator Component
+function StatusIndicator({ isLoading, autoSaveEnabled, errors }) {
   return (
-    <div className="w-full bg-white rounded-xl border border-gray-200 p-6 mb-8">
+    <div className="flex items-center gap-3 text-sm">
+      {isLoading && (
+        <div className="flex items-center gap-2 text-blue-600">
+          <div className="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          <span>Processing...</span>
+        </div>
+      )}
+      
+      {autoSaveEnabled && !isLoading && (
+        <div className="flex items-center gap-2 text-green-600">
+          <Database className="w-4 h-4" />
+          <span>Auto-save enabled</span>
+        </div>
+      )}
+      
+      {Object.keys(errors).length > 0 && (
+        <div className="flex items-center gap-2 text-red-600">
+          <AlertCircle className="w-4 h-4" />
+          <span>{Object.keys(errors).length} validation error(s)</span>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// Enterprise Step Progress Component
+function EnterpriseStepProgress({ currentStep, steps, onStepClick, completionPercentage, errors }) {
+  return (
+    <div className="w-full bg-white rounded-xl border border-gray-200 p-6 mb-8 shadow-sm">
+      {/* Progress Bar */}
+      <div className="mb-6">
+        <div className="flex justify-between items-center mb-2">
+          <span className="text-sm font-medium text-gray-600">Progress</span>
+          <span className="text-sm font-bold text-gray-800">{completionPercentage}%</span>
+        </div>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <motion.div 
+            className="bg-gradient-to-r from-blue-500 to-purple-600 h-2 rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${completionPercentage}%` }}
+            transition={{ duration: 0.5 }}
+          />
+        </div>
+      </div>
+      
+      {/* Step Indicators */}
       <div className="flex items-center justify-between">
         {steps.map((step, index) => {
           const isActive = index === currentStep;
           const isCompleted = index < currentStep;
           const isAccessible = index <= currentStep;
+          const hasErrors = errors[step.id];
           
           return (
             <div key={step.id} className="flex items-center flex-1">
@@ -93,50 +138,45 @@ function StepProgress({ currentStep, steps, onStepClick }) {
                   onClick={() => isAccessible && onStepClick(index)}
                   disabled={!isAccessible}
                   className={`
-                    w-10 h-10 rounded-full flex items-center justify-center text-sm font-semibold
-                    transition-all duration-200 ${
+                    w-12 h-12 rounded-full flex items-center justify-center text-sm font-semibold
+                    transition-all duration-300 relative ${
                       isCompleted 
-                        ? 'bg-green-500 text-white' 
+                        ? 'bg-green-500 text-white shadow-lg shadow-green-200' 
                         : isActive 
-                        ? 'bg-blue-500 text-white' 
+                        ? `bg-${step.color}-500 text-white shadow-lg shadow-${step.color}-200` 
                         : 'bg-gray-200 text-gray-500'
-                    } ${isAccessible ? 'hover:scale-105 cursor-pointer' : 'cursor-not-allowed'}
+                    } ${
+                      isAccessible ? 'cursor-pointer hover:scale-105' : 'cursor-not-allowed'
+                    }
                   `}
                 >
                   {isCompleted ? (
-                    <Check size={16} />
+                    <Check className="w-5 h-5" />
                   ) : (
-                    <step.icon size={16} />
+                    <step.icon className="w-5 h-5" />
+                  )}
+                  
+                  {hasErrors && (
+                    <div className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center">
+                      <AlertCircle className="w-3 h-3 text-white" />
+                    </div>
                   )}
                 </button>
-                
-                {/* Step Info */}
-                <div className="ml-3">
-                  <div className={`font-semibold text-sm ${
-                    isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-500'
-                  }`}>
-                    {step.title}
-                  </div>
-                  <div className="text-xs text-gray-500">
-                    {step.description}
-                  </div>
-                </div>
               </div>
               
-              {/* Progress Line */}
-              {index < steps.length - 1 && (
-                <div className="flex-1 mx-4">
-                  <div className="h-0.5 bg-gray-200 relative">
-                    <div 
-                      className={`absolute top-0 left-0 h-full transition-all duration-300 ${
-                        index < currentStep ? 'bg-green-500' : 'bg-gray-200'
-                      }`}
-                      style={{ 
-                        width: index < currentStep ? '100%' : '0%' 
-                      }}
-                    />
-                  </div>
+              {/* Step Info */}
+              <div className="ml-4 flex-1">
+                <div className={`font-semibold ${isActive ? 'text-gray-900' : 'text-gray-600'}`}>
+                  {step.title}
                 </div>
+                <div className="text-sm text-gray-500">{step.description}</div>
+              </div>
+              
+              {/* Connector Line */}
+              {index < steps.length - 1 && (
+                <div className={`flex-1 h-px mx-4 ${
+                  index < currentStep ? 'bg-green-400' : 'bg-gray-300'
+                }`} />
               )}
             </div>
           );

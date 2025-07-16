@@ -181,8 +181,16 @@ export default function TournamentsTab({ tournaments = [], refetchData }) {
             <div className="text-sm text-gray-700 space-y-1">
               <p><strong>📍 Location:</strong> {tournament.location || "N/A"}</p>
               <p><strong>🏅 Sports:</strong> {tournament.sports?.join(", ")}</p>
-              <p><strong>🗓 Start:</strong> {tournament.start_date?.slice(0, 10) || "N/A"}</p>
-              <p><strong>🏁 End:</strong> {tournament.end_date?.slice(0, 10) || "N/A"}</p>
+              <p><strong>🗓 Start:</strong> {tournament.start_date ? 
+                (tournament.start_date instanceof Date ? 
+                  tournament.start_date.toISOString().slice(0, 10) : 
+                  tournament.start_date.slice(0, 10)
+                ) : "N/A"}</p>
+              <p><strong>🏁 End:</strong> {tournament.end_date ? 
+                (tournament.end_date instanceof Date ? 
+                  tournament.end_date.toISOString().slice(0, 10) : 
+                  tournament.end_date.slice(0, 10)
+                ) : "N/A"}</p>
             </div>
           </div>
         ))}

@@ -31,11 +31,17 @@ export default function ViewTournamentModal({ open, onClose, tournament }) {
             </div>
             <div>
               <span className="font-medium text-gray-700">🗓️ Start Date: </span>
-              {tournament.start_date?.slice(0, 10) || "N/A"}
+              {tournament.start_date ? 
+                (tournament.start_date instanceof Date ? 
+                  tournament.start_date.toISOString().slice(0, 10) : 
+                  tournament.start_date.slice(0, 10)) : "N/A"}
             </div>
             <div>
               <span className="font-medium text-gray-700">🏁 End Date: </span>
-              {tournament.end_date?.slice(0, 10) || "N/A"}
+              {tournament.end_date ? 
+                (tournament.end_date instanceof Date ? 
+                  tournament.end_date.toISOString().slice(0, 10) : 
+                  tournament.end_date.slice(0, 10)) : "N/A"}
             </div>
             <div>
               <span className="font-medium text-gray-700">🎯 Format: </span>

@@ -9,11 +9,15 @@ const auth = (req, res, next) => {
   // In production, this would validate JWT tokens
   req.user = {
     id: 1,
-    role: 'admin',
-    name: 'Test User'
+    role: 'superadmin',
+    name: 'Test User',
+    email: 'test@athletiq.com'
   };
   next();
 };
+
+// Alias for protect function
+const protect = auth;
 
 // Role-based auth middleware
 const authorize = (roles = []) => {
@@ -30,5 +34,8 @@ const authorize = (roles = []) => {
   };
 };
 
-module.exports = auth;
-module.exports.authorize = authorize;
+module.exports = {
+  auth,
+  protect,
+  authorize
+};

@@ -7,7 +7,7 @@ const pool = require('../config/db');
 class GuardianNotificationService {
   constructor() {
     // Email configuration
-    this.emailTransporter = nodemailer.createTransporter({
+    this.emailTransporter = nodemailer.createTransport({
       service: 'gmail',
       auth: {
         user: process.env.EMAIL_USER,
@@ -52,6 +52,35 @@ class GuardianNotificationService {
 
     const result = await pool.query(query, [
       athleteId, guardianPhone, guardianEmail, claimCode, expiresAt
+    ]);
+
+    return result.rows[0];
+  }
+
+  /**
+   * Store claim code with approval requirement
+   */
+  async storeClaimCodeWithApproval(athleteId, guardianPhone, guardianEmail, claimCode, status = 'pending_approval') {
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days for approval
+
+    const query = `
+      INSERT INTO guardian_claims (
+        athlete_id, guardian_phone, guardian_email, claim_code, 
+        expires_at, status, created_at, requires_school_approval
+      ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), true)
+      ON CONFLICT (athlete_id) 
+      DO UPDATE SET 
+        claim_code = $4, 
+        expires_at = $5, 
+        status = $6,
+        requires_school_approval = true,
+        updated_at = NOW()
+      RETURNING *
+    `;
+
+    const result = await pool.query(query, [
+      athleteId, guardianPhone, guardianEmail, claimCode, expiresAt, status
     ]);
 
     return result.rows[0];
@@ -286,7 +315,7 @@ Reply STOP to opt out.
           p.date_of_birth,
           s.name as school_name
         FROM guardian_claims gc
-        JOIN players p ON gc.athlete_id = p.athlete_id
+        JOIN players p ON gc.athlete_id = p.id
         LEFT JOIN schools s ON p.school_id = s.id
         WHERE gc.claim_code = $1 
           AND gc.status = 'pending' 
@@ -314,6 +343,158 @@ Reply STOP to opt out.
         success: false,
         error: error.message,
         message: 'Failed to verify claim code'
+      };
+    }
+  }
+
+  /**
+   * Claim student by school name, student name, and date of birth
+   */
+  async claimByStudentDetails({ schoolName, firstName, lastName, dateOfBirth, dateFormat = 'english', guardianPhone, guardianEmail }) {
+    try {
+      const fullName = `${firstName} ${lastName}`.trim();
+      
+      // Convert Nepali date to English if needed
+      let searchDate = dateOfBirth;
+      if (dateFormat === 'nepali') {
+        // Add Nepali to English date conversion logic here
+        // For now, we'll assume the date is already converted
+        searchDate = dateOfBirth;
+      }
+
+      // First, search for the student with flexible name matching
+      const studentQuery = `
+        SELECT 
+          p.*,
+          s.name as school_name
+        FROM players p
+        LEFT JOIN schools s ON p.school_id = s.id
+        WHERE (
+          LOWER(p.full_name) = LOWER($1)
+          OR LOWER(p.full_name) LIKE LOWER($2)
+          OR LOWER(p.full_name) LIKE LOWER($3)
+        )
+        AND p.date_of_birth = $4
+        AND (LOWER(s.name) = LOWER($5) OR LOWER(p.school_name) = LOWER($5))
+      `;
+
+      const nameVariations = [
+        fullName,
+        `${firstName}%${lastName}`,
+        `${lastName}%${firstName}`
+      ];
+
+      const studentResult = await pool.query(studentQuery, [
+        fullName,
+        nameVariations[1],
+        nameVariations[2],
+        searchDate,
+        schoolName
+      ]);
+
+      if (studentResult.rowCount === 0) {
+        return {
+          success: false,
+          message: 'No student found with the provided details. Please verify the school name, student name, and date of birth.'
+        };
+      }
+
+      if (studentResult.rowCount > 1) {
+        return {
+          success: false,
+          message: 'Multiple students found with the same details. Please contact the school administration for assistance.'
+        };
+      }
+
+      const student = studentResult.rows[0];
+
+      // Check if there's already a claim for this student
+      const existingClaimQuery = `
+        SELECT * FROM guardian_claims 
+        WHERE athlete_id = $1 AND (status = 'pending' OR status = 'pending_approval')
+      `;
+      
+      const existingClaim = await pool.query(existingClaimQuery, [student.id]);
+
+      let claimCode;
+      let status = 'pending_approval'; // Requires school approval for manual claims
+      
+      if (existingClaim.rowCount > 0) {
+        // Use existing claim code
+        claimCode = existingClaim.rows[0].claim_code;
+        status = existingClaim.rows[0].status;
+      } else {
+        // Generate new claim code and store it
+        claimCode = this.generateClaimCode();
+        await this.storeClaimCodeWithApproval(student.id, guardianPhone, guardianEmail, claimCode, status);
+      }
+
+      return {
+        success: true,
+        data: {
+          ...student,
+          claim_code: claimCode,
+          guardian_phone: guardianPhone,
+          guardian_email: guardianEmail,
+          status: status
+        },
+        claimCode,
+        requiresApproval: true,
+        message: 'Student found. Your claim is pending school approval.'
+      };
+
+    } catch (error) {
+      console.error('Claim by student details error:', error);
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to claim student'
+      };
+    }
+  }
+
+  /**
+   * Get list of schools for dropdown with search capability
+   */
+  async getSchoolsList(searchTerm = '') {
+    try {
+      let query = `
+        SELECT DISTINCT 
+          COALESCE(s.name, p.school_name) as school_name,
+          COUNT(p.id) as student_count,
+          s.id as school_id
+        FROM players p
+        LEFT JOIN schools s ON p.school_id = s.id
+        WHERE COALESCE(s.name, p.school_name) IS NOT NULL
+      `;
+      
+      let params = [];
+      
+      if (searchTerm) {
+        query += ` AND LOWER(COALESCE(s.name, p.school_name)) LIKE LOWER($1)`;
+        params.push(`%${searchTerm}%`);
+      }
+      
+      query += `
+        GROUP BY COALESCE(s.name, p.school_name), s.id
+        ORDER BY student_count DESC, school_name ASC
+        LIMIT 50
+      `;
+
+      const result = await pool.query(query, params);
+
+      return {
+        success: true,
+        data: result.rows,
+        message: 'Schools list retrieved successfully'
+      };
+
+    } catch (error) {
+      console.error('Get schools list error:', error);
+      return {
+        success: false,
+        error: error.message,
+        message: 'Failed to retrieve schools list'
       };
     }
   }

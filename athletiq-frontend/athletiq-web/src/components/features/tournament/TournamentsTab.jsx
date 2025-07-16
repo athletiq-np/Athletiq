@@ -31,7 +31,15 @@ export default function TournamentsTab({ tournaments = [] }) {
                 🏅 {Array.isArray(t.sports) ? t.sports.join(", ") : t.sports}
               </p>
               <p className="text-sm text-gray-600">
-                📆 {t.start_date?.slice(0, 10)} – {t.end_date?.slice(0, 10)}
+                📆 {t.start_date ? 
+                  (t.start_date instanceof Date ? 
+                    t.start_date.toISOString().slice(0, 10) : 
+                    t.start_date.slice(0, 10)
+                  ) : "N/A"} – {t.end_date ? 
+                  (t.end_date instanceof Date ? 
+                    t.end_date.toISOString().slice(0, 10) : 
+                    t.end_date.slice(0, 10)
+                  ) : "N/A"}
               </p>
               <p className="text-sm text-gray-600 capitalize">
                 Status: <span className="font-medium">{t.status || "upcoming"}</span>

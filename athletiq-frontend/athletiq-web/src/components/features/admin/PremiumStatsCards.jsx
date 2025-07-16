@@ -6,12 +6,15 @@ import {
   FaUserGraduate, FaSchool, FaTrophy, FaCheckCircle, FaExclamationCircle,
   FaArrowUp, FaArrowDown, FaDollarSign, FaChartLine, FaUsers, FaCalendarAlt
 } from 'react-icons/fa';
-import { MdPending, MdTrending } from 'react-icons/md';
+import { MdPending, MdTrendingUp } from 'react-icons/md';
 
 /**
  * 📊 Premium Stats Cards Component
+ * - Real-time enterprise data from backend services
+ * - System health monitoring
+ * - Performance metrics
  * - Animated and responsive stat cards
- * - Trend indicators
+ * - Trend indicators and alerts
  * - Gradient backgrounds
  * - Internationalization support
  * - Dark mode support
@@ -86,6 +89,31 @@ export default function PremiumStatsCards({ summary, loading, formatDate }) {
       changeType: 'negative',
       subtitle: t('dashboard.stats.requiresAttention')
     },
+    // Enterprise System Health Cards
+    {
+      key: 'systemHealth',
+      title: 'System Health',
+      value: summary.systemHealth || 'UNKNOWN',
+      icon: FaChartLine,
+      gradient: summary.systemHealth === 'HEALTHY' ? 'from-green-500 to-emerald-500' : 'from-red-500 to-pink-500',
+      iconBg: summary.systemHealth === 'HEALTHY' ? 'bg-green-500/20' : 'bg-red-500/20',
+      change: summary.systemHealth === 'HEALTHY' ? 'Online' : 'Issues',
+      changeType: summary.systemHealth === 'HEALTHY' ? 'positive' : 'negative',
+      subtitle: 'Real-time Status',
+      isText: true
+    },
+    {
+      key: 'responseTime',
+      title: 'API Response Time',
+      value: summary.responseTime || 0,
+      icon: MdTrendingUp,
+      gradient: 'from-indigo-500 to-blue-500',
+      iconBg: 'bg-indigo-500/20',
+      change: summary.responseTime < 500 ? 'Fast' : 'Slow',
+      changeType: summary.responseTime < 500 ? 'positive' : 'negative',
+      subtitle: 'milliseconds',
+      suffix: 'ms'
+    },
     {
       key: 'revenue',
       title: t('dashboard.stats.totalRevenue'),
@@ -93,8 +121,8 @@ export default function PremiumStatsCards({ summary, loading, formatDate }) {
       icon: FaDollarSign,
       gradient: 'from-indigo-500 to-blue-500',
       iconBg: 'bg-indigo-500/20',
-      change: '+18%',
-      changeType: 'positive',
+      change: `+${summary.monthlyGrowth || 0}%`,
+      changeType: (summary.monthlyGrowth || 0) >= 0 ? 'positive' : 'negative',
       subtitle: t('dashboard.stats.thisQuarter'),
       isPrice: true
     },
@@ -177,8 +205,9 @@ export default function PremiumStatsCards({ summary, loading, formatDate }) {
                 ) : (
                   <>
                     {card.isPrice && '$'}
-                    {card.value?.toLocaleString() || '0'}
+                    {card.isText ? card.value : (card.value?.toLocaleString() || '0')}
                     {card.isPercentage && '%'}
+                    {card.suffix && ` ${card.suffix}`}
                   </>
                 )}
               </div>

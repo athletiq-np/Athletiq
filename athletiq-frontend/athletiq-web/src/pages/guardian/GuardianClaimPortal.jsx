@@ -1,12 +1,14 @@
 // src/pages/guardian/GuardianClaimPortal.jsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import Select from 'react-select';
 import {
   FaUserShield, FaCheck, FaTimes, FaSpinner, FaUser, FaPhone,
   FaEnvelope, FaMapMarkerAlt, FaBriefcase, FaGraduationCap,
   FaShieldAlt, FaCheckCircle, FaExclamationTriangle, FaArrowLeft,
-  FaFileAlt, FaCamera, FaUpload, FaEye, FaUserFriends
+  FaFileAlt, FaCamera, FaUpload, FaEye, FaUserFriends, FaGoogle,
+  FaCalendarAlt, FaSearch, FaSchool, FaUsers
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import apiClient from '@/api/apiClient';
@@ -15,10 +17,25 @@ export default function GuardianClaimPortal() {
   const { claimCode } = useParams();
   const navigate = useNavigate();
   
-  const [step, setStep] = useState(1);
-  const [loading, setLoading] = useState(true);
+  const [step, setStep] = useState(claimCode ? 1 : 0); // Start at step 0 if no claim code
+  const [loading, setLoading] = useState(!!claimCode);
   const [submitting, setSubmitting] = useState(false);
   const [claimData, setClaimData] = useState(null);
+  const [claimMethod, setClaimMethod] = useState(claimCode ? 'code' : '');
+  const [enteredClaimCode, setEnteredClaimCode] = useState('');
+  const [schools, setSchools] = useState([]);
+  const [schoolsLoading, setSchoolsLoading] = useState(false);
+  const [selectedSchool, setSelectedSchool] = useState(null);
+  const [studentSearchData, setStudentSearchData] = useState({
+    schoolName: '',
+    firstName: '',
+    lastName: '',
+    dateOfBirth: '',
+    dateFormat: 'english',
+    guardianPhone: '',
+    guardianEmail: ''
+  });
+  const [googleUser, setGoogleUser] = useState(null);
   const [formData, setFormData] = useState({
     full_name: '',
     phone: '',
@@ -44,27 +61,125 @@ export default function GuardianClaimPortal() {
   useEffect(() => {
     if (claimCode) {
       verifyClaimCode();
+    } else {
+      loadSchools();
     }
   }, [claimCode]);
 
-  const verifyClaimCode = async () => {
+  const loadSchools = useCallback(async (searchTerm = '') => {
+    try {
+      console.log('Loading schools with search term:', searchTerm);
+      setSchoolsLoading(true);
+      const url = `/guardian/schools${searchTerm ? `?search=${searchTerm}` : ''}`;
+      console.log('Making API call to:', url);
+      const response = await apiClient.get(url);
+      console.log('Schools API response:', response.data);
+      if (response.data.success) {
+        const schoolOptions = response.data.schools.map(school => ({
+          value: school.school_name,
+          label: `${school.school_name} (${school.student_count} students)`,
+          ...school
+        }));
+        console.log('Processed school options:', schoolOptions);
+        setSchools(schoolOptions);
+      } else {
+        console.error('Schools API returned unsuccessful response:', response.data);
+        toast.error('Failed to load schools list');
+      }
+    } catch (error) {
+      console.error('Error loading schools:', error);
+      toast.error('Error loading schools list');
+    } finally {
+      setSchoolsLoading(false);
+    }
+  }, []);
+
+  const handleGoogleSignIn = async (credentialResponse) => {
     try {
       setLoading(true);
-      const response = await apiClient.post('/api/guardian/verify-claim', {
-        claim_code: claimCode
+      const response = await apiClient.post('/api/guardian/google-auth', {
+        googleToken: credentialResponse.credential
       });
 
       if (response.data.success) {
-        setClaimData(response.data.claim);
-        setStep(response.data.claim.status === 'pending' ? 2 : 1);
+        setGoogleUser(response.data.guardian);
+        setStudentSearchData(prev => ({
+          ...prev,
+          guardianEmail: response.data.guardian.email
+        }));
+        toast.success('Google authentication successful!');
+      }
+    } catch (error) {
+      console.error('Google auth error:', error);
+      toast.error('Google authentication failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const validatePhoneNumber = (phone) => {
+    const phoneRegex = /^(\+977|977)?[0-9]{10}$/;
+    return phoneRegex.test(phone.replace(/[-\s]/g, ''));
+  };
+
+  const verifyClaimCode = async (codeToVerify = claimCode) => {
+    try {
+      setLoading(true);
+      const response = await apiClient.post('/api/guardian/verify-claim', {
+        claimCode: codeToVerify
+      });
+
+      if (response.data.success) {
+        setClaimData(response.data.athlete);
+        setStep(2);
+        toast.success('Claim code verified successfully!');
       } else {
         toast.error('Invalid or expired claim code');
-        setTimeout(() => navigate('/'), 3000);
       }
     } catch (error) {
       console.error('Claim verification error:', error);
       toast.error('Error verifying claim code');
-      setTimeout(() => navigate('/'), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const claimByStudentDetails = async () => {
+    try {
+      setLoading(true);
+
+      // Validate required fields
+      if (!studentSearchData.schoolName || !studentSearchData.firstName || 
+          !studentSearchData.lastName || !studentSearchData.dateOfBirth || 
+          !studentSearchData.guardianPhone) {
+        toast.error('Please fill in all required fields');
+        return;
+      }
+
+      // Validate phone number
+      if (!validatePhoneNumber(studentSearchData.guardianPhone)) {
+        toast.error('Please provide a valid Nepali phone number (10 digits)');
+        return;
+      }
+
+      const response = await apiClient.post('/api/guardian/claim-by-details', studentSearchData);
+
+      if (response.data.success) {
+        setClaimData(response.data.athlete);
+        setEnteredClaimCode(response.data.claimCode);
+        setStep(2);
+        
+        if (response.data.requiresApproval) {
+          toast.success('Student found! Your claim is pending school approval.');
+        } else {
+          toast.success('Student found and claim code generated!');
+        }
+      } else {
+        toast.error(response.data.message || 'Student not found with provided details');
+      }
+    } catch (error) {
+      console.error('Student claim error:', error);
+      toast.error('Error searching for student');
     } finally {
       setLoading(false);
     }
@@ -224,6 +339,302 @@ export default function GuardianClaimPortal() {
           </div>
 
           <AnimatePresence mode="wait">
+            {/* Step 0: Choose Claim Method */}
+            {step === 0 && (
+              <motion.div
+                key="step0"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                className="bg-white rounded-2xl shadow-xl p-8"
+              >
+                <div className="text-center mb-8">
+                  <h2 className="text-2xl font-bold text-gray-900 mb-4">How would you like to claim your student?</h2>
+                  <p className="text-gray-600">Choose one of the options below to get started</p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-6 mb-8">
+                  {/* Claim Code Option */}
+                  <div 
+                    className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
+                      claimMethod === 'code' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'
+                    }`}
+                    onClick={() => setClaimMethod('code')}
+                  >
+                    <div className="text-center">
+                      <FaShieldAlt className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">I have a claim code</h3>
+                      <p className="text-gray-600">Use the claim code provided by your school or received via SMS/email</p>
+                    </div>
+                  </div>
+
+                  {/* Student Details Option */}
+                  <div 
+                    className={`p-6 border-2 rounded-xl cursor-pointer transition-all ${
+                      claimMethod === 'details' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-blue-300'
+                    }`}
+                    onClick={() => {
+                      setClaimMethod('details');
+                      // Load schools when user selects this method
+                      if (schools.length === 0) {
+                        loadSchools();
+                      }
+                    }}
+                  >
+                    <div className="text-center">
+                      <FaUser className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Find my student</h3>
+                      <p className="text-gray-600">Search using school name, student name, and date of birth</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Claim Code Form */}
+                {claimMethod === 'code' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="mb-6"
+                  >
+                    <div className="max-w-md mx-auto">
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Enter Claim Code
+                      </label>
+                      <div className="flex gap-3">
+                        <input
+                          type="text"
+                          value={enteredClaimCode}
+                          onChange={(e) => setEnteredClaimCode(e.target.value.toUpperCase())}
+                          placeholder="Enter your claim code"
+                          className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          maxLength={10}
+                        />
+                        <button
+                          onClick={() => verifyClaimCode(enteredClaimCode)}
+                          disabled={!enteredClaimCode.trim() || loading}
+                          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+                        >
+                          {loading ? <FaSpinner className="animate-spin" /> : 'Verify'}
+                        </button>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+
+                {/* Student Details Form */}
+                {claimMethod === 'details' && (
+                  <motion.div
+                    initial={{ opacity: 0, height: 0 }}
+                    animate={{ opacity: 1, height: 'auto' }}
+                    className="mb-6"
+                  >
+                    {/* Google Sign In Option */}
+                    <div className="mb-6 p-4 bg-blue-50 rounded-lg">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <h4 className="font-semibold text-gray-900">Optional: Sign in with Google</h4>
+                          <p className="text-sm text-gray-600">Auto-fill your email address</p>
+                        </div>
+                        {!googleUser ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // This would trigger Google Sign-In
+                              // For now, we'll simulate it
+                              toast.info('Google Sign-In integration coming soon');
+                            }}
+                            className="flex items-center px-4 py-2 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                          >
+                            <FaGoogle className="mr-2 text-red-500" />
+                            Sign in with Google
+                          </button>
+                        ) : (
+                          <div className="flex items-center text-green-600">
+                            <FaCheckCircle className="mr-2" />
+                            Signed in as {googleUser.email}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4 mb-4">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <FaSchool className="inline mr-1" />
+                          School Name *
+                        </label>
+                        <Select
+                          value={selectedSchool}
+                          onChange={(selected) => {
+                            setSelectedSchool(selected);
+                            setStudentSearchData(prev => ({...prev, schoolName: selected?.value || ''}));
+                          }}
+                          onInputChange={(inputValue) => {
+                            if (inputValue.length > 2) {
+                              loadSchools(inputValue);
+                            }
+                          }}
+                          onMenuOpen={() => {
+                            // Load schools when dropdown opens if not already loaded
+                            if (schools.length === 0) {
+                              loadSchools();
+                            }
+                          }}
+                          options={schools}
+                          isLoading={schoolsLoading}
+                          isSearchable
+                          placeholder="Search and select school..."
+                          className="react-select-container"
+                          classNamePrefix="react-select"
+                          noOptionsMessage={() => "No schools found"}
+                          loadingMessage={() => "Searching schools..."}
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <FaUser className="inline mr-1" />
+                          Student First Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={studentSearchData.firstName}
+                          onChange={(e) => setStudentSearchData(prev => ({...prev, firstName: e.target.value}))}
+                          placeholder="Enter student's first name"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <FaUser className="inline mr-1" />
+                          Student Last Name *
+                        </label>
+                        <input
+                          type="text"
+                          value={studentSearchData.lastName}
+                          onChange={(e) => setStudentSearchData(prev => ({...prev, lastName: e.target.value}))}
+                          placeholder="Enter student's last name"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <FaCalendarAlt className="inline mr-1" />
+                          Date Format
+                        </label>
+                        <select
+                          value={studentSearchData.dateFormat}
+                          onChange={(e) => setStudentSearchData(prev => ({...prev, dateFormat: e.target.value}))}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        >
+                          <option value="english">English Date (AD)</option>
+                          <option value="nepali">Nepali Date (BS)</option>
+                        </select>
+                      </div>
+                      
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <FaCalendarAlt className="inline mr-1" />
+                          Date of Birth *
+                        </label>
+                        <div className="flex gap-2">
+                          <input
+                            type="date"
+                            value={studentSearchData.dateOfBirth}
+                            onChange={(e) => setStudentSearchData(prev => ({...prev, dateOfBirth: e.target.value}))}
+                            className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          />
+                          {studentSearchData.dateFormat === 'nepali' && (
+                            <button
+                              type="button"
+                              onClick={() => toast.info('Nepali date converter coming soon')}
+                              className="px-4 py-3 bg-orange-100 text-orange-700 rounded-lg hover:bg-orange-200"
+                            >
+                              Convert BS/AD
+                            </button>
+                          )}
+                        </div>
+                        {studentSearchData.dateFormat === 'nepali' && (
+                          <p className="text-xs text-gray-500 mt-1">
+                            Enter date in AD format for now. BS date support coming soon.
+                          </p>
+                        )}
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <FaPhone className="inline mr-1" />
+                          Your Phone Number * (Required)
+                        </label>
+                        <input
+                          type="tel"
+                          value={studentSearchData.guardianPhone}
+                          onChange={(e) => setStudentSearchData(prev => ({...prev, guardianPhone: e.target.value}))}
+                          placeholder="+977-9XXXXXXXXX"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                          Enter your 10-digit Nepali mobile number
+                        </p>
+                      </div>
+                      
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <FaEnvelope className="inline mr-1" />
+                          Your Email {googleUser ? '(From Google)' : '(Optional)'}
+                        </label>
+                        <input
+                          type="email"
+                          value={studentSearchData.guardianEmail}
+                          onChange={(e) => setStudentSearchData(prev => ({...prev, guardianEmail: e.target.value}))}
+                          placeholder="your.email@example.com"
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                          disabled={!!googleUser}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                      <div className="flex items-start">
+                        <FaExclamationTriangle className="h-5 w-5 text-yellow-600 mt-0.5 mr-3" />
+                        <div>
+                          <h4 className="font-semibold text-yellow-800">School Approval Required</h4>
+                          <p className="text-sm text-yellow-700 mt-1">
+                            Claims made without a code require approval from your school administration. 
+                            You will be notified once approved.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-center">
+                      <button
+                        onClick={claimByStudentDetails}
+                        disabled={!studentSearchData.schoolName || !studentSearchData.firstName || 
+                                !studentSearchData.lastName || !studentSearchData.dateOfBirth || 
+                                !studentSearchData.guardianPhone || loading}
+                        className="px-8 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center mx-auto"
+                      >
+                        {loading ? (
+                          <>
+                            <FaSpinner className="animate-spin mr-2" />
+                            Searching...
+                          </>
+                        ) : (
+                          <>
+                            <FaSearch className="mr-2" />
+                            Find Student & Submit for Approval
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </motion.div>
+                )}
+              </motion.div>
+            )}
+
             {/* Step 1: Invalid/Expired Claim */}
             {step === 1 && (
               <motion.div

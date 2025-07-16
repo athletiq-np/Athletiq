@@ -3,8 +3,12 @@
 //
 import React, { useEffect, Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { I18nextProvider } from 'react-i18next';
 import apiClient from '@/api/apiClient';
 import useUserStore from '@/store/userStore';
+
+// Import i18n configuration
+import i18n from './i18n';
 
 // Import Theme Provider
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -34,6 +38,8 @@ import AthleteProfile from '@/pages/athlete/AthleteProfile';
 
 // Import guardian components
 import GuardianClaimPortal from '@/pages/guardian/GuardianClaimPortal';
+import GuardianDashboard from '@/components/features/guardian/GuardianDashboard';
+import GuardianTestPage from '@/pages/test/GuardianTestPage';
 
 // Tournament creation component
 import TournamentCreate from '@/pages/admin/tournaments/TournamentCreate';
@@ -70,13 +76,14 @@ function App() {
   }
 
   return (
-    <ThemeProvider>
-      <ErrorBoundary 
-        title="Application Error"
-        description="Something went wrong with the Athletiq application. We're working to fix this issue."
-      >
-        <Router>
-          <Routes>
+    <I18nextProvider i18n={i18n}>
+      <ThemeProvider>
+        <ErrorBoundary 
+          title="Application Error"
+          description="Something went wrong with the Athletiq application. We're working to fix this issue."
+        >
+          <Router>
+            <Routes>
             {/* --- Public Routes --- */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
@@ -84,6 +91,9 @@ function App() {
             
             {/* --- Guardian Routes --- */}
             <Route path="/guardian/claim/:claimCode" element={<GuardianClaimPortal />} />
+            <Route path="/guardian-claim" element={<GuardianClaimPortal />} />
+            <Route path="/guardian-dashboard" element={<GuardianDashboard />} />
+            <Route path="/guardian-test" element={<GuardianTestPage />} />
             
             {/* --- Test Routes --- */}
             <Route path="/test/pdf" element={<PDFTestPage />} />
@@ -210,6 +220,7 @@ function App() {
       </Router>
     </ErrorBoundary>
     </ThemeProvider>
+    </I18nextProvider>
   );
 }
 

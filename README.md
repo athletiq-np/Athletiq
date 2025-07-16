@@ -1,307 +1,362 @@
-# 🏆 Athletiq - Comprehensive Tournament Management System
+# 🏆 AthletiQ - Enterprise Tournament Management System
 
-[![Status](https://img.shields.io/badge/status-production--ready-brightgreen)](https://github.com/athletiq-np/Athletiq)
-[![Version](https://img.shields.io/badge/version-1.0.0-blue)](https://github.com/athletiq-np/Athletiq)
-[![Node.js](https://img.shields.io/badge/node.js-22.16.0-green)](https://nodejs.org/)
-[![React](https://img.shields.io/badge/react-18.0+-blue)](https://reactjs.org/)
-[![PostgreSQL](https://img.shields.io/badge/postgresql-13+-blue)](https://postgresql.org/)
+> **Enterprise-Grade Sports Tournament Management Platform for Schools & Organizations**
 
-## 📋 Table of Contents
-
-- [Overview](#overview)
-- [Features](#features)
-- [Architecture](#architecture)
-- [Installation](#installation)
-- [Configuration](#configuration)
-- [API Documentation](#api-documentation)
-- [Database Schema](#database-schema)
-- [Frontend Components](#frontend-components)
-- [Testing](#testing)
-- [Deployment](#deployment)
-- [Contributing](#contributing)
-- [License](#license)
+[![License: Private](https://img.shields.io/badge/License-Private-red.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/Node.js-18.x-green.svg)](https://nodejs.org/)
+[![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-14.x-blue.svg)](https://postgresql.org/)
+[![Enterprise](https://img.shields.io/badge/Grade-Enterprise-gold.svg)](#)
 
 ## 🎯 Overview
 
-**Athletiq** is a comprehensive, full-stack tournament management system designed specifically for educational institutions, sports organizations, and tournament organizers. Built with modern web technologies, it provides end-to-end tournament lifecycle management from creation to completion.
+AthletiQ is an enterprise-grade, full-stack tournament management system designed for schools and sports organizations. Built with modern technologies and enterprise best practices, it provides comprehensive tools for tournament creation, team management, bracket generation, real-time scoring, and digital certificate generation.
 
-### Key Capabilities
-- **Multi-Sport Tournament Support**: Handle 40+ different sports with sport-specific configurations
-- **Advanced Bracket Management**: Automated bracket generation with multiple tournament formats
-- **School Management**: Complete school administration with role-based access control
-- **Real-time Updates**: Live tournament tracking and results management
-- **Certificate Generation**: Automated PDF certificate creation and distribution
-- **Comprehensive Analytics**: Tournament statistics and performance insights
+## ✨ Enterprise Features
 
-## ✨ Features
+### � **Enterprise Architecture**
+- **Microservices-ready** backend with modular design
+- **Enterprise security** with JWT authentication and role-based access
+- **Real-time monitoring** and health checks
+- **Scalable database** design with connection pooling
+- **API-first approach** with comprehensive documentation
 
-### 🏫 School Management
-- **Multi-school Support**: Manage multiple educational institutions
-- **Role-based Access**: SuperAdmin, SchoolAdmin, and Teacher roles
-- **Student/Athlete Management**: Complete athlete profiles and registration
-- **Team Organization**: Create and manage sports teams with positions
-- **House System**: Traditional school house management and competitions
+### 🛡️ **Security & Compliance**
+- **Enterprise authentication** with secure cookie handling
+- **Role-based access control** (SuperAdmin, SchoolAdmin, Staff)
+- **Input validation** and sanitization at all layers
+- **Rate limiting** and DDoS protection
+- **CORS protection** with origin validation
+- **SQL injection prevention** with parameterized queries
 
-### 🏆 Tournament Management
-- **Multi-step Tournament Creation**: Comprehensive 4-step tournament wizard
-  - Tournament Information & Settings
-  - Sports Selection & Configuration  
-  - Advanced Configuration & Bracket Setup
-  - Review & Final Creation
-- **40+ Sports Supported**: From traditional sports to emerging categories
-- **Flexible Tournament Formats**:
-  - Single/Double Elimination
-  - Round Robin
-  - Group Stage + Knockout
-  - Custom Heat-based Competitions
-- **Advanced Scheduling**: Automated fixture generation and venue management
-- **Real-time Bracket Updates**: Live tournament progression tracking
+### 🏫 **Multi-Organization Management**
+- **Multi-school support** with isolated data
+- **School dashboards** with real-time analytics
+- **Athlete/player management** with comprehensive profiles
+- **House system integration** for intra-school competitions
+- **Bulk operations** for efficient data management
 
-### 📊 Analytics & Reporting
-- **Tournament Statistics**: Comprehensive performance analytics
-- **Certificate System**: Automated PDF generation for winners
-- **Export Capabilities**: Excel/CSV exports for all data
-- **Performance Tracking**: Individual and team performance metrics
-- **Historical Data**: Complete tournament history and trends
+### 🏆 **Advanced Tournament Management**
+- **Multi-step creation wizard** with validation and auto-save
+- **50+ sports supported** with custom rule configurations
+- **Multiple tournament formats**: Knockout, Round Robin, Group Stage + Knockout
+- **Real-time bracket generation** with automatic updates
+- **Advanced scheduling** with venue and resource allocation
+- **Live scoring** with real-time updates and notifications
 
-### 🔐 Authentication & Security
-- **JWT-based Authentication**: Secure token-based authentication
-- **Cookie Management**: HttpOnly secure cookies for enhanced security
-- **Role-based Authorization**: Granular permissions system
-- **Input Validation**: Comprehensive server-side validation
-- **Rate Limiting**: API protection against abuse
+### 📊 **Enterprise Analytics & Reporting**
+- **Real-time dashboards** with live performance metrics
+- **Advanced tournament statistics** and historical analysis
+- **PDF scoresheet generation** for all supported sports
+- **Digital certificate system** with custom branding
+- **Export capabilities** (Excel, PDF, CSV)
+- **Custom reporting** with data visualization
 
-### 🎨 Modern User Interface
-- **Responsive Design**: Mobile-first responsive interface
-- **Modern Animations**: Smooth transitions with Framer Motion
-- **Intuitive Navigation**: Tab-based dashboard system
-- **Real-time Feedback**: Toast notifications and loading states
-- **Accessibility**: WCAG compliant interface design
+### 🇳🇵 **Nepal-Specific Features**
+- **Nepal Athlete ID System** with government integration
+- **Localized location database** with provinces and districts
+- **Multi-language support** (English, Nepali)
+- **Cultural sport categories** and traditional games support
 
-## 🏗️ Architecture
+## 🚀 Enterprise Quick Start
+
+### Prerequisites
+- Node.js 18.x or higher
+- PostgreSQL 14.x or higher
+- npm or yarn package manager
+- Git for version control
+
+### 🔧 Enterprise Backend Setup
+```bash
+cd athletiq-backend
+
+# Install dependencies
+npm install
+
+# Setup environment
+cp .env.example .env
+# Configure your enterprise database settings in .env
+
+# Initialize enterprise configuration
+npm run setup:enterprise
+
+# Start with enterprise monitoring
+npm start
+```
+
+### 🌐 Enterprise Frontend Setup
+```bash
+cd athletiq-frontend/athletiq-web
+
+# Install dependencies
+npm install
+
+# Setup environment
+cp .env.example .env
+# Configure API endpoints and enterprise features
+
+# Start development server
+npm start
+```
+
+### 🗄️ Enterprise Database Setup
+```bash
+# Create PostgreSQL database
+createdb athletiq_enterprise
+
+# Run enterprise migrations
+npm run migrate:enterprise
+
+# Seed enterprise data
+npm run seed:enterprise
+
+# Verify database health
+npm run db:health
+```
+
+## 🏗️ Enterprise Architecture
 
 ### Backend (Node.js/Express)
 ```
-athletiq-backend/
-├── src/
-│   ├── controllers/        # Business logic controllers
-│   ├── routes/            # API route definitions
-│   ├── middlewares/       # Authentication, validation, security
-│   ├── models/           # Database models (if using ORM)
-│   ├── services/         # Business logic services
-│   ├── utils/            # Helper utilities
-│   └── config/           # Configuration files
-├── uploads/              # File upload storage
-├── server.js            # Main server entry point
-└── package.json         # Dependencies and scripts
+📁 athletiq-backend/
+├── 📁 src/
+│   ├── 📁 config/
+│   │   ├── enterprise.js          # Enterprise configuration
+│   │   ├── monitoring.js          # System monitoring
+│   │   └── swagger.js             # API documentation
+│   ├── 📁 controllers/            # Business logic (15+ controllers)
+│   ├── 📁 middlewares/            # Security & validation
+│   ├── 📁 routes/                 # API routes (25+ endpoints)
+│   ├── 📁 services/               # Core business services
+│   │   ├── 📁 ai/                # AI/OCR processing
+│   │   ├── 📁 pdfGeneration/     # Document generation
+│   │   └── 📁 queue/             # Background processing
+│   └── 📁 utils/                  # Utility functions
+├── 📁 tests/                      # Comprehensive test suite
+│   ├── 📁 integration/           # Integration tests
+│   ├── 📁 unit/                  # Unit tests
+│   └── 📁 performance/           # Performance tests
+└── 📁 migrations/                 # Database migrations
 ```
 
-### Frontend (React)
+### Frontend (React 18.x)
 ```
-athletiq-frontend/athletiq-web/src/
-├── components/
-│   ├── common/          # Reusable UI components
-│   ├── features/        # Feature-specific components
-│   ├── dashboard/       # Dashboard components
-│   └── admin/          # Admin-specific components
-├── pages/              # Route-based page components
-├── hooks/              # Custom React hooks
-├── utils/              # Frontend utilities
-├── styles/             # Global styles and themes
-└── api/                # API client configuration
-```
-
-### Database (PostgreSQL)
-- **50+ Tables**: Comprehensive relational database schema
-- **Optimized Queries**: Indexed for performance
-- **Data Integrity**: Foreign key constraints and validation
-- **Audit Trails**: Complete change tracking for tournaments
-
-## 🚀 Installation
-
-### Prerequisites
-- **Node.js** 18.0+ (recommended: 22.16.0)
-- **PostgreSQL** 13+
-- **npm** or **yarn**
-- **Git**
-
-### Quick Start
-
-#### Backend Setup
-```bash
-cd athletiq-backend
-npm install
-cp .env.example .env
-# Edit .env with your database configuration
-npm start
-
+📁 athletiq-frontend/athletiq-web/
+├── 📁 src/
+│   ├── 📁 components/
+│   │   ├── 📁 features/          # Feature components
+│   │   ├── 📁 layout/            # Layout components
+│   │   └── 📁 ui/                # Reusable UI components
+│   ├── 📁 pages/                 # Page components
+│   │   ├── 📁 admin/             # Admin pages
+│   │   ├── 📁 school/            # School pages
+│   │   └── 📁 athlete/           # Athlete pages
+│   ├── 📁 hooks/                 # Custom React hooks
+│   │   ├── useTournamentCreation.js  # Tournament management
+│   │   └── useApiHealthMonitor.js    # System monitoring
+│   ├── 📁 api/                   # API integration
+│   │   ├── enterpriseTournamentApi.js # Tournament API
+│   │   └── apiClient.js          # HTTP client
+│   └── 📁 services/              # Business logic services
 ```
 
-#### Frontend Setup
-```bash
-cd athletiq-frontend/athletiq-web
-npm install
-npm start
-```
+## 🛠️ Enterprise Technology Stack
 
-### Default Test Credentials
-- **Email**: `admin@test.com`
-- **Password**: `password123`
+### Backend Technologies
+- **Runtime**: Node.js 18.x with enterprise features
+- **Framework**: Express.js with security middleware
+- **Database**: PostgreSQL 14.x with connection pooling
+- **Authentication**: JWT with secure HTTP-only cookies
+- **File Processing**: Multer with enterprise validation
+- **PDF Generation**: Puppeteer with custom templates
+- **Documentation**: Swagger/OpenAPI 3.0
+- **Monitoring**: Winston logging with metrics
+- **Testing**: Jest with enterprise coverage
 
-## ⚙️ Configuration
+### Frontend Technologies
+- **Framework**: React 18.x with concurrent features
+- **Routing**: React Router v6 with protected routes
+- **State Management**: Context API + Enterprise hooks
+- **UI Framework**: Tailwind CSS with custom design system
+- **Animations**: Framer Motion with enterprise themes
+- **Forms**: React Hook Form with Zod validation
+- **HTTP Client**: Axios with interceptors and retry logic
+- **Testing**: React Testing Library with enterprise scenarios
+
+### Enterprise DevOps
+- **Process Management**: PM2 with cluster mode
+- **Reverse Proxy**: Nginx with SSL termination
+- **Database**: PostgreSQL with replication
+- **Monitoring**: Enterprise monitoring stack
+- **Logging**: Centralized logging with rotation
+- **Backup**: Automated database backup system
+
+## 🔧 Configuration
 
 ### Environment Variables
 
 #### Backend (.env)
-```properties
-# Database Configuration
+```bash
+# Database
 DB_HOST=localhost
 DB_PORT=5432
 DB_NAME=athletiq
 DB_USER=postgres
 DB_PASSWORD=your_password
 
-# Server Configuration
+# Server
 PORT=5000
 NODE_ENV=development
 
-# JWT Configuration
-JWT_SECRET=your_secure_jwt_secret_key
+# Authentication
+JWT_SECRET=your_jwt_secret_key
 JWT_EXPIRES_IN=7d
 
-# CORS Configuration
-CORS_ORIGIN=http://localhost:3000
+# Frontend URL
+FRONTEND_URL=http://localhost:3000
 ```
 
-## 📡 API Documentation
-
-### Authentication Endpoints
+#### Frontend (.env)
 ```bash
-POST /api/auth/login          # User login
-POST /api/auth/logout         # User logout
-GET  /api/auth/me            # Get current user
+# API Configuration
+REACT_APP_API_URL=http://localhost:5000
+REACT_APP_API_TIMEOUT=10000
+
+# Environment
+REACT_APP_NODE_ENV=development
 ```
 
-### School Management
+## 🎮 Usage
+
+### For School Administrators
+1. **Login** with your school admin credentials
+2. **Create tournaments** using the multi-step wizard
+3. **Register teams** and manage player rosters
+4. **Monitor progress** through real-time dashboards
+5. **Generate certificates** for winners
+
+### For System Administrators
+1. **Manage multiple schools** from the superadmin dashboard
+2. **Create system-wide tournaments** and competitions
+3. **Monitor system performance** and analytics
+4. **Manage user accounts** and permissions
+
+## 🔐 Authentication & Security
+
+### Default Test Credentials
 ```bash
-GET    /api/schools/me                 # Get current user's school
-PATCH  /api/schools/me                 # Update school profile
-GET    /api/schools/me/athletes        # Get school athletes
-GET    /api/schools/me/teams          # Get school teams
-GET    /api/schools/me/tournaments    # Get school tournaments
+# SuperAdmin
+Email: admin@test.com
+Password: password123
+
+# School Admin (if seeded)
+Email: school@test.com
+Password: password123
 ```
 
-### Tournament Management
-```bash
-GET    /api/tournaments               # Get all tournaments
-POST   /api/tournaments              # Create tournament
-GET    /api/tournaments/:id          # Get tournament details
-PATCH  /api/tournaments/:id          # Update tournament
-GET    /api/tournaments/:id/bracket  # Get tournament bracket
-```
+### Security Features
+- JWT-based authentication with HttpOnly cookies
+- Role-based access control (RBAC)
+- Input validation and sanitization
+- Rate limiting and request throttling
+- CORS protection
+- SQL injection prevention
 
-## 🗄️ Database Schema
+## � API Documentation
 
-### Core Tables
-- **users**: User authentication and profiles
-- **schools**: Educational institution management
-- **tournaments**: Tournament configuration and management
-- **athletes**: Student/athlete profiles
-- **teams**: Team organization and management
-- **tournament_teams**: Tournament registrations
-- **matches**: Match scheduling and results
+The API follows RESTful conventions with the following main endpoints:
 
-## 🎨 Frontend Components
+### Authentication
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `GET /api/auth/me` - Get current user
 
-### Dashboard System
-- **SuperAdminDashboard**: System-wide administration
-- **SchoolAdminDashboard**: School-specific management
-- **TournamentsTab**: Tournament management interface
-- **AthletesTab**: Athlete management interface
+### Schools
+- `GET /api/schools/me` - Get school profile
+- `PUT /api/schools/me` - Update school profile
+- `GET /api/schools/me/athletes` - Get school athletes
 
-### Tournament Creation Wizard
-- **TournamentCreate**: Main wizard coordinator (4 steps)
-- **TournamentInfoStep**: Basic tournament information
-- **TournamentSportsStep**: Sports selection with drag-and-drop
-- **TournamentConfigStep**: Advanced configuration
-- **TournamentReviewStep**: Final review and submission
-
-## 🚀 Current Status
-
-### ✅ Completed Features
-- **Authentication System**: JWT-based with role management
-- **School Management**: Complete CRUD operations
-- **Tournament Creation**: 4-step wizard with 40+ sports
-- **Athlete Management**: Registration and team assignment
-- **Database Integration**: PostgreSQL with 50+ tables
-- **Modern UI**: Responsive design with animations
-- **API Security**: Rate limiting and input validation
-
-### 🔧 Technical Stack
-- **Backend**: Node.js, Express.js, PostgreSQL
-- **Frontend**: React 18, Tailwind CSS, Framer Motion
-- **Authentication**: JWT with HttpOnly cookies
-- **Database**: PostgreSQL with connection pooling
-- **Deployment**: Production-ready configuration
-
-## 📁 Project Structure
-
-```
-📁 Athletiq/
-├── 📁 athletiq-backend/     # Node.js/Express API server
-│   ├── src/                 # Source code
-│   │   ├── controllers/     # Business logic
-│   │   ├── routes/         # API endpoints
-│   │   ├── middlewares/    # Authentication & validation
-│   │   └── config/         # Configuration files
-│   ├── uploads/            # File storage
-│   └── server.js           # Main entry point
-├── 📁 athletiq-frontend/   # React web application
-│   └── athletiq-web/src/   # Frontend source
-│       ├── components/     # UI components
-│       ├── pages/         # Route pages
-│       └── utils/         # Helper functions
-├── 📁 docs/               # Documentation
-├── 📁 production/         # Deployment files
-└── README.md              # This file
-```
+### Tournaments
+- `GET /api/tournaments` - List tournaments
+- `POST /api/tournaments` - Create tournament
+- `GET /api/tournaments/:id` - Get tournament details
+- `PUT /api/tournaments/:id` - Update tournament
 
 ## 🧪 Testing
 
-### Backend Testing
+### Backend Tests
 ```bash
 cd athletiq-backend
 npm test
 ```
 
-### Frontend Testing
+### Frontend Tests
 ```bash
 cd athletiq-frontend/athletiq-web
 npm test
 ```
 
+## 📚 Documentation
+
+Comprehensive documentation is available in the `docs/` folder:
+
+- **[System Architecture](docs/SYSTEM_ARCHITECTURE.md)** - Technical overview
+- **[API Reference](docs/API_REFERENCE.md)** - Complete API documentation
+- **[Development Guide](docs/DEVELOPMENT_GUIDE.md)** - Development setup and guidelines
+- **[Deployment Guide](docs/DEPLOYMENT_GUIDE.md)** - Production deployment instructions
+- **[User Manual](docs/USER_MANUAL.md)** - End-user documentation
+
+## 🚀 Deployment
+
+### Development
+```bash
+# Start both backend and frontend in development mode
+npm run dev
+```
+
+### Production
+```bash
+# Build frontend
+cd athletiq-frontend/athletiq-web
+npm run build
+
+# Start backend with PM2
+cd athletiq-backend
+pm2 start ecosystem.config.js
+```
+
+## � Recent Updates (v2.0.0)
+
+- ✅ **Multi-step tournament creation wizard** with template support
+- ✅ **Enhanced authentication system** with JWT cookies
+- ✅ **Real-time dashboards** with comprehensive analytics
+- ✅ **PDF generation system** for scoresheets and certificates
+- ✅ **50+ sports support** with custom configurations
+- ✅ **Performance optimizations** and caching
+- ✅ **Security enhancements** and input validation
+- ✅ **Responsive design** for mobile and desktop
+
 ## 🤝 Contributing
 
-We welcome contributions! Please follow these steps:
+This is a private project. For development team members:
 
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Add tests for new features
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. Create feature branches from `main`
+2. Follow the coding standards in the style guide
+3. Write tests for new features
+4. Submit pull requests for review
 
 ## 📞 Support
 
-- **Issues**: [GitHub Issues](https://github.com/athletiq-np/Athletiq/issues)
-- **Email**: support@athletiq.com
+For technical support or questions:
+- **Development Team**: Internal Slack channel
+- **Documentation**: Check the `docs/` folder
+- **Issues**: Use the internal issue tracking system
+
+## 📄 License
+
+Private - AthletiQ Sports Management System  
+© 2025 AthletiQ. All rights reserved.
 
 ---
 
-**Built with ❤️ for the global sports community**
-
-Last Updated: July 16, 2025
-Version: 1.0.0
+**Built with ❤️ for the sports community**

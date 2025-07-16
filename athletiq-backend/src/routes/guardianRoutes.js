@@ -43,6 +43,148 @@ router.post('/verify-claim', generalLimiter, async (req, res, next) => {
 });
 
 /**
+ * Claim student by school name, student name, and date of birth
+ * POST /api/guardian/claim-by-details
+ */
+router.post('/claim-by-details', generalLimiter, async (req, res, next) => {
+  try {
+    const { schoolName, firstName, lastName, dateOfBirth, dateFormat, guardianPhone, guardianEmail } = req.body;
+
+    if (!schoolName || !firstName || !lastName || !dateOfBirth || !guardianPhone) {
+      return res.status(400).json({
+        success: false,
+        message: 'School name, first name, last name, date of birth, and guardian phone are required'
+      });
+    }
+
+    // Validate phone number format
+    const phoneRegex = /^(\+977|977)?[0-9]{10}$/;
+    if (!phoneRegex.test(guardianPhone.replace(/[-\s]/g, ''))) {
+      return res.status(400).json({
+        success: false,
+        message: 'Please provide a valid Nepali phone number'
+      });
+    }
+
+    const result = await guardianService.claimByStudentDetails({
+      schoolName,
+      firstName,
+      lastName,
+      dateOfBirth,
+      dateFormat: dateFormat || 'english',
+      guardianPhone,
+      guardianEmail
+    });
+
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        message: result.message,
+        athlete: result.data,
+        claimCode: result.claimCode,
+        requiresApproval: result.requiresApproval || false
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message
+      });
+    }
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
+ * Google OAuth login for guardians
+ * POST /api/guardian/google-auth
+ */
+router.post('/google-auth', generalLimiter, async (req, res, next) => {
+  try {
+    const { googleToken, guardianData } = req.body;
+
+    if (!googleToken) {
+      return res.status(400).json({
+        success: false,
+        message: 'Google token is required'
+      });
+    }
+
+    // Verify Google token
+    const { OAuth2Client } = require('google-auth-library');
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+    
+    const ticket = await client.verifyIdToken({
+      idToken: googleToken,
+      audience: process.env.GOOGLE_CLIENT_ID,
+    });
+    
+    const payload = ticket.getPayload();
+    const email = payload.email;
+    const name = payload.name;
+
+    // Check if guardian already exists
+    const existingGuardian = await pool.query(
+      'SELECT * FROM guardian_profiles WHERE email = $1',
+      [email]
+    );
+
+    if (existingGuardian.rowCount > 0) {
+      // Return existing guardian info
+      res.status(200).json({
+        success: true,
+        guardian: existingGuardian.rows[0],
+        message: 'Guardian authenticated successfully'
+      });
+    } else {
+      // Create new guardian entry
+      const newGuardian = await pool.query(
+        `INSERT INTO guardian_profiles (email, full_name, auth_provider, google_id, created_at)
+         VALUES ($1, $2, 'google', $3, NOW()) RETURNING *`,
+        [email, name, payload.sub]
+      );
+
+      res.status(201).json({
+        success: true,
+        guardian: newGuardian.rows[0],
+        isNewUser: true,
+        message: 'Guardian account created successfully'
+      });
+    }
+
+  } catch (error) {
+    console.error('Google auth error:', error);
+    res.status(400).json({
+      success: false,
+      message: 'Google authentication failed'
+    });
+  }
+});
+router.get('/schools', generalLimiter, async (req, res, next) => {
+  try {
+    const { search } = req.query;
+    const result = await guardianService.getSchoolsList(search);
+
+    if (result.success) {
+      res.status(200).json({
+        success: true,
+        schools: result.data,
+        message: 'Schools list retrieved successfully'
+      });
+    } else {
+      res.status(400).json({
+        success: false,
+        message: result.message
+      });
+    }
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+/**
  * Complete guardian profile
  * POST /api/guardian/complete-profile
  */
