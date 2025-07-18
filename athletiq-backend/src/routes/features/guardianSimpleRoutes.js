@@ -4,15 +4,15 @@ const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
-const GuardianRegistrationService = require('../services/guardianRegistrationService');
-const pool = require('../config/db');
+const GuardianRegistrationService = require('../../services/guardianRegistrationService');
+const pool = require('../../config/db');
 const { 
   convertBSToAD, 
   convertNepaliNumeralsToEnglish, 
   parseNepaliAddress, 
   normalizeGender,
   assessExtractionConfidence 
-} = require('../utils/nepaliDateConverter');
+} = require('../../utils/nepaliDateConverter');
 
 const router = express.Router();
 const guardianService = new GuardianRegistrationService();

@@ -111,7 +111,7 @@ try {
 }
 
 try {
-  app.use('/api/guardian', require('./src/routes/guardianRoutes'));
+  app.use('/api/guardian', require('./src/routes/features/guardianRoutes'));
   console.log('✅ Guardian routes loaded');
 } catch (error) {
   console.error('❌ Guardian routes failed:', error.message);

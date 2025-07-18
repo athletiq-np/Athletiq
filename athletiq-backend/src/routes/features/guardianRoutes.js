@@ -1,9 +1,9 @@
 // src/routes/guardianRoutes.js
 const express = require('express');
 const router = express.Router();
-const GuardianNotificationService = require('../services/guardianNotificationService');
-const { generalLimiter } = require('../middlewares/rateLimiter');
-const apiResponse = require('../utils/apiResponse');
+const GuardianNotificationService = require('../../services/guardianNotificationService');
+const { generalLimiter } = require('../../middlewares/rateLimiter');
+const apiResponse = require('../../utils/apiResponse');
 
 const guardianService = new GuardianNotificationService();
 

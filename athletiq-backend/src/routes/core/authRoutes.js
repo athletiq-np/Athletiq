@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
-const authController = require('../controllers/authController');
-const { protect } = require('../middlewares/authMiddleware');
-const { authLimiter, passwordResetLimiter } = require('../middlewares/rateLimiter');
-const { validateUserLogin, validateUserRegistration } = require('../middlewares/validation');
+const authController = require('../../controllers/authController');
+const { protect } = require('../../middlewares/authMiddleware');
+const { authLimiter, passwordResetLimiter } = require('../../middlewares/rateLimiter');
+const { validateUserLogin, validateUserRegistration } = require('../../middlewares/validation');
 
 // @route   POST /api/auth/register
 // @desc    Register a new School Admin and their School
