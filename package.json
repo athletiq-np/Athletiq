@@ -1,9 +1,0 @@
-{
-  "dependencies": {
-    "@faker-js/faker": "^9.9.0",
-    "node-fetch": "^2.7.0"
-  },
-  "devDependencies": {
-    "axios": "^1.10.0"
-  }
-}
