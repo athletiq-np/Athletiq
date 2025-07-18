@@ -159,27 +159,27 @@ export default function Login() {
               <p className="text-sm text-gray-600">Manage your athlete's profile and activities</p>
             </div>
 
-            {/* Guardian Login Button */}
+            {/* Modern Guardian Access Button */}
             <button
-              onClick={() => navigate('/guardian-claim')}
+              onClick={() => navigate('/guardian-modern')}
               className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
             >
               <FaUserShield className="mr-2" />
-              Access Guardian Portal
+              Access Modern Guardian Portal
             </button>
 
-            {/* Guardian Signup/Claim Button */}
+            {/* Guardian Registration Button */}
             <button
-              onClick={() => navigate('/guardian-claim')}
+              onClick={() => navigate('/guardian-modern')}
               className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-center"
             >
               <FaGraduationCap className="mr-2" />
-              Register as Guardian
+              Register as Guardian (No Claim Codes!)
             </button>
 
             <div className="text-center mt-4">
               <p className="text-xs text-gray-600">
-                Use your claim code or search for your student to get started
+                ✨ New system: No claim codes needed! Register directly and add your children.
               </p>
             </div>
 

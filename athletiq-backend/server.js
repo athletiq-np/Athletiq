@@ -118,6 +118,13 @@ try {
 }
 
 try {
+  app.use('/api/guardian-simple', require('./src/routes/guardianSimpleRoutes'));
+  console.log('✅ Guardian simple routes loaded');
+} catch (error) {
+  console.error('❌ Guardian simple routes failed:', error.message);
+}
+
+try {
   app.use('/api/guardian/auth', require('./src/routes/guardianAuthRoutes'));
   console.log('✅ Guardian auth routes loaded');
 } catch (error) {

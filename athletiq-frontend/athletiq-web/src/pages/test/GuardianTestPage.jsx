@@ -36,7 +36,7 @@ export default function GuardianTestPage() {
 
     setLoading(true);
     try {
-      const response = await apiClient.post('/api/guardian/verify-claim', {
+      const response = await apiClient.post('/guardian/verify-claim', {
         claimCode: claimCode.trim()
       });
 

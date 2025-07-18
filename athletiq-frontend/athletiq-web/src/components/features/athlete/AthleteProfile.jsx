@@ -42,7 +42,7 @@ const PlayerProfile = ({ playerId, isEditable = false }) => {
       setLoading(true);
       
       // Fetch player profile
-      const playerResponse = await fetch(`/api/players/${playerId}`, {
+      const playerResponse = await fetch(`/players/${playerId}`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -57,7 +57,7 @@ const PlayerProfile = ({ playerId, isEditable = false }) => {
       setEditForm(playerData);
 
       // Fetch player documents
-      const docsResponse = await fetch(`/api/players/${playerId}/documents`, {
+      const docsResponse = await fetch(`/players/${playerId}/documents`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }
@@ -79,7 +79,7 @@ const PlayerProfile = ({ playerId, isEditable = false }) => {
     try {
       setSaving(true);
       
-      const response = await fetch(`/api/players/${playerId}`, {
+      const response = await fetch(`/players/${playerId}`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`,

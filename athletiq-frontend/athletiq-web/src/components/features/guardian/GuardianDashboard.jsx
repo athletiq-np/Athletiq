@@ -35,16 +35,16 @@ export default function GuardianDashboard() {
       }
 
       // Fetch guardian profile
-      const profileResponse = await apiClient.get(`/api/guardian/profile/${guardianId}`);
+      const profileResponse = await apiClient.get(`/guardian/profile/${guardianId}`);
       setProfile(profileResponse.data.profile);
       setAthlete(profileResponse.data.athlete);
       
       // Fetch athlete's tournaments
-      const tournamentsResponse = await apiClient.get(`/api/athletes/${profileResponse.data.athlete.id}/tournaments`);
+      const tournamentsResponse = await apiClient.get(`/athletes/${profileResponse.data.athlete.id}/tournaments`);
       setTournaments(tournamentsResponse.data.tournaments || []);
       
       // Fetch notifications
-      const notificationsResponse = await apiClient.get(`/api/guardian/notifications/${guardianId}`);
+      const notificationsResponse = await apiClient.get(`/guardian/notifications/${guardianId}`);
       setNotifications(notificationsResponse.data.notifications || []);
       
     } catch (error) {
@@ -62,7 +62,7 @@ export default function GuardianDashboard() {
 
   const handleSaveProfile = async () => {
     try {
-      await apiClient.put(`/api/guardian/profile/${profile.id}`, formData);
+      await apiClient.put(`/guardian/profile/${profile.id}`, formData);
       setProfile({ ...profile, ...formData });
       setEditing(false);
       toast.success('Profile updated successfully');

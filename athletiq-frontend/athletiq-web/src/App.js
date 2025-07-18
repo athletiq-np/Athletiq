@@ -38,6 +38,8 @@ import AthleteProfile from '@/pages/athlete/AthleteProfile';
 
 // Import guardian components
 import GuardianClaimPortal from '@/pages/guardian/GuardianClaimPortal';
+import ModernGuardianPortal from '@/pages/guardian/ModernGuardianPortal';
+import SimpleGuardianPortal from '@/pages/guardian/SimpleGuardianPortal';
 import GuardianDashboard from '@/components/features/guardian/GuardianDashboard';
 import GuardianTestPage from '@/pages/test/GuardianTestPage';
 
@@ -92,6 +94,7 @@ function App() {
             {/* --- Guardian Routes --- */}
             <Route path="/guardian/claim/:claimCode" element={<GuardianClaimPortal />} />
             <Route path="/guardian-claim" element={<GuardianClaimPortal />} />
+            <Route path="/guardian-modern" element={<SimpleGuardianPortal />} />
             <Route path="/guardian-dashboard" element={<GuardianDashboard />} />
             <Route path="/guardian-test" element={<GuardianTestPage />} />
             

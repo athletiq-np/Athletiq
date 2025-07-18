@@ -187,7 +187,7 @@ const TeamsManagement = () => {
 
   const loadTeams = async () => {
     try {
-      const response = await apiClient.get('/api/schools/me/teams');
+      const response = await apiClient.get('/schools/me/teams');
       setTeams(response.data);
     } catch (error) {
       console.error('Error loading teams:', error);
@@ -198,7 +198,7 @@ const TeamsManagement = () => {
 
   const loadSports = async () => {
     try {
-      const response = await apiClient.get('/api/schools/me/teams/sports');
+      const response = await apiClient.get('/schools/me/teams/sports');
       setSports(response.data);
     } catch (error) {
       console.error('Error loading sports:', error);
@@ -216,7 +216,7 @@ const TeamsManagement = () => {
   const handleCreateTeam = async (e) => {
     e.preventDefault();
     try {
-      const response = await apiClient.post('/api/schools/me/teams', teamForm);
+      const response = await apiClient.post('/schools/me/teams', teamForm);
       setTeams([...teams, response.data]);
       setShowCreateModal(false);
       resetTeamForm();
@@ -228,7 +228,7 @@ const TeamsManagement = () => {
   const handleEditTeam = async (e) => {
     e.preventDefault();
     try {
-      const response = await apiClient.put(`/api/schools/me/teams/${editingTeam.id}`, teamForm);
+      const response = await apiClient.put(`/schools/me/teams/${editingTeam.id}`, teamForm);
       setTeams(teams.map(t => t.id === editingTeam.id ? response.data : t));
       setShowCreateModal(false);
       setEditingTeam(null);
@@ -241,7 +241,7 @@ const TeamsManagement = () => {
   const handleDeleteTeam = async (teamId) => {
     if (window.confirm('Are you sure you want to delete this team?')) {
       try {
-        await apiClient.delete(`/api/schools/me/teams/${teamId}`);
+        await apiClient.delete(`/schools/me/teams/${teamId}`);
         setTeams(teams.filter(t => t.id !== teamId));
       } catch (error) {
         console.error('Error deleting team:', error);
@@ -252,7 +252,7 @@ const TeamsManagement = () => {
   const handleAddAthlete = async (e) => {
     e.preventDefault();
     try {
-      const response = await apiClient.post(`/api/schools/me/teams/${selectedTeamId}/athletes`, athleteForm);
+      const response = await apiClient.post(`/schools/me/teams/${selectedTeamId}/athletes`, athleteForm);
       setTeams(teams.map(team => 
         team.id === selectedTeamId 
           ? { ...team, athletes: [...(team.athletes || []), response.data] }
@@ -267,7 +267,7 @@ const TeamsManagement = () => {
 
   const handleRemoveAthlete = async (athleteId) => {
     try {
-      await apiClient.delete(`/api/schools/me/teams/${selectedTeamId}/athletes/${athleteId}`);
+      await apiClient.delete(`/schools/me/teams/${selectedTeamId}/athletes/${athleteId}`);
       setTeams(teams.map(team => 
         team.id === selectedTeamId 
           ? { ...team, athletes: team.athletes.filter(p => p.id !== athleteId) }
@@ -285,7 +285,7 @@ const TeamsManagement = () => {
         position: index + 1
       }));
       
-      await apiClient.put(`/api/schools/me/teams/${teamId}/players/positions`, { updates });
+      await apiClient.put(`/schools/me/teams/${teamId}/players/positions`, { updates });
       setTeams(teams.map(team => 
         team.id === teamId ? { ...team, players: newPlayers } : team
       ));

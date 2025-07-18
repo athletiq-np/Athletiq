@@ -97,7 +97,7 @@ export default function GuardianClaimPortal() {
   const handleGoogleSignIn = async (credentialResponse) => {
     try {
       setLoading(true);
-      const response = await apiClient.post('/api/guardian/google-auth', {
+      const response = await apiClient.post('/guardian/google-auth', {
         googleToken: credentialResponse.credential
       });
 
@@ -125,7 +125,7 @@ export default function GuardianClaimPortal() {
   const verifyClaimCode = async (codeToVerify = claimCode) => {
     try {
       setLoading(true);
-      const response = await apiClient.post('/api/guardian/verify-claim', {
+      const response = await apiClient.post('/guardian/verify-claim', {
         claimCode: codeToVerify
       });
 
@@ -147,39 +147,56 @@ export default function GuardianClaimPortal() {
   const claimByStudentDetails = async () => {
     try {
       setLoading(true);
+      console.log('=== Frontend: Claiming student by details ===');
+      console.log('studentSearchData:', JSON.stringify(studentSearchData, null, 2));
 
       // Validate required fields
       if (!studentSearchData.schoolName || !studentSearchData.firstName || 
           !studentSearchData.lastName || !studentSearchData.dateOfBirth || 
           !studentSearchData.guardianPhone) {
+        console.log('Frontend validation failed - missing required fields');
         toast.error('Please fill in all required fields');
         return;
       }
 
       // Validate phone number
       if (!validatePhoneNumber(studentSearchData.guardianPhone)) {
+        console.log('Frontend phone validation failed');
         toast.error('Please provide a valid Nepali phone number (10 digits)');
         return;
       }
 
-      const response = await apiClient.post('/api/guardian/claim-by-details', studentSearchData);
+      console.log('Making API request to /guardian/claim-by-details');
+      const response = await apiClient.post('/guardian/claim-by-details', studentSearchData);
 
       if (response.data.success) {
         setClaimData(response.data.athlete);
         setEnteredClaimCode(response.data.claimCode);
         setStep(2);
         
-        if (response.data.requiresApproval) {
-          toast.success('Student found! Your claim is pending school approval.');
+        if (response.data.isNewStudent) {
+          toast.success('🎉 New student registration created! Your request is pending school approval.', {
+            duration: 6000
+          });
+        } else if (response.data.requiresApproval) {
+          toast.success('✅ Student found! Your claim is pending school approval.', {
+            duration: 4000
+          });
         } else {
-          toast.success('Student found and claim code generated!');
+          toast.success('✅ Student found and claim code generated!');
         }
       } else {
+        console.log('API response error:', response.data);
         toast.error(response.data.message || 'Student not found with provided details');
       }
     } catch (error) {
       console.error('Student claim error:', error);
-      toast.error('Error searching for student');
+      console.error('Error response:', error.response?.data);
+      if (error.response?.data?.message) {
+        toast.error(error.response.data.message);
+      } else {
+        toast.error('Error searching for student. Please check the details and try again.');
+      }
     } finally {
       setLoading(false);
     }
@@ -283,7 +300,7 @@ export default function GuardianClaimPortal() {
         submitData.append('photo', documents.photo);
       }
 
-      const response = await apiClient.post(`/api/guardian/complete-profile/${claimCode}`, submitData, {
+      const response = await apiClient.post(`/guardian/complete-profile/${claimCode}`, submitData, {
         headers: {
           'Content-Type': 'multipart/form-data'
         }
@@ -305,7 +322,7 @@ export default function GuardianClaimPortal() {
 
   const handleResendClaim = async () => {
     try {
-      await apiClient.post('/api/guardian/resend-claim', {
+      await apiClient.post('/guardian/resend-claim', {
         claim_code: claimCode
       });
       toast.success('Claim details resent to your contact information');

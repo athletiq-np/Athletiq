@@ -2,10 +2,15 @@
 const nodemailer = require('nodemailer');
 const twilio = require('twilio');
 const crypto = require('crypto');
+const { v4: uuidv4 } = require('uuid');
 const pool = require('../config/db');
+const AthleteIdGenerator = require('./ai/athleteIdGenerator');
 
 class GuardianNotificationService {
   constructor() {
+    // Initialize athlete ID generator
+    this.athleteIdGenerator = new AthleteIdGenerator();
+    
     // Email configuration
     this.emailTransporter = nodemailer.createTransport({
       service: 'gmail',
@@ -349,6 +354,7 @@ Reply STOP to opt out.
 
   /**
    * Claim student by school name, student name, and date of birth
+   * If student doesn't exist, creates a new pending registration for school approval
    */
   async claimByStudentDetails({ schoolName, firstName, lastName, dateOfBirth, dateFormat = 'english', guardianPhone, guardianEmail }) {
     try {
@@ -362,7 +368,19 @@ Reply STOP to opt out.
         searchDate = dateOfBirth;
       }
 
-      // First, search for the student with flexible name matching
+      // First, check if school exists
+      const schoolQuery = `
+        SELECT id, name FROM schools 
+        WHERE LOWER(name) = LOWER($1)
+      `;
+      const schoolResult = await pool.query(schoolQuery, [schoolName]);
+      
+      let schoolId = null;
+      if (schoolResult.rowCount > 0) {
+        schoolId = schoolResult.rows[0].id;
+      }
+
+      // Search for existing student with flexible name matching
       const studentQuery = `
         SELECT 
           p.*,
@@ -392,21 +410,55 @@ Reply STOP to opt out.
         schoolName
       ]);
 
-      if (studentResult.rowCount === 0) {
-        return {
-          success: false,
-          message: 'No student found with the provided details. Please verify the school name, student name, and date of birth.'
-        };
-      }
+      let student;
+      let isNewStudent = false;
 
-      if (studentResult.rowCount > 1) {
+      if (studentResult.rowCount === 0) {
+        // Student doesn't exist - create a new pending student registration
+        console.log('Student not found, creating new pending registration');
+        
+        // Generate Nepal format athlete ID (NP + 6 alphanumeric)
+        const athleteIdResult = await this.athleteIdGenerator.generateAthleteId({
+          full_name: fullName,
+          date_of_birth: searchDate,
+          school_id: schoolId,
+          guardian_phone: guardianPhone
+        });
+        const athleteId = athleteIdResult.athleteId;
+        
+        // Create pending student record
+        const newStudentQuery = `
+          INSERT INTO players (
+            athlete_id, full_name, date_of_birth, school_id, school_name,
+            guardian_name, guardian_phone, guardian_email,
+            registration_method, verification_status, enrollment_status,
+            gender, grade, relationship_to_player, address,
+            created_at, updated_at
+          ) VALUES (
+            $1, $2, $3, $4, $5, $6, $7, $8, 
+            'By guardian', 'Pending', 'Active',
+            'Male', '10', 'Guardian', 'Kathmandu',
+            NOW(), NOW()
+          ) RETURNING *
+        `;
+
+        const newStudentResult = await pool.query(newStudentQuery, [
+          athleteId, fullName, searchDate, schoolId, schoolName,
+          'Guardian', guardianPhone, guardianEmail
+        ]);
+
+        student = newStudentResult.rows[0];
+        isNewStudent = true;
+
+      } else if (studentResult.rowCount > 1) {
         return {
           success: false,
           message: 'Multiple students found with the same details. Please contact the school administration for assistance.'
         };
+      } else {
+        // Student exists
+        student = studentResult.rows[0];
       }
-
-      const student = studentResult.rows[0];
 
       // Check if there's already a claim for this student
       const existingClaimQuery = `
@@ -417,7 +469,7 @@ Reply STOP to opt out.
       const existingClaim = await pool.query(existingClaimQuery, [student.id]);
 
       let claimCode;
-      let status = 'pending_approval'; // Requires school approval for manual claims
+      let status = isNewStudent ? 'pending_school_approval' : 'pending_approval';
       
       if (existingClaim.rowCount > 0) {
         // Use existing claim code
@@ -429,6 +481,10 @@ Reply STOP to opt out.
         await this.storeClaimCodeWithApproval(student.id, guardianPhone, guardianEmail, claimCode, status);
       }
 
+      const message = isNewStudent 
+        ? 'New student registration created! Your request is pending school approval.'
+        : 'Student found. Your claim is pending school approval.';
+
       return {
         success: true,
         data: {
@@ -436,11 +492,13 @@ Reply STOP to opt out.
           claim_code: claimCode,
           guardian_phone: guardianPhone,
           guardian_email: guardianEmail,
-          status: status
+          status: status,
+          is_new_student: isNewStudent
         },
         claimCode,
         requiresApproval: true,
-        message: 'Student found. Your claim is pending school approval.'
+        isNewStudent,
+        message
       };
 
     } catch (error) {

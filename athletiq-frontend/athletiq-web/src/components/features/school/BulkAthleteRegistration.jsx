@@ -27,7 +27,7 @@ export default function BulkAthleteRegistration({ school, onComplete, onClose })
 
   const handleDownloadTemplate = async () => {
     try {
-      const response = await apiClient.get('/api/bulk-registration/template', {
+      const response = await apiClient.get('/bulk-registration/template', {
         responseType: 'blob'
       });
 
@@ -91,7 +91,7 @@ export default function BulkAthleteRegistration({ school, onComplete, onClose })
 
     try {
       setProcessing(true);
-      const response = await apiClient.post('/api/bulk-registration/validate', formData, {
+      const response = await apiClient.post('/bulk-registration/validate', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
@@ -122,7 +122,7 @@ export default function BulkAthleteRegistration({ school, onComplete, onClose })
 
     try {
       setProcessing(true);
-      const response = await apiClient.post('/api/bulk-registration/process', formData, {
+      const response = await apiClient.post('/bulk-registration/process', formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 

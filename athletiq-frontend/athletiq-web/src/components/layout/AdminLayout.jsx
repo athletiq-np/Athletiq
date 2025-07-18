@@ -55,7 +55,7 @@ const AdminLayout = () => {
 
   const loadUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users', {
+      const response = await fetch('/admin/users', {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         }

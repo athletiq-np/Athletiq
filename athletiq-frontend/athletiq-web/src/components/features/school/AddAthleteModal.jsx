@@ -175,7 +175,7 @@ export default function AddAthleteModal({
       }
 
       // Submit to backend
-      const response = await apiClient.post('/api/players/register', submitData, {
+      const response = await apiClient.post('/players/register', submitData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },

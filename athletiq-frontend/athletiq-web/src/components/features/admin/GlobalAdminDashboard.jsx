@@ -125,19 +125,19 @@ export default function GlobalAdminDashboard() {
         schoolsRes, 
         tournamentsRes
       ] = await Promise.all([
-        apiClient.get('/api/health/stats').catch((err) => {
+        apiClient.get('/health/stats').catch((err) => {
           console.log('❌ Health stats failed:', err.message);
           return { data: { data: {} } };
         }),
-        apiClient.get('/api/athletes').catch((err) => {
+        apiClient.get('/athletes').catch((err) => {
           console.log('❌ Athletes API failed:', err.message);
           return { data: { data: [] } };
         }),
-        apiClient.get('/api/schools').catch((err) => {
+        apiClient.get('/schools').catch((err) => {
           console.log('❌ Schools API failed:', err.message);
           return { data: { data: [] } };
         }),
-        apiClient.get('/api/tournaments').catch((err) => {
+        apiClient.get('/tournaments').catch((err) => {
           console.log('❌ Tournaments API failed:', err.message);
           return { data: { data: [] } };
         })
@@ -305,9 +305,9 @@ export default function GlobalAdminDashboard() {
       // Try to fetch enterprise data for enhanced features (optional)
       try {
         const [systemHealth, businessMetrics, systemAlerts] = await Promise.all([
-          apiClient.get('/api/enterprise/health').catch(() => null),
-          apiClient.get('/api/enterprise/metrics').catch(() => null),
-          apiClient.get('/api/enterprise/alerts').catch(() => null)
+          apiClient.get('/enterprise/health').catch(() => null),
+          apiClient.get('/enterprise/metrics').catch(() => null),
+          apiClient.get('/enterprise/alerts').catch(() => null)
         ]);
         
         if (systemHealth?.data?.data || businessMetrics?.data?.data) {

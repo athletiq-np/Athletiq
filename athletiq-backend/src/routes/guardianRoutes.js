@@ -48,9 +48,17 @@ router.post('/verify-claim', generalLimiter, async (req, res, next) => {
  */
 router.post('/claim-by-details', generalLimiter, async (req, res, next) => {
   try {
+    console.log('=== Guardian claim-by-details request ===');
+    console.log('Request body:', JSON.stringify(req.body, null, 2));
+    
     const { schoolName, firstName, lastName, dateOfBirth, dateFormat, guardianPhone, guardianEmail } = req.body;
 
+    console.log('Extracted fields:', {
+      schoolName, firstName, lastName, dateOfBirth, dateFormat, guardianPhone, guardianEmail
+    });
+
     if (!schoolName || !firstName || !lastName || !dateOfBirth || !guardianPhone) {
+      console.log('Validation failed - missing required fields');
       return res.status(400).json({
         success: false,
         message: 'School name, first name, last name, date of birth, and guardian phone are required'
@@ -60,12 +68,14 @@ router.post('/claim-by-details', generalLimiter, async (req, res, next) => {
     // Validate phone number format
     const phoneRegex = /^(\+977|977)?[0-9]{10}$/;
     if (!phoneRegex.test(guardianPhone.replace(/[-\s]/g, ''))) {
+      console.log('Phone validation failed for:', guardianPhone);
       return res.status(400).json({
         success: false,
         message: 'Please provide a valid Nepali phone number'
       });
     }
 
+    console.log('Calling guardianService.claimByStudentDetails...');
     const result = await guardianService.claimByStudentDetails({
       schoolName,
       firstName,
@@ -76,7 +86,10 @@ router.post('/claim-by-details', generalLimiter, async (req, res, next) => {
       guardianEmail
     });
 
+    console.log('Service result:', JSON.stringify(result, null, 2));
+
     if (result.success) {
+      console.log('Sending success response');
       res.status(200).json({
         success: true,
         message: result.message,
@@ -85,6 +98,7 @@ router.post('/claim-by-details', generalLimiter, async (req, res, next) => {
         requiresApproval: result.requiresApproval || false
       });
     } else {
+      console.log('Sending error response:', result.message);
       res.status(400).json({
         success: false,
         message: result.message
@@ -92,6 +106,7 @@ router.post('/claim-by-details', generalLimiter, async (req, res, next) => {
     }
 
   } catch (error) {
+    console.error('Guardian claim-by-details error:', error);
     next(error);
   }
 });
