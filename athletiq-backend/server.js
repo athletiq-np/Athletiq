@@ -83,7 +83,7 @@ app.get('/', (req, res) => res.send('Athletiq API is running...'));
 
 // Load routes with error handling
 try {
-  app.use('/api/auth', require('./src/routes/authRoutes'));
+  app.use('/api/auth', require('./src/routes/core/authRoutes'));
   console.log('✅ Auth routes loaded');
 } catch (error) {
   console.error('❌ Auth routes failed:', error.message);
@@ -118,14 +118,14 @@ try {
 }
 
 try {
-  app.use('/api/guardian-simple', require('./src/routes/guardianSimpleRoutes'));
+  app.use('/api/guardian-simple', require('./src/routes/features/guardianSimpleRoutes'));
   console.log('✅ Guardian simple routes loaded');
 } catch (error) {
   console.error('❌ Guardian simple routes failed:', error.message);
 }
 
 try {
-  app.use('/api/guardian/auth', require('./src/routes/guardianAuthRoutes'));
+  app.use('/api/guardian/auth', require('./src/routes/features/guardianAuthRoutes'));
   console.log('✅ Guardian auth routes loaded');
 } catch (error) {
   console.error('❌ Guardian auth routes failed:', error.message);
@@ -169,7 +169,7 @@ try {
 
 // Health check and core monitoring routes (enterprise grade)
 try {
-  app.use('/api/health', require('./src/routes/health'));
+  app.use('/api/health', require('./src/routes/core/health'));
   console.log('✅ Health check routes loaded');
 } catch (error) {
   console.error('❌ Health routes failed:', error.message);
