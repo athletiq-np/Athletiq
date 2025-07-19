@@ -37,10 +37,16 @@ import AthleteList from '@/pages/athlete/AthleteList';
 import AthleteProfile from '@/pages/athlete/AthleteProfile';
 
 // Import guardian components
-import GuardianClaimPortal from '@/pages/guardian/GuardianClaimPortal';
-import ModernGuardianPortal from '@/pages/guardian/ModernGuardianPortal';
-import SimpleGuardianPortal from '@/pages/guardian/SimpleGuardianPortal';
-import GuardianDashboard from '@/components/features/guardian/GuardianDashboard';
+import { 
+  GuardianClaimPortal,
+  ModernGuardianPortal, 
+  SimpleGuardianPortal,
+  GuardianDashboard,
+  GuardianAuthProvider,
+  GuardianRegistrationNew
+} from '@/features/guardian';
+import GuardianPortal from '@/features/guardian/pages/GuardianPortal';
+import GuardianDashboardStandalone from '@/features/guardian/pages/GuardianDashboardStandalone';
 import GuardianTestPage from '@/pages/test/GuardianTestPage';
 
 // Tournament creation component
@@ -80,11 +86,12 @@ function App() {
   return (
     <I18nextProvider i18n={i18n}>
       <ThemeProvider>
-        <ErrorBoundary 
-          title="Application Error"
-          description="Something went wrong with the Athletiq application. We're working to fix this issue."
-        >
-          <Router>
+        <GuardianAuthProvider>
+          <ErrorBoundary 
+            title="Application Error"
+            description="Something went wrong with the Athletiq application. We're working to fix this issue."
+          >
+            <Router>
             <Routes>
             {/* --- Public Routes --- */}
             <Route path="/" element={<Home />} />
@@ -92,10 +99,13 @@ function App() {
             <Route path="/register" element={<Register />} />
             
             {/* --- Guardian Routes --- */}
+            <Route path="/guardian" element={<GuardianPortal />} />
+            <Route path="/guardian/register" element={<GuardianRegistrationNew />} />
+            <Route path="/guardian/dashboard" element={<GuardianDashboardStandalone />} />
             <Route path="/guardian/claim/:claimCode" element={<GuardianClaimPortal />} />
             <Route path="/guardian-claim" element={<GuardianClaimPortal />} />
             <Route path="/guardian-modern" element={<SimpleGuardianPortal />} />
-            <Route path="/guardian-dashboard" element={<GuardianDashboard />} />
+            <Route path="/guardian-dashboard" element={<GuardianDashboardStandalone />} />
             <Route path="/guardian-test" element={<GuardianTestPage />} />
             
             {/* --- Test Routes --- */}
@@ -221,7 +231,8 @@ function App() {
           <Route path="*" element={<NotFoundPage />} />
         </Routes>
       </Router>
-    </ErrorBoundary>
+            </ErrorBoundary>
+        </GuardianAuthProvider>
     </ThemeProvider>
     </I18nextProvider>
   );

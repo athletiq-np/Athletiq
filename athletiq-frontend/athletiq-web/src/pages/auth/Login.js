@@ -32,27 +32,40 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await apiClient.post('/auth/login', formData);
+      // Different API endpoints for admin vs guardian
+      const endpoint = userType === 'admin' ? '/auth/login' : '/guardian/login';
+      const response = await apiClient.post(endpoint, formData);
       
       if (response.data.success) {
         // Backend returns user data in response.data.data
         const userData = response.data.data;
         setUser(userData);
-        toast.success(t('login_successful'));
+        toast.success(userType === 'admin' ? t('login_successful') : 'Guardian login successful!');
         
-        // Redirect based on user role
-        const from = location.state?.from?.pathname || '/';
-        if (userData.role === 'SuperAdmin') {
-          navigate('/admin', { replace: true });
-        } else if (userData.role === 'SchoolAdmin') {
-          navigate('/school', { replace: true });
+        // Redirect based on user type and role
+        if (userType === 'guardian') {
+          // Store guardian token for guardian-specific requests
+          localStorage.setItem('guardianToken', response.data.token);
+          localStorage.setItem('guardianInfo', JSON.stringify(userData));
+          navigate('/guardian/dashboard', { replace: true });
         } else {
-          navigate(from, { replace: true });
+          // Admin login - redirect based on role
+          const from = location.state?.from?.pathname || '/';
+          if (userData.role === 'SuperAdmin') {
+            navigate('/admin', { replace: true });
+          } else if (userData.role === 'SchoolAdmin') {
+            navigate('/school', { replace: true });
+          } else {
+            navigate(from, { replace: true });
+          }
         }
       }
     } catch (error) {
       console.error('Login error:', error);
-      toast.error(error.response?.data?.message || t('login_failed'));
+      const errorMessage = userType === 'guardian' 
+        ? 'Guardian login failed. Please check your credentials.'
+        : (error.response?.data?.message || t('login_failed'));
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -151,44 +164,72 @@ export default function Login() {
             </div>
           </>
         ) : (
-          // Guardian Access Options
-          <div className="space-y-4">
-            <div className="text-center mb-6">
-              <FaUserShield className="h-12 w-12 text-blue-600 mx-auto mb-3" />
-              <h3 className="text-lg font-semibold text-gray-800">Guardian Access</h3>
-              <p className="text-sm text-gray-600">Manage your athlete's profile and activities</p>
-            </div>
+          // Guardian Login Form
+          <>
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Guardian Email
+                </label>
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your email"
+                />
+              </div>
 
-            {/* Modern Guardian Access Button */}
-            <button
-              onClick={() => navigate('/guardian-modern')}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 flex items-center justify-center"
-            >
-              <FaUserShield className="mr-2" />
-              Access Modern Guardian Portal
-            </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Password
+                </label>
+                <input
+                  type="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  required
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="Enter your password"
+                />
+              </div>
 
-            {/* Guardian Registration Button */}
-            <button
-              onClick={() => navigate('/guardian-modern')}
-              className="w-full bg-green-600 text-white py-3 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-center"
-            >
-              <FaGraduationCap className="mr-2" />
-              Register as Guardian (No Claim Codes!)
-            </button>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-blue-600 text-white py-2 px-4 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 flex items-center justify-center"
+              >
+                <FaUserShield className="mr-2" />
+                {loading ? 'Logging in...' : 'Login to Guardian Portal'}
+              </button>
+            </form>
 
-            <div className="text-center mt-4">
-              <p className="text-xs text-gray-600">
-                ✨ New system: No claim codes needed! Register directly and add your children.
+            <div className="mt-6 text-center">
+              <p className="text-sm text-gray-600">
+                Don't have an account?
               </p>
+              <button
+                onClick={() => navigate('/guardian/register')}
+                className="mt-2 w-full bg-green-600 text-white py-2 px-4 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 flex items-center justify-center"
+              >
+                <FaGraduationCap className="mr-2" />
+                Register as New Guardian
+              </button>
+              
+              <div className="mt-4 text-xs text-gray-600">
+                ✨ Quick Nepal-friendly registration with dual calendar support
+              </div>
             </div>
 
             <div className="border-t pt-4 mt-6">
               <p className="text-xs text-gray-500 text-center">
-                Need help? Contact your school administration or call support.
+                Demo Login: guardian@demo.com / guardian123
               </p>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
