@@ -360,3 +360,17 @@ Private - AthletiQ Sports Management System
 ---
 
 **Built with ❤️ for the sports community**
+
+## 📰 Nepali News Voice Script
+
+Use the built-in script to hear recent Nepali news headlines with optional voice output.
+
+```bash
+# Install dependencies
+npm install
+
+# Run the announcer
+npm run news:np
+```
+
+The script fetches headlines from Google News (Nepali edition). If your system has the `say` command with Nepali voice support, the headlines will be spoken aloud; otherwise they are printed to the console.
