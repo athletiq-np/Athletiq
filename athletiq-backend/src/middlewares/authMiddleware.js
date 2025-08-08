@@ -21,9 +21,14 @@ const protect = async (req, res, next) => {
     token = req.cookies.token;
   }
 
-  // 2. Make sure a token exists
+  // 2. If no cookie, check Authorization header (for SPA/API usage)
+  if (!token && req.headers.authorization && req.headers.authorization.startsWith('Bearer ')) {
+    token = req.headers.authorization.substring(7); // Remove 'Bearer ' prefix
+  }
+
+  // 3. Make sure a token exists
   if (!token) {
-    console.log('🔒 No token found in cookies for route:', req.path);
+    console.log('🔒 No token found in cookies or headers for route:', req.path);
     // Using next() with an error allows our central errorHandler to handle it
     const error = new Error('Not authorized, no token provided.');
     error.statusCode = 401;
@@ -31,11 +36,11 @@ const protect = async (req, res, next) => {
   }
 
   try {
-    // 3. Verify the token's signature
+    // 4. Verify the token's signature
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     console.log('🔑 Token decoded successfully for user ID:', decoded.user.id);
 
-    // 4. Fetch the user from the database using the ID from the token.
+    // 5. Fetch the user from the database using the ID from the token.
     // This ensures the user data is always current and prevents issues
     // with outdated roles or permissions stored in an old token.
     const userResult = await pool.query(
@@ -50,7 +55,7 @@ const protect = async (req, res, next) => {
       return next(error);
     }
 
-    // 5. Attach the user object to the request for use in subsequent routes
+    // 6. Attach the user object to the request for use in subsequent routes
     req.user = userResult.rows[0];
     console.log('✅ User authenticated:', req.user.email, 'Role:', req.user.role);
     

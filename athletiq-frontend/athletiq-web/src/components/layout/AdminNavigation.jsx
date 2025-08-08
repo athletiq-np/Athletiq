@@ -34,9 +34,24 @@ const AdminNavigation = ({ currentUser, onNavigate, currentPage = 'dashboard' })
     { id: 'settings', label: 'Settings', icon: Settings, count: null }
   ];
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    window.location.href = '/login';
+  const handleLogout = async () => {
+    try {
+      // Try to call server logout endpoint
+      await fetch('/auth/logout', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token') || localStorage.getItem('athletiq_token')}`
+        }
+      });
+    } catch (error) {
+      console.error('Server logout failed:', error);
+    } finally {
+      // Always clear local storage and redirect
+      localStorage.removeItem('token');
+      localStorage.removeItem('athletiq_token');
+      localStorage.removeItem('athletiq_user');
+      window.location.href = '/login';
+    }
   };
 
   const MenuItem = ({ item, isActive }) => (

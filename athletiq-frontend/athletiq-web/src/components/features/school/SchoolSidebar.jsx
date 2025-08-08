@@ -63,7 +63,11 @@ export default function SchoolSidebar({
       toast.success('Logged out successfully');
       navigate('/login');
     } catch (error) {
-      toast.error('Logout failed');
+      console.error('Logout error:', error);
+      // Clear local state even if server call fails
+      clearUser();
+      toast.success('Logged out successfully');
+      navigate('/login');
     }
   };
 

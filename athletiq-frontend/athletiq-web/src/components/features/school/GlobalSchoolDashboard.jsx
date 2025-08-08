@@ -105,7 +105,7 @@ export default function GlobalSchoolDashboard() {
       ] = await Promise.all([
         apiClient.get('/schools/me'),
         apiClient.get('/schools/me/tournament-stats').catch(() => ({ data: { data: {} } })),
-        apiClient.get('/schools/me/players?limit=100&page=1').catch(() => ({ data: { data: [] } })),
+        apiClient.get('/schools/me/athletes?limit=100&page=1').catch(() => ({ data: { data: [] } })),
         apiClient.get('/schools/houses').catch(() => ({ data: { data: [] } })),
         apiClient.get('/schools/staff').catch(() => ({ data: { data: [] } })),
         apiClient.get('/schools/me/tournaments?limit=100&page=1').catch(() => ({ data: { data: [] } })),
@@ -118,13 +118,14 @@ export default function GlobalSchoolDashboard() {
       
       // Process summary data
       const stats = summaryRes.data.data || summaryRes.data;
+      const tournamentsData = Array.isArray(tournamentsRes.data?.data) ? tournamentsRes.data.data : [];
       setSummary({
         registeredStudents: stats.studentCount || studentsRes.data?.data?.length || 0,
         houses: stats.houseCount || housesRes.data?.data?.length || 0,
         activeTeams: stats.activeTeams || 0,
         staff: stats.staffCount || staffRes.data?.data?.length || 0,
-        tournaments: stats.tournamentCount || tournamentsRes.data?.data?.length || 0,
-        activeTournaments: tournamentsRes.data?.data?.filter(t => t.status === 'active').length || 0,
+        tournaments: stats.tournamentCount || tournamentsData.length || 0,
+        activeTournaments: tournamentsData.filter(t => t.status === 'active').length || 0,
         pendingDocuments: stats.pendingDocuments || 0,
         completionRate: stats.completionRate || 0,
       });
@@ -132,7 +133,7 @@ export default function GlobalSchoolDashboard() {
       setStudents(studentsRes.data?.data || []);
       setHouses(housesRes.data?.data || []);
       setStaff(staffRes.data?.data || []);
-      setTournaments(tournamentsRes.data?.data || []);
+      setTournaments(tournamentsData);
       setNotifications(notificationsRes.data?.data || []);
       setRecentActivities(activitiesRes.data?.data || []);
       

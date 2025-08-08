@@ -134,7 +134,7 @@ export default function StudentRoster({ students, houses, onRefresh, filters, se
   const handleAddStudent = async (studentData) => {
     try {
       setLoading(true);
-      await apiClient.post('/schools/me/players', studentData);
+      await apiClient.post('/schools/me/athletes', studentData);
       toast.success('Student added successfully');
       setShowAddModal(false);
       if (onRefresh) onRefresh();
@@ -160,7 +160,7 @@ export default function StudentRoster({ students, houses, onRefresh, filters, se
     if (window.confirm('Are you sure you want to delete this student?')) {
       try {
         setLoading(true);
-        await apiClient.delete(`/schools/me/players/${studentId}`);
+        await apiClient.delete(`/schools/me/athletes/${studentId}`);
         toast.success('Student deleted successfully');
         if (onRefresh) onRefresh();
       } catch (error) {
@@ -175,7 +175,7 @@ export default function StudentRoster({ students, houses, onRefresh, filters, se
   const handleUpdateStudent = async (studentData) => {
     try {
       setLoading(true);
-      await apiClient.put(`/schools/me/players/${selectedStudent.id}`, studentData);
+      await apiClient.put(`/schools/me/athletes/${selectedStudent.id}`, studentData);
       toast.success('Student updated successfully');
       setShowEditModal(false);
       setSelectedStudent(null);
@@ -191,7 +191,7 @@ export default function StudentRoster({ students, houses, onRefresh, filters, se
   const handleBulkUpload = async (uploadData) => {
     try {
       setLoading(true);
-      await apiClient.post('/schools/me/players/bulk-import', uploadData);
+      await apiClient.post('/schools/me/athletes/bulk-import', uploadData);
       toast.success('Students imported successfully');
       setShowBulkUploadModal(false);
       if (onRefresh) onRefresh();
@@ -240,7 +240,7 @@ export default function StudentRoster({ students, houses, onRefresh, filters, se
         case 'assign-house':
           const houseToAssign = prompt('Enter house name to assign:');
           if (houseToAssign) {
-            await apiClient.put('/schools/me/players/bulk-update', {
+            await apiClient.put('/schools/me/athletes/bulk-update', {
               studentIds: selectedStudents,
               updates: { house: houseToAssign }
             });
@@ -249,7 +249,7 @@ export default function StudentRoster({ students, houses, onRefresh, filters, se
           break;
           
         case 'export':
-          const response = await apiClient.post('/schools/me/players/export', {
+          const response = await apiClient.post('/schools/me/athletes/export', {
             studentIds: selectedStudents
           }, { responseType: 'blob' });
           
@@ -266,7 +266,7 @@ export default function StudentRoster({ students, houses, onRefresh, filters, se
           
         case 'delete':
           if (window.confirm(`Are you sure you want to delete ${selectedStudents.length} students?`)) {
-            await apiClient.delete('/schools/me/players/bulk-delete', {
+            await apiClient.delete('/schools/me/athletes/bulk-delete', {
               data: { studentIds: selectedStudents }
             });
             toast.success(`Deleted ${selectedStudents.length} students`);

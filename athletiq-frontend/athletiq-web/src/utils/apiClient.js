@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { mockGuardianAPI, DEMO_MODE } from './demoData';
+import { AUTH_KEYS } from '@/utils/authKeys';
 
 // Create axios instance with base configuration
 const apiClient = axios.create({
@@ -13,7 +14,8 @@ const apiClient = axios.create({
 // Request interceptor to add authentication token
 apiClient.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('guardian-token');
+  // Prefer unified token, fall back to legacy guardian token for backward compatibility
+  const token = localStorage.getItem(AUTH_KEYS.TOKEN) || localStorage.getItem('guardian-token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -32,8 +34,9 @@ apiClient.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       // Token expired or invalid
-      localStorage.removeItem('guardian-token');
-      localStorage.removeItem('guardian-data');
+  // Do not aggressively clear unified token here; allow auth hook to manage logout
+  localStorage.removeItem('guardian-token');
+  localStorage.removeItem('guardian-data');
       // Redirect to login could be handled here
     }
     
@@ -56,7 +59,7 @@ export const guardianAPI = {
     }
     try {
       // Use main guardian endpoint with full registration
-      const response = await apiClient.post('/api/guardian/register', guardianData);
+      const response = await apiClient.post('/guardian/register', guardianData);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -70,7 +73,7 @@ export const guardianAPI = {
       return mockGuardianAPI.register(guardianData);
     }
     try {
-      const response = await apiClient.post('/api/guardian/simplified-register', guardianData);
+      const response = await apiClient.post('/guardian/simplified-register', guardianData);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -83,7 +86,7 @@ export const guardianAPI = {
       return mockGuardianAPI.login(credentials);
     }
     try {
-      const response = await apiClient.post('/api/guardian/login', credentials);
+      const response = await apiClient.post('/guardian/login', credentials);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -96,7 +99,7 @@ export const guardianAPI = {
       return mockGuardianAPI.getProfile();
     }
     try {
-      const response = await apiClient.get('/api/guardian/profile');
+      const response = await apiClient.get('/guardian/profile');
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -109,7 +112,7 @@ export const guardianAPI = {
       return mockGuardianAPI.updateProfile(profileData);
     }
     try {
-      const response = await apiClient.put('/api/guardian/profile', profileData);
+      const response = await apiClient.put('/guardian/profile', profileData);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -123,7 +126,7 @@ export const guardianAPI = {
       return mockGuardianAPI.getChildren(); // Keep using mock for now
     }
     try {
-      const response = await apiClient.get('/api/guardian/athletes');
+      const response = await apiClient.get('/guardian/athletes');
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -136,7 +139,7 @@ export const guardianAPI = {
       return mockGuardianAPI.addChild(athleteData); // Keep using mock for now
     }
     try {
-      const response = await apiClient.post('/api/guardian/add-athlete', athleteData);
+      const response = await apiClient.post('/guardian/add-athlete', athleteData);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -150,7 +153,7 @@ export const guardianAPI = {
       return mockGuardianAPI.getChildStatus(athleteId); // Keep using mock for now
     }
     try {
-      const response = await apiClient.get(`/api/guardian/athlete/${athleteId}/status`);
+      const response = await apiClient.get(`/guardian/athlete/${athleteId}/status`);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -179,7 +182,7 @@ export const guardianAPI = {
       return mockGuardianAPI.updateChild(childId, childData);
     }
     try {
-      const response = await apiClient.put(`/api/guardian/children/${childId}`, childData);
+      const response = await apiClient.put(`/guardian/children/${childId}`, childData);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -193,7 +196,7 @@ export const guardianAPI = {
       return mockGuardianAPI.getSchools(search);
     }
     try {
-      const response = await apiClient.get(`/api/guardian/schools${search ? `?search=${search}` : ''}`);
+      const response = await apiClient.get(`/guardian/schools${search ? `?search=${search}` : ''}`);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -206,7 +209,7 @@ export const guardianAPI = {
       return mockGuardianAPI.deleteChild(childId);
     }
     try {
-      const response = await apiClient.delete(`/api/guardian/children/${childId}`);
+      const response = await apiClient.delete(`/guardian/children/${childId}`);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -220,7 +223,7 @@ export const guardianAPI = {
       return mockGuardianAPI.getChildMatches(athleteId);
     }
     try {
-      const response = await apiClient.get(`/api/guardian/athletes/${athleteId}/matches`);
+      const response = await apiClient.get(`/guardian/athletes/${athleteId}/matches`);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -233,7 +236,7 @@ export const guardianAPI = {
       return mockGuardianAPI.getChildStats(athleteId);
     }
     try {
-      const response = await apiClient.get(`/api/guardian/athletes/${athleteId}/stats`);
+      const response = await apiClient.get(`/guardian/athletes/${athleteId}/stats`);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
@@ -296,7 +299,7 @@ export const guardianAPI = {
     }
     try {
       const response = await apiClient.post(
-        `/api/guardian/children/${childId}/documents`,
+        `/guardian/children/${childId}/documents`,
         formData,
         {
           headers: {
@@ -316,7 +319,7 @@ export const guardianAPI = {
       return mockGuardianAPI.getDocuments(childId);
     }
     try {
-      const response = await apiClient.get(`/api/guardian/children/${childId}/documents`);
+      const response = await apiClient.get(`/guardian/children/${childId}/documents`);
       return response.data;
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);

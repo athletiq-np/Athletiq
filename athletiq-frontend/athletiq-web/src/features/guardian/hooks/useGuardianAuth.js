@@ -1,6 +1,7 @@
 import { useState, useEffect, useContext, createContext } from 'react';
 import { toast } from 'react-toastify';
 import { guardianAPI, tokenManager } from '../../../utils/apiClient';
+import { AUTH_KEYS, persistUnifiedSession, readLegacyGuardian, clearLegacyGuardian } from '@/utils/authKeys';
 
 // Create Guardian Auth Context
 const GuardianAuthContext = createContext();
@@ -25,18 +26,30 @@ export const GuardianAuthProvider = ({ children }) => {
 
   const checkAuthStatus = async () => {
     try {
-      const token = tokenManager.get();
-      const guardianData = localStorage.getItem('guardian-data');
-
-      if (token && tokenManager.isValid() && guardianData) {
-        const parsedGuardian = JSON.parse(guardianData);
-        setGuardian(parsedGuardian);
+      // Migration: read unified session first
+      const unifiedToken = localStorage.getItem(AUTH_KEYS.TOKEN);
+      const unifiedUserRaw = localStorage.getItem(AUTH_KEYS.USER);
+      if (unifiedToken && unifiedUserRaw) {
+        try {
+          const u = JSON.parse(unifiedUserRaw);
+          if (u && (u.role === 'Guardian' || u.guardianId)) {
+            setGuardian(u);
+            setIsAuthenticated(true);
+            return;
+          }
+        } catch {}
+      }
+      // Legacy fallback
+      const { token, guardian } = readLegacyGuardian();
+      if (token && tokenManager.isValid() && guardian) {
+        setGuardian(guardian);
         setIsAuthenticated(true);
-        
-        // Optionally verify token with server
         try {
           const response = await guardianAPI.getProfile();
           setGuardian(response.data);
+          // Persist to unified storage
+          persistUnifiedSession({ token, user: { ...response.data, role: response.data.role || 'Guardian' } });
+          clearLegacyGuardian();
         } catch (error) {
           console.log('Token verification failed, but keeping local data');
         }
@@ -54,14 +67,13 @@ export const GuardianAuthProvider = ({ children }) => {
       setLoading(true);
       const response = await guardianAPI.register(registrationData);
       
-      const { token, guardian: guardianInfo } = response.data;
-      
-      // Store auth data
-      tokenManager.set(token);
-      localStorage.setItem('guardian-data', JSON.stringify(guardianInfo));
-      
-      setGuardian(guardianInfo);
-      setIsAuthenticated(true);
+  const { token, guardian: guardianInfo } = response.data;
+  tokenManager.set(token);
+  const normalized = { ...guardianInfo, role: guardianInfo.role || 'Guardian' };
+  persistUnifiedSession({ token, user: normalized });
+  clearLegacyGuardian();
+  setGuardian(normalized);
+  setIsAuthenticated(true);
       
       toast.success('Registration successful!');
       return { success: true, data: guardianInfo };
@@ -79,14 +91,13 @@ export const GuardianAuthProvider = ({ children }) => {
       setLoading(true);
       const response = await guardianAPI.login({ email, password });
       
-      const { token, guardian: guardianInfo } = response.data;
-      
-      // Store auth data
-      tokenManager.set(token);
-      localStorage.setItem('guardian-data', JSON.stringify(guardianInfo));
-      
-      setGuardian(guardianInfo);
-      setIsAuthenticated(true);
+  const { token, guardian: guardianInfo } = response.data;
+  tokenManager.set(token);
+  const normalized = { ...guardianInfo, role: guardianInfo.role || 'Guardian' };
+  persistUnifiedSession({ token, user: normalized });
+  clearLegacyGuardian();
+  setGuardian(normalized);
+  setIsAuthenticated(true);
       
       toast.success('Login successful!');
       return { success: true, data: guardianInfo };
@@ -99,11 +110,27 @@ export const GuardianAuthProvider = ({ children }) => {
     }
   };
 
-  const logout = () => {
-    tokenManager.remove();
-    setGuardian(null);
-    setIsAuthenticated(false);
-    toast.info('Logged out successfully');
+  const logout = async () => {
+    try {
+      // Try to call server logout endpoint
+      await fetch('/auth/logout', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${tokenManager.get() || localStorage.getItem(AUTH_KEYS.TOKEN)}`
+        }
+      });
+    } catch (error) {
+      console.error('Server logout failed:', error);
+    } finally {
+      // Always clear local data
+      tokenManager.remove();
+      clearLegacyGuardian();
+      localStorage.removeItem(AUTH_KEYS.TOKEN);
+      localStorage.removeItem(AUTH_KEYS.USER);
+      setGuardian(null);
+      setIsAuthenticated(false);
+      toast.info('Logged out successfully');
+    }
   };
 
   const updateProfile = async (profileData) => {

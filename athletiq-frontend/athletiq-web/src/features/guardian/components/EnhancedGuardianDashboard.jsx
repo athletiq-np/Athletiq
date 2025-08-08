@@ -42,8 +42,12 @@ const EnhancedGuardianDashboard = () => {
   // Load data on component mount
   useEffect(() => {
     loadAthletes();
-    loadDashboardStats();
   }, []);
+
+  // Calculate stats whenever athletes change
+  useEffect(() => {
+    loadDashboardStats();
+  }, [athletes]);
 
   // Filter athletes based on search and filters
   const filteredAthletes = athletes.filter(athlete => {
@@ -72,7 +76,7 @@ const EnhancedGuardianDashboard = () => {
   const loadAthletes = async () => {
     try {
       setLoading(true);
-      const response = await apiClient.get('/api/guardian/athletes');
+      const response = await apiClient.get('/guardian/athletes');
       
       if (response.data.success) {
         setAthletes(response.data.athletes || []);
@@ -89,19 +93,31 @@ const EnhancedGuardianDashboard = () => {
 
   const loadDashboardStats = async () => {
     try {
-      const response = await apiClient.get('/api/guardian/dashboard/stats');
-      
-      if (response.data.success) {
-        setDashboardStats(response.data.stats);
+      // Calculate stats from loaded athletes instead of separate API call
+      if (athletes && athletes.length > 0) {
+        const stats = {
+          totalAthletes: athletes.length,
+          totalSchools: [...new Set(athletes.map(a => a.school_name).filter(Boolean))].length,
+          completedProfiles: athletes.filter(a => a.profile_completion >= 80).length,
+          pendingReview: athletes.filter(a => a.status === 'pending_review').length
+        };
+        setDashboardStats(stats);
+      } else {
+        setDashboardStats({
+          totalAthletes: 0,
+          totalSchools: 0,
+          completedProfiles: 0,
+          pendingReview: 0
+        });
       }
     } catch (error) {
-      console.error('Error loading dashboard stats:', error);
+      console.error('Error calculating dashboard stats:', error);
     }
   };
 
   const handleAddAthlete = async (formData) => {
     try {
-      const response = await apiClient.post('/api/guardian/athletes', formData, {
+      const response = await apiClient.post('/guardian/athletes', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -111,7 +127,6 @@ const EnhancedGuardianDashboard = () => {
         toast.success('Athlete registered successfully!');
         setShowAddForm(false);
         await loadAthletes();
-        await loadDashboardStats();
         
         // Show completion status
         const { profile_completion, requires_manual_review } = response.data.data;
@@ -131,7 +146,7 @@ const EnhancedGuardianDashboard = () => {
 
   const handleEditAthlete = async (formData) => {
     try {
-      const response = await apiClient.put(`/api/guardian/athletes/${editingAthlete.id}`, formData, {
+      const response = await apiClient.put(`/guardian/athletes/${editingAthlete.id}`, formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -141,7 +156,6 @@ const EnhancedGuardianDashboard = () => {
         toast.success('Athlete updated successfully!');
         setEditingAthlete(null);
         await loadAthletes();
-        await loadDashboardStats();
       } else {
         toast.error(response.data.message || 'Failed to update athlete');
       }
@@ -157,12 +171,11 @@ const EnhancedGuardianDashboard = () => {
     }
 
     try {
-      const response = await apiClient.delete(`/api/guardian/athletes/${athleteId}`);
+      const response = await apiClient.delete(`/guardian/athletes/${athleteId}`);
       
       if (response.data.success) {
         toast.success('Athlete deleted successfully');
         await loadAthletes();
-        await loadDashboardStats();
       } else {
         toast.error(response.data.message || 'Failed to delete athlete');
       }

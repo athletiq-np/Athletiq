@@ -49,7 +49,7 @@ export default function TournamentManagement({ tournaments, school, onRefresh })
         apiClient.get('/schools/me/tournaments').catch(() => ({ data: { success: false, data: { registered_tournaments: [] } } })),
         apiClient.get('/schools/me/tournament-stats').catch(() => ({ data: { success: false, data: {} } })),
         apiClient.get('/schools/me/teams').catch(() => ({ data: { success: false, data: [] } })),
-        apiClient.get('/schools/me/players').catch(() => ({ data: { success: false, data: [] } }))
+        apiClient.get('/schools/me/athletes').catch(() => ({ data: { success: false, data: [] } }))
       ]);
 
       setTournamentData({

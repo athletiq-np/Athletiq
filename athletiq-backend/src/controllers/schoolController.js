@@ -393,7 +393,17 @@ exports.getMySchoolAthletes = async (req, res) => {
     }
     
     const schoolId = req.user.school_id;
-    
+    // Debug: basic presence log (avoid logging PII beyond IDs)
+    console.log('[getMySchoolAthletes] schoolId:', schoolId);
+
+    // Lightweight sanity check to help diagnose 500 errors (does table & FK data exist?)
+    try {
+      const sanity = await pool.query('SELECT id, full_name FROM players WHERE school_id = $1 LIMIT 1', [schoolId]);
+      console.log('[getMySchoolAthletes] sanityCheck count:', sanity.rowCount);
+    } catch (innerErr) {
+      console.error('[getMySchoolAthletes] sanityCheck failed:', innerErr.message);
+    }
+
     const { rows } = await pool.query(`
       SELECT 
         p.id,
@@ -401,34 +411,44 @@ exports.getMySchoolAthletes = async (req, res) => {
         p.full_name,
         p.date_of_birth,
         p.gender,
-        p.class,
+        p.grade AS class,               -- Backwards compatibility alias
         p.section,
-        p.contact_no,
-        p.email,
-        p.registration_status,
-        p.is_active,
+        p.guardian_phone AS contact_no, -- Alias to match older field name
+        p.guardian_email AS email,
+        p.enrollment_status AS registration_status,
+        (p.active_status = 'Active') AS is_active,
         p.created_at,
-        json_agg(
+        COALESCE(json_agg(
           json_build_object(
             'sport', s.name,
             'team', t.team_name,
             'position', psp.event_category
           )
-        ) FILTER (WHERE s.id IS NOT NULL) as sports_participation
+        ) FILTER (WHERE s.id IS NOT NULL), '[]'::json) as sports_participation
       FROM players p
-      LEFT JOIN player_sport_participation psp ON p.id = psp.athlete_id
+      LEFT JOIN player_sport_participation psp ON p.id = psp.player_id
       LEFT JOIN sports s ON psp.sport_id = s.id
       LEFT JOIN teams t ON psp.team_id = t.id
       WHERE p.school_id = $1
-      GROUP BY p.id, p.athlete_id, p.full_name, p.date_of_birth, p.gender, p.class, p.section, p.contact_no, p.email, p.registration_status, p.is_active, p.created_at
+      GROUP BY p.id, p.athlete_id, p.full_name, p.date_of_birth, p.gender, p.grade, p.section, p.guardian_phone, p.guardian_email, p.enrollment_status, p.active_status, p.created_at
       ORDER BY p.full_name
     `, [schoolId]);
     
-  sendResponse(res, { data: rows, message: 'School athletes retrieved successfully' });
+    // Ensure rows is an array even if nullish
+    const safeRows = Array.isArray(rows) ? rows : [];
+  sendResponse(res, { data: safeRows, message: 'School athletes retrieved successfully' });
     
   } catch (err) {
-    console.error("Get school athletes error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school athletes.' });
+    // Enhanced structured logging
+    console.error('[getMySchoolAthletes] error:', {
+      message: err.message,
+      code: err.code,
+      detail: err.detail,
+      stack: err.stack
+    });
+    const isProd = process.env.NODE_ENV === 'production';
+    const publicMessage = 'Server error while fetching school athletes.';
+    sendResponse(res, { success: false, status: 500, message: publicMessage, ...(isProd ? {} : { errors: { message: err.message, code: err.code, detail: err.detail } }) });
   }
 };
 
@@ -877,7 +897,7 @@ exports.getSchoolTeams = async (req, res) => {
               'player_id', tp.player_id,
               'athlete_id', p.athlete_id,
               'name', p.full_name,
-              'grade', p.class,
+              'grade', p.grade,
               'position', tp.position,
               'jersey_number', tp.jersey_number,
               'is_starter', tp.is_starter,

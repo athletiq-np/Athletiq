@@ -15,6 +15,11 @@ router.post('/register', authLimiter, validateUserRegistration, authController.r
 // @access  Public
 router.post('/login', authLimiter, validateUserLogin, authController.login);
 
+// @route   POST /api/auth/unified-login
+// @desc    Attempt user login (users table) then guardian login automatically
+// @access  Public
+router.post('/unified-login', authLimiter, authController.loginUnified);
+
 // @route   GET /api/auth/logout
 // @desc    Log user out by clearing the authentication cookie
 // @access  Private (must be logged in to log out)

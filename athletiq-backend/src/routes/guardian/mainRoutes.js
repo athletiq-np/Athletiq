@@ -6,7 +6,8 @@ const multer = require('multer');
 const path = require('path');
 const fs = require('fs');
 const Joi = require('joi');
-const pool = require('../../config/db');
+// NOTE: db.js exports an object { pool, query, ... } so we must destructure
+const { pool } = require('../../config/db');
 
 const router = express.Router();
 
@@ -58,19 +59,35 @@ const authenticateGuardian = async (req, res, next) => {
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback_secret');
-    const guardian = await pool.query('SELECT * FROM guardians WHERE id = $1', [decoded.guardianId]);
+    
+    // Support both legacy guardian tokens and unified tokens
+    let guardianId;
+    if (decoded.guardianId) {
+      // Legacy token format
+      guardianId = decoded.guardianId;
+    } else if (decoded.user && decoded.user.role === 'Guardian') {
+      // Unified token format
+      guardianId = decoded.user.id;
+    } else {
+      return res.status(401).json({ 
+        success: false, 
+        message: 'Invalid token format.' 
+      });
+    }
+    
+    const guardian = await pool.query('SELECT * FROM guardians WHERE id = $1', [guardianId]);
     
     if (guardian.rowCount === 0) {
       return res.status(401).json({ 
         success: false, 
-        message: 'Invalid token.' 
+        message: 'Guardian not found.' 
       });
     }
 
     req.guardian = guardian.rows[0];
     next();
   } catch (error) {
-    console.error('Authentication error:', error);
+    console.error('Guardian authentication error:', error.message);
     res.status(401).json({ 
       success: false, 
       message: 'Invalid token.' 

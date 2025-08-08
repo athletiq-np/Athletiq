@@ -30,7 +30,8 @@ const sendTokenResponse = (user, statusCode, res) => {
     .json({
       success: true,
       message: 'Authentication successful',
-      data: user
+      data: user,
+      token // expose token for SPA header auth
     });
 };
 
@@ -171,4 +172,51 @@ exports.logout = (req, res, next) => {
     httpOnly: true,
   });
   return sendResponse(res, { message: 'Logged out successfully', data: null });
+};
+
+// @desc    Unified login for any account type (users table first, then guardians)
+// @route   POST /api/auth/unified-login
+// @access  Public
+exports.loginUnified = async (req, res, next) => {
+  const { email, password } = req.body;
+  if (!email || !password) {
+    const err = new Error('email and password are required');
+    err.statusCode = 400; return next(err);
+  }
+  try {
+    console.log('🔐 Unified login attempt:', email);
+    let dbPool = pool;
+    if (process.env.NODE_ENV === 'test') {
+      try { const { testPool } = require('../../tests/testDb'); if (testPool) dbPool = testPool; } catch(_) {}
+    }
+
+    // 1. Try primary users table
+    const userResult = await dbPool.query('SELECT * FROM users WHERE email = $1', [email]);
+    const userRow = userResult.rows[0];
+    if (userRow && await bcrypt.compare(password, userRow.password_hash)) {
+      console.log('✅ Unified login (users) success:', email);
+      const payload = { user: { id: userRow.id, role: userRow.role, school_id: userRow.school_id } };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
+      delete userRow.password_hash;
+      return res.status(200).json({ success: true, message: 'Authentication successful', data: userRow, token, userType: 'user' });
+    }
+
+    // 2. Try guardians table
+    const guardianResult = await dbPool.query('SELECT * FROM guardians WHERE email = $1', [email]);
+    const guardianRow = guardianResult.rows[0];
+    if (guardianRow && await bcrypt.compare(password, guardianRow.password_hash)) {
+      console.log('✅ Unified login (guardian) success:', email);
+      const payload = { user: { id: guardianRow.id, role: 'Guardian' } };
+      const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
+      delete guardianRow.password_hash;
+      return res.status(200).json({ success: true, message: 'Authentication successful', data: { ...guardianRow, role: 'Guardian' }, token, userType: 'guardian' });
+    }
+
+    console.log('❌ Unified login failed (no match):', email);
+    const error = new Error('Invalid credentials.');
+    error.statusCode = 401; return next(error);
+  } catch (err) {
+    console.error('🚫 Unified login error:', err.message);
+    return next(err);
+  }
 };

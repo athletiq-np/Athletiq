@@ -1,6 +1,8 @@
 import React from 'react';
 
 const ProfileCompletionCircle = ({ percentage, size = 'md' }) => {
+  // Ensure percentage is a valid number and provide fallback
+  const validPercentage = isNaN(percentage) || percentage == null ? 0 : Math.max(0, Math.min(100, percentage));
   const getSizeConfig = (size) => {
     switch (size) {
       case 'sm':
@@ -31,11 +33,11 @@ const ProfileCompletionCircle = ({ percentage, size = 'md' }) => {
   };
 
   const config = getSizeConfig(size);
-  const color = getColorFromPercentage(percentage);
+  const color = getColorFromPercentage(validPercentage);
   const radius = 14;
   const circumference = 2 * Math.PI * radius;
   const strokeDasharray = circumference;
-  const strokeDashoffset = circumference - (percentage / 100) * circumference;
+  const strokeDashoffset = circumference - (validPercentage / 100) * circumference;
 
   return (
     <div className={`relative ${config.containerSize} flex items-center justify-center`}>
@@ -64,7 +66,7 @@ const ProfileCompletionCircle = ({ percentage, size = 'md' }) => {
         />
       </svg>
       <div className={`absolute inset-0 flex items-center justify-center ${config.textSize} font-medium`} style={{ color }}>
-        {percentage}%
+        {validPercentage}%
       </div>
     </div>
   );
