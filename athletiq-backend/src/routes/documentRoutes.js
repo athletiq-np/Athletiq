@@ -6,6 +6,7 @@
 const express = require('express');
 const router = express.Router();
 const { body, param, validationResult } = require('express-validator');
+const { sendResponse } = require('../utils/response');
 
 // Import middleware
 const { protect: authMiddleware } = require('../middlewares/authMiddleware');
@@ -101,11 +102,7 @@ router.post('/upload',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation failed',
-          errors: errors.array()
-        });
+  return sendResponse(res, { success: false, status: 400, message: 'Validation failed', errors: errors.array() });
       }
 
       const { document_type, entity_type, entity_id } = req.body;
@@ -119,19 +116,11 @@ router.post('/upload',
         user_id
       });
 
-      res.json({
-        success: true,
-        message: 'Document uploaded and queued for processing',
-        data: result
-      });
+  sendResponse(res, { message: 'Document uploaded and queued for processing', data: result });
 
     } catch (error) {
       console.error('Document upload error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to upload document',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to upload document', errors: process.env.NODE_ENV === 'development' ? [{ msg: error.message }] : null });
     }
   }
 );
@@ -193,11 +182,7 @@ router.get('/:uploadId/status',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation failed',
-          errors: errors.array()
-        });
+  return sendResponse(res, { success: false, status: 400, message: 'Validation failed', errors: errors.array() });
       }
 
       const { uploadId } = req.params;
@@ -218,17 +203,12 @@ router.get('/:uploadId/status',
       const result = await query(statusQuery, [uploadId, user_id]);
 
       if (result.rows.length === 0) {
-        return res.status(404).json({
-          success: false,
-          message: 'Document not found or access denied'
-        });
+  return sendResponse(res, { success: false, status: 404, message: 'Document not found or access denied' });
       }
 
       const doc = result.rows[0];
       
-      res.json({
-        success: true,
-        data: {
+      sendResponse(res, { data: {
           id: doc.id,
           filename: doc.filename,
           file_size: doc.file_size,
@@ -244,16 +224,11 @@ router.get('/:uploadId/status',
           processing_attempts: doc.processing_attempts || 0,
           created_at: doc.created_at,
           updated_at: doc.updated_at
-        }
-      });
+        } });
 
     } catch (error) {
       console.error('Status check error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to check document status',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to check document status', errors: process.env.NODE_ENV === 'development' ? [{ msg: error.message }] : null });
     }
   }
 );
@@ -309,11 +284,7 @@ router.post('/:uploadId/approve',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation failed',
-          errors: errors.array()
-        });
+  return sendResponse(res, { success: false, status: 400, message: 'Validation failed', errors: errors.array() });
       }
 
       const { uploadId } = req.params;
@@ -327,19 +298,11 @@ router.post('/:uploadId/approve',
         approval_notes
       });
 
-      res.json({
-        success: true,
-        message: 'Document approved and data updated',
-        data: result
-      });
+  sendResponse(res, { message: 'Document approved and data updated', data: result });
 
     } catch (error) {
       console.error('Document approval error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to approve document',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to approve document', errors: process.env.NODE_ENV === 'development' ? [{ msg: error.message }] : null });
     }
   }
 );
@@ -388,11 +351,7 @@ router.post('/bulk/process',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation failed',
-          errors: errors.array()
-        });
+  return sendResponse(res, { success: false, status: 400, message: 'Validation failed', errors: errors.array() });
       }
 
       const { document_ids, priority = 'normal' } = req.body;
@@ -404,19 +363,11 @@ router.post('/bulk/process',
         initiated_by: user_id
       });
 
-      res.json({
-        success: true,
-        message: 'Bulk processing initiated',
-        data: result
-      });
+  sendResponse(res, { message: 'Bulk processing initiated', data: result });
 
     } catch (error) {
       console.error('Bulk processing error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to initiate bulk processing',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to initiate bulk processing', errors: process.env.NODE_ENV === 'development' ? [{ msg: error.message }] : null });
     }
   }
 );
@@ -539,18 +490,11 @@ router.get('/analytics',
         analytics.average_confidence = result.rows.reduce((sum, row) => sum + parseFloat(row.avg_confidence || 0), 0) / result.rows.length;
       }
 
-      res.json({
-        success: true,
-        data: analytics
-      });
+  sendResponse(res, { data: analytics });
 
     } catch (error) {
       console.error('Analytics error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve analytics',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve analytics', errors: process.env.NODE_ENV === 'development' ? [{ msg: error.message }] : null });
     }
   }
 );

@@ -1,6 +1,6 @@
 const FootballTemplateService = require('../services/pdfGeneration/templates/FootballTemplateService');
 const ScoreSheetDataService = require('../services/pdfGeneration/ScoreSheetDataService');
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 
 /**
  * Scoresheet Controller
@@ -38,16 +38,16 @@ class ScoresheetController {
         htmlContent = templateService.generateWithSampleData(format);
       }
 
-      ApiResponse.success(res, {
+  return sendResponse(res, { data: {
         html: htmlContent,
         format,
         generated_at: new Date().toISOString(),
         data_source: useRealData ? 'database' : 'sample'
-      }, 'Football scoresheet generated successfully');
+  }, message: 'Football scoresheet generated successfully' });
 
     } catch (error) {
       console.error('Error generating football scoresheet:', error);
-      ApiResponse.error(res, 'Failed to generate football scoresheet', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to generate football scoresheet' });
     }
   }
 
@@ -60,7 +60,7 @@ class ScoresheetController {
       const { matchList = [], defaultOptions = {} } = req.body;
 
       if (!Array.isArray(matchList) || matchList.length === 0) {
-        return ApiResponse.error(res, 'Match list is required and must be a non-empty array', 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Match list is required and must be a non-empty array' });
       }
 
       const templateService = new FootballTemplateService();
@@ -76,7 +76,7 @@ class ScoresheetController {
       const successCount = results.filter(r => r.success).length;
       const failureCount = results.length - successCount;
 
-      ApiResponse.success(res, {
+  return sendResponse(res, { data: {
         results,
         summary: {
           total: results.length,
@@ -84,11 +84,11 @@ class ScoresheetController {
           failed: failureCount
         },
         generated_at: new Date().toISOString()
-      }, `Batch generation completed: ${successCount}/${results.length} successful`);
+  }, message: `Batch generation completed: ${successCount}/${results.length} successful` });
 
     } catch (error) {
       console.error('Error in batch scoresheet generation:', error);
-      ApiResponse.error(res, 'Failed to generate batch scoresheets', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to generate batch scoresheets' });
     }
   }
 
@@ -107,7 +107,7 @@ class ScoresheetController {
         schools = await ScoreSheetDataService.getSchoolsWithFootballTeams(parseInt(limit));
       }
 
-      ApiResponse.success(res, {
+  return sendResponse(res, { data: {
         schools: schools.map(school => ({
           school_id: school.school_id,
           school_name: school.school_name,
@@ -117,11 +117,11 @@ class ScoresheetController {
           players_count: school.players?.length || 0
         })),
         total: schools.length
-      }, 'Schools retrieved successfully');
+  }, message: 'Schools retrieved successfully' });
 
     } catch (error) {
       console.error('Error fetching schools:', error);
-      ApiResponse.error(res, 'Failed to fetch schools', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to fetch schools' });
     }
   }
 
@@ -138,10 +138,10 @@ class ScoresheetController {
       const school = schools.find(s => s.school_id == schoolId);
 
       if (!school) {
-        return ApiResponse.error(res, 'School not found', 404);
+  return sendResponse(res, { success: false, status: 404, message: 'School not found' });
       }
 
-      ApiResponse.success(res, {
+  return sendResponse(res, { data: {
         school: {
           school_id: school.school_id,
           school_name: school.school_name,
@@ -149,11 +149,11 @@ class ScoresheetController {
         },
         teams: school.teams || [],
         players: school.players || []
-      }, 'School teams retrieved successfully');
+  }, message: 'School teams retrieved successfully' });
 
     } catch (error) {
       console.error('Error fetching school teams:', error);
-      ApiResponse.error(res, 'Failed to fetch school teams', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to fetch school teams' });
     }
   }
 
@@ -172,7 +172,7 @@ class ScoresheetController {
       } = req.body;
 
       if (!homeTeamId || !awayTeamId) {
-        return ApiResponse.error(res, 'Both home and away team IDs are required', 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Both home and away team IDs are required' });
       }
 
       const matchInfo = {
@@ -188,16 +188,16 @@ class ScoresheetController {
         matchInfo
       });
 
-      ApiResponse.success(res, {
+  return sendResponse(res, { data: {
         html: htmlContent,
         match_info: matchInfo,
         format,
         generated_at: new Date().toISOString()
-      }, 'Team match scoresheet generated successfully');
+  }, message: 'Team match scoresheet generated successfully' });
 
     } catch (error) {
       console.error('Error generating team match scoresheet:', error);
-      ApiResponse.error(res, 'Failed to generate team match scoresheet', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to generate team match scoresheet' });
     }
   }
 
@@ -209,7 +209,7 @@ class ScoresheetController {
     try {
       const templateService = new FootballTemplateService();
 
-      ApiResponse.success(res, {
+  return sendResponse(res, { data: {
         name: templateService.name,
         description: templateService.description,
         sport: templateService.sportName,
@@ -226,11 +226,11 @@ class ScoresheetController {
           'Match event logging',
           'Professional branding support'
         ]
-      }, 'Template information retrieved successfully');
+  }, message: 'Template information retrieved successfully' });
 
     } catch (error) {
       console.error('Error fetching template info:', error);
-      ApiResponse.error(res, 'Failed to fetch template information', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to fetch template information' });
     }
   }
 
@@ -245,16 +245,16 @@ class ScoresheetController {
       const templateService = new FootballTemplateService();
       const htmlContent = templateService.generateWithSampleData(format);
 
-      ApiResponse.success(res, {
+  return sendResponse(res, { data: {
         html: htmlContent,
         format,
         data_source: 'sample',
         generated_at: new Date().toISOString()
-      }, 'Preview scoresheet generated successfully');
+  }, message: 'Preview scoresheet generated successfully' });
 
     } catch (error) {
       console.error('Error generating preview:', error);
-      ApiResponse.error(res, 'Failed to generate preview', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to generate preview' });
     }
   }
 }

@@ -7,7 +7,7 @@ const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/db');
 const { protect, checkRole } = require('../middlewares/authMiddleware');
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 // const NepalAthleteSystemMonitor = require('../../NepalAthleteSystemMonitor');
 
 // Initialize monitor (disabled for stability)
@@ -83,11 +83,11 @@ router.get('/nepal-athlete-stats', protect, checkRole(['SchoolAdmin']), async (r
       }))
     };
     
-    ApiResponse.success(res, schoolStats, 'School Nepal athlete statistics retrieved successfully');
+  return sendResponse(res, { data: schoolStats, message: 'School Nepal athlete statistics retrieved successfully' });
     
   } catch (error) {
     console.error('Error fetching school Nepal athlete stats:', error);
-    ApiResponse.error(res, 'Failed to retrieve school athlete statistics', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve school athlete statistics' });
   }
 });
 
@@ -126,11 +126,11 @@ router.get('/recent-registrations', protect, checkRole(['SchoolAdmin']), async (
       processingTime: row.processing_time_ms ? `${row.processing_time_ms}ms` : null
     }));
     
-    ApiResponse.success(res, recentRegistrations, 'Recent registrations retrieved successfully');
+  return sendResponse(res, { data: recentRegistrations, message: 'Recent registrations retrieved successfully' });
     
   } catch (error) {
     console.error('Error fetching recent registrations:', error);
-    ApiResponse.error(res, 'Failed to retrieve recent registrations', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve recent registrations' });
   }
 });
 
@@ -170,11 +170,11 @@ router.get('/id-validation-summary', protect, checkRole(['SchoolAdmin']), async 
       securityScore: calculateSecurityScore(passedValidation, totalValidated)
     };
     
-    ApiResponse.success(res, validationSummary, 'ID validation summary retrieved successfully');
+  return sendResponse(res, { data: validationSummary, message: 'ID validation summary retrieved successfully' });
     
   } catch (error) {
     console.error('Error fetching validation summary:', error);
-    ApiResponse.error(res, 'Failed to retrieve validation summary', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve validation summary' });
   }
 });
 
@@ -227,11 +227,11 @@ router.post('/nepal-athlete-performance-test', protect, checkRole(['SchoolAdmin'
       [schoolId, iterations, performanceResults.averageTime]
     );
     
-    ApiResponse.success(res, performanceData, 'Performance test completed successfully');
+  return sendResponse(res, { data: performanceData, message: 'Performance test completed successfully' });
     
   } catch (error) {
     console.error('Error running performance test:', error);
-    ApiResponse.error(res, 'Failed to run performance test', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to run performance test' });
   }
 });
 
@@ -282,7 +282,7 @@ router.get('/export-athlete-data', protect, checkRole(['SchoolAdmin']), async (r
     
   } catch (error) {
     console.error('Error exporting athlete data:', error);
-    ApiResponse.error(res, 'Failed to export athlete data', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to export athlete data' });
   }
 });
 
@@ -316,11 +316,11 @@ router.get('/realtime-metrics', protect, checkRole(['SchoolAdmin']), async (req,
       systemLoad: Math.floor(Math.random() * 20) + 10 // Mock system load
     };
     
-    ApiResponse.success(res, realtimeMetrics, 'Real-time metrics retrieved successfully');
+  return sendResponse(res, { data: realtimeMetrics, message: 'Real-time metrics retrieved successfully' });
     
   } catch (error) {
     console.error('Error fetching real-time metrics:', error);
-    ApiResponse.error(res, 'Failed to retrieve real-time metrics', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve real-time metrics' });
   }
 });
 

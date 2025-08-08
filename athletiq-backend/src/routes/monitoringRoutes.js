@@ -3,7 +3,7 @@ const express = require('express');
 const router = express.Router();
 const { protect, checkRole } = require('../middlewares/authMiddleware');
 const monitoring = require('../config/monitoring');
-const apiResponse = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 
 /**
  * @swagger
@@ -31,10 +31,10 @@ const apiResponse = require('../utils/apiResponse');
  */
 router.get('/health', protect, checkRole(['SuperAdmin']), (req, res) => {
   try {
-    const healthStatus = monitoring.healthCheck();
-    res.status(200).json(apiResponse.success(healthStatus, 'Health check completed'));
+  const healthStatus = monitoring.healthCheck();
+  return sendResponse(res, { data: healthStatus, message: 'Health check completed' });
   } catch (error) {
-    res.status(500).json(apiResponse.error('Health check failed', 500));
+  return sendResponse(res, { success: false, status: 500, message: 'Health check failed' });
   }
 });
 
@@ -53,10 +53,10 @@ router.get('/health', protect, checkRole(['SuperAdmin']), (req, res) => {
  */
 router.get('/metrics', protect, checkRole(['SuperAdmin']), (req, res) => {
   try {
-    const metrics = monitoring.getPerformanceMetrics();
-    res.status(200).json(apiResponse.success(metrics, 'Metrics retrieved successfully'));
+  const metrics = monitoring.getPerformanceMetrics();
+  return sendResponse(res, { data: metrics, message: 'Metrics retrieved successfully' });
   } catch (error) {
-    res.status(500).json(apiResponse.error('Failed to retrieve metrics', 500));
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve metrics' });
   }
 });
 

@@ -276,6 +276,47 @@ const validateTournamentId = [
   validateRequest
 ];
 
+// Generic pagination & filtering validation (query params)
+const validatePagination = [
+  (req, res, next) => { // defaults
+    if (req.query.page === undefined) req.query.page = '1';
+    if (req.query.limit === undefined) req.query.limit = '25';
+    next();
+  },
+  
+  // page
+  param('page').optional(), // placeholder to avoid express-validator warning (we validate via custom below)
+  body('page').optional(), // ensure no body conflict
+  // custom manual checks (simpler than mixing query() needing import)
+  (req, res, next) => {
+    const errors = [];
+    const page = parseInt(req.query.page, 10);
+    const limit = parseInt(req.query.limit, 10);
+    if (isNaN(page) || page < 1 || page > 10000) {
+      errors.push({ msg: 'page must be an integer between 1 and 10000', param: 'page', location: 'query' });
+    }
+    if (isNaN(limit) || limit < 1 || limit > 200) {
+      errors.push({ msg: 'limit must be an integer between 1 and 200', param: 'limit', location: 'query' });
+    }
+    if (req.query.status && !['scheduled','live','completed','cancelled','postponed'].includes(req.query.status)) {
+      errors.push({ msg: 'status filter invalid', param: 'status', location: 'query' });
+    }
+    if (req.query.from && isNaN(Date.parse(req.query.from))) {
+      errors.push({ msg: 'from must be ISO date', param: 'from', location: 'query' });
+    }
+    if (req.query.to && isNaN(Date.parse(req.query.to))) {
+      errors.push({ msg: 'to must be ISO date', param: 'to', location: 'query' });
+    }
+    if (req.query.from && req.query.to && Date.parse(req.query.from) > Date.parse(req.query.to)) {
+      errors.push({ msg: 'from must be before to', param: 'from', location: 'query' });
+    }
+    if (errors.length) {
+      return res.status(400).json({ success: false, message: 'Validation failed', errors });
+    }
+    return next();
+  }
+];
+
 /**
  * Validation rules for athlete registration via school admin
  */
@@ -691,5 +732,17 @@ module.exports = {
   validateEventNomination,
   validateAthleteStats,
   validateAthleteTransfer,
-  validateBulkAthleteUpload
+  validateBulkAthleteUpload,
+  validatePagination,
+  // Inline bulk match creation validation (kept light – deeper rules can be added later)
+  validateBulkMatchCreate: [
+    body('matches').isArray({ min: 1, max: 200 }).withMessage('matches must be an array of 1-200 items'),
+    body('matches.*.tournament_id').isInt({ min:1 }).withMessage('tournament_id required'),
+    body('matches.*.home_team_id').isInt({ min:1 }).withMessage('home_team_id required'),
+    body('matches.*.away_team_id').isInt({ min:1 }).withMessage('away_team_id required'),
+    body('matches.*.sport_id').optional().isInt({ min:1 }).withMessage('sport_id must be int'),
+    body('matches.*.scheduled_at').optional().isISO8601().withMessage('scheduled_at must be ISO date'),
+    body('matches.*.venue').optional().isLength({ max:200 }).withMessage('venue too long'),
+    validateRequest
+  ]
 };

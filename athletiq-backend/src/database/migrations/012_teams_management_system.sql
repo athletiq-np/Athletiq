@@ -252,7 +252,7 @@ SELECT
     st.sport,
     tp.player_id,
     p.full_name as player_name,
-    p.class as grade,
+    NULL::varchar as grade, -- 'class' column no longer exists on players; placeholder grade
     tp.jersey_number,
     tp.position,
     tp.is_starter,

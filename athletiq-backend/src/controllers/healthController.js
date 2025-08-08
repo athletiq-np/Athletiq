@@ -1,5 +1,6 @@
 // src/controllers/healthController.js
-const { ApiResponse } = require('../utils/apiResponse');
+// Refactored to use unified sendResponse helper instead of legacy ApiResponse
+const { sendResponse } = require('../utils/response');
 
 /**
  * @desc    Health check endpoint
@@ -16,8 +17,8 @@ exports.healthCheck = async (req, res) => {
       version: process.env.npm_package_version || '1.0.0'
     };
 
-    return ApiResponse.success(res, healthData, 'Health check passed');
+    return sendResponse(res, { data: healthData, message: 'Health check passed' });
   } catch (error) {
-    return ApiResponse.error(res, 'Health check failed', 500);
+    return sendResponse(res, { success: false, status: 500, message: 'Health check failed' });
   }
 };

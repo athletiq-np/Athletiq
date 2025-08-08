@@ -110,7 +110,7 @@ const {
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - Generic success response
  *                 - type: object
  *                   properties:
  *                     data:
@@ -145,7 +145,7 @@ router.post("/", generalLimiter, protect, validateTournament, createTournament);
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - Generic success response
  *                 - type: object
  *                   properties:
  *                     data:
@@ -182,7 +182,7 @@ router.get("/", generalLimiter, getTournaments);
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - Generic success response
  *                 - type: object
  *                   properties:
  *                     data:
@@ -235,7 +235,7 @@ router.get("/:id", generalLimiter, validateTournamentId, getTournamentById);
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - Generic success response
  *                 - type: object
  *                   properties:
  *                     data:
@@ -287,7 +287,7 @@ router.post("/:id/register", generalLimiter, protect, checkRole(['SchoolAdmin', 
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - Generic success response
  *                 - type: object
  *                   properties:
  *                     data:
@@ -335,7 +335,7 @@ router.post("/:id/generate-bracket", generalLimiter, protect, checkRole(['SuperA
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - Generic success response
  *                 - type: object
  *                   properties:
  *                     data:
@@ -402,7 +402,7 @@ router.get("/:id/bracket", generalLimiter, getTournamentBracket);
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - Generic success response
  *                 - type: object
  *                   properties:
  *                     data:
@@ -465,7 +465,7 @@ router.patch("/:tournamentId/matches/:matchId/result", generalLimiter, protect, 
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - Generic success response
  *                 - type: object
  *                   properties:
  *                     data:
@@ -525,7 +525,7 @@ router.patch("/:id/status", generalLimiter, protect, updateTournamentStatus);
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - Generic success response
  *                 - type: object
  *                   properties:
  *                     data:
@@ -585,7 +585,7 @@ router.patch("/:id/organizer", generalLimiter, protect, checkRole(['SuperAdmin']
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - Generic success response
  *                 - type: object
  *                   properties:
  *                     data:
@@ -637,7 +637,7 @@ router.post("/:id/check-eligibility", generalLimiter, protect, checkTournamentEl
  *           application/json:
  *             schema:
  *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
+ *                 - Generic success response
  *                 - type: object
  *                   properties:
  *                     data:

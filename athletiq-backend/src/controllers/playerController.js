@@ -1,5 +1,5 @@
 const { pool } = require('../config/db');
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 const { v4: uuidv4 } = require('uuid');
 const fs = require('fs');
 const OpenAI = require('openai');
@@ -78,7 +78,7 @@ exports.getPlayers = async (req, res) => {
     const { rows: countResult } = await pool.query(countQuery, queryParams);
     const total = parseInt(countResult[0].total);
 
-    ApiResponse.success(res, {
+    sendResponse(res, { data: {
       players,
       pagination: {
         page: parseInt(page),
@@ -88,11 +88,11 @@ exports.getPlayers = async (req, res) => {
         hasNext: page < Math.ceil(total / limit),
         hasPrev: page > 1
       }
-    }, 'Players retrieved successfully');
+    }, message: 'Players retrieved successfully' });
 
   } catch (error) {
     console.error('Get players error:', error);
-    ApiResponse.error(res, 'Failed to retrieve players', 500);
+  sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve players' });
   }
 };
 
@@ -160,7 +160,7 @@ exports.createPlayer = async (req, res) => {
 
     // Validation
     if (!full_name || !gender || !date_of_birth || !grade || !guardian_name || !guardian_phone || !address) {
-      return ApiResponse.error(res, 'Missing required fields', 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Missing required fields' });
     }
 
     const query = `
@@ -194,52 +194,14 @@ exports.createPlayer = async (req, res) => {
 
     const { rows } = await pool.query(query, values);
 
-    ApiResponse.success(res, rows[0], 'Player created successfully', 201);
+  sendResponse(res, { status: 201, data: rows[0], message: 'Player created successfully' });
 
   } catch (error) {
     console.error('Create player error:', error);
     if (error.code === '23505') { // Unique constraint violation
-      return ApiResponse.error(res, 'Player with this name and date of birth already exists for this school', 409);
+      return sendResponse(res, { success: false, status: 409, message: 'Player with this name and date of birth already exists for this school' });
     }
-    ApiResponse.error(res, 'Failed to create player', 500);
-  }
-};
-  try {
-    const {
-      full_name,
-      dob,
-      gender,
-      father_name,
-      mother_name,
-      guardian_phone,
-      guardian_email,
-      address
-    } = req.body;
-
-    if (!full_name || !dob || !gender || !father_name || !guardian_phone)
-      return res.status(400).json(apiResponse.error("Missing required fields.", 400));
-
-    let photoFilename = null;
-    let certFilename = null;
-    if (req.files && req.files.photo) photoFilename = req.files.photo[0].filename;
-    if (req.files && req.files.birthCertificate) certFilename = req.files.birthCertificate[0].filename;
-
-    // Optional: Duplicate check logic here
-
-    // Insert into DB
-    const result = await pool.query(
-      `INSERT INTO players (
-        full_name, dob, gender, father_name, mother_name, guardian_phone, guardian_email, address, photo_url, birth_certificate_url, created_at
-      ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,NOW()) RETURNING id`,
-      [full_name, dob, gender, father_name, mother_name, guardian_phone, guardian_email, address, photoFilename, certFilename]
-    );
-    res.status(201).json(apiResponse.success(
-      { player_id: result.rows[0].id }, 
-      "Player registered successfully!"
-    ));
-  } catch (err) {
-    console.error("Player registration error:", err);
-    res.status(500).json(apiResponse.error("Server error during registration.", 500));
+    return sendResponse(res, { success: false, status: 500, message: 'Failed to create player' });
   }
 };
 
@@ -331,14 +293,14 @@ exports.getPlayerById = async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return ApiResponse.error(res, 'Player not found', 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Player not found' });
     }
 
-    ApiResponse.success(res, rows[0], 'Player retrieved successfully');
+  sendResponse(res, { data: rows[0], message: 'Player retrieved successfully' });
 
   } catch (error) {
     console.error('Get player by ID error:', error);
-    ApiResponse.error(res, 'Failed to retrieve player', 500);
+  sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve player' });
   }
 };
 
@@ -359,7 +321,7 @@ exports.updatePlayer = async (req, res) => {
     );
 
     if (existingPlayer.rows.length === 0) {
-      return ApiResponse.error(res, 'Player not found', 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Player not found' });
     }
 
     // Build dynamic update query
@@ -389,7 +351,7 @@ exports.updatePlayer = async (req, res) => {
     });
 
     if (updateFields.length === 0) {
-      return ApiResponse.error(res, 'No fields to update', 400);
+  return sendResponse(res, { success: false, status: 400, message: 'No fields to update' });
     }
 
     const query = `
@@ -403,14 +365,14 @@ exports.updatePlayer = async (req, res) => {
 
     const { rows } = await pool.query(query, values);
 
-    ApiResponse.success(res, rows[0], 'Player updated successfully');
+  sendResponse(res, { data: rows[0], message: 'Player updated successfully' });
 
   } catch (error) {
     console.error('Update player error:', error);
     if (error.code === '23505') {
-      return ApiResponse.error(res, 'Player with this name and date of birth already exists for this school', 409);
+  return sendResponse(res, { success: false, status: 409, message: 'Player with this name and date of birth already exists for this school' });
     }
-    ApiResponse.error(res, 'Failed to update player', 500);
+  sendResponse(res, { success: false, status: 500, message: 'Failed to update player' });
   }
 };
 
@@ -430,14 +392,14 @@ exports.deletePlayer = async (req, res) => {
     );
 
     if (rows.length === 0) {
-      return ApiResponse.error(res, 'Player not found', 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Player not found' });
     }
 
-    ApiResponse.success(res, null, 'Player deleted successfully');
+  sendResponse(res, { data: null, message: 'Player deleted successfully' });
 
   } catch (error) {
     console.error('Delete player error:', error);
-    ApiResponse.error(res, 'Failed to delete player', 500);
+  sendResponse(res, { success: false, status: 500, message: 'Failed to delete player' });
   }
 };
 
@@ -495,11 +457,11 @@ exports.getPlayerStatistics = async (req, res) => {
       averageProfileCompletion: Math.round(queries[4].rows[0].avg_completion || 0)
     };
 
-    ApiResponse.success(res, statistics, 'Player statistics retrieved successfully');
+  sendResponse(res, { data: statistics, message: 'Player statistics retrieved successfully' });
 
   } catch (error) {
     console.error('Get statistics error:', error);
-    ApiResponse.error(res, 'Failed to retrieve statistics', 500);
+  sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve statistics' });
   }
 };
 

@@ -18,7 +18,7 @@ const {
   validateBulkAthleteUpload
 } = require('../middlewares/validation');
 const { generalLimiter } = require('../middlewares/rateLimiter');
-const apiResponse = require('../utils/apiResponse');
+// Legacy route file: responses will be modernized later; avoiding apiResponse import
 
 // Enhanced Multer Setup for athlete documents
 const storage = multer.diskStorage({

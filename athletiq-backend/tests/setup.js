@@ -1,13 +1,20 @@
 const path = require('path');
 const dotenv = require('dotenv');
-const { TestDatabase, testPool } = require('./testDb');
-const { pool } = require('../src/config/db');
-
-// Load test environment variables
-dotenv.config({ path: path.resolve(__dirname, '..', '.env.test') });
-
-// Ensure NODE_ENV is set to test
+// Ensure NODE_ENV is set BEFORE requiring application db config
 process.env.NODE_ENV = 'test';
+// Load test environment variables early
+dotenv.config({ path: path.resolve(__dirname, '..', '.env.test') });
+const { TestDatabase, testPool } = require('./testDb');
+// Avoid importing main pool before NODE_ENV is configured; not needed directly here
+
+// Silence noisy logs in test environment while allowing errors
+const originalConsole = { ...console };
+['log','info','debug','warn'].forEach(fn => {
+  console[fn] = (...args) => {
+    if (process.env.VERBOSE_TESTS === 'true') return originalConsole[fn](...args);
+    // no-op otherwise
+  };
+});
 
 // Global test setup
 beforeAll(async () => {

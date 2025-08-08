@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../config/db');
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 const { protect, checkRole } = require('../middlewares/authMiddleware');
 const { generalLimiter } = require('../middlewares/rateLimiter');
 const { v4: uuidv4 } = require('uuid');
@@ -27,16 +27,16 @@ exports.bulkRegisterWithInvitations = async (req, res) => {
     const created_by = req.user?.id || 1; // Default to user ID 1 for testing
     
     if (!school_id) {
-      return ApiResponse.error(res, 'School ID is required', 400);
+      return sendResponse(res, { success: false, status: 400, message: 'School ID is required' });
     }
 
     
     if (!school_id) {
-      return ApiResponse.error(res, 'School ID is required', 400);
+      return sendResponse(res, { success: false, status: 400, message: 'School ID is required' });
     }
 
     if (!athletes || !Array.isArray(athletes) || athletes.length === 0) {
-      return ApiResponse.error(res, 'Athletes array is required', 400);
+      return sendResponse(res, { success: false, status: 400, message: 'Athletes array is required' });
     }
 
     const client = await pool.connect();
@@ -125,23 +125,20 @@ exports.bulkRegisterWithInvitations = async (req, res) => {
     await client.query('COMMIT');
     client.release();
 
-    return ApiResponse.success(res, {
-      message: `Bulk registration completed. ${results.length} athletes registered, ${errors.length} errors.`,
-      data: {
-        successful: results,
-        errors: errors,
-        summary: {
-          total: athletes.length,
-          successful: results.length,
-          failed: errors.length,
-          invitations_to_send: results.filter(r => r.invitation_sent).length
-        }
+    return sendResponse(res, { status: 201, message: `Bulk registration completed. ${results.length} athletes registered, ${errors.length} errors.`, data: {
+      successful: results,
+      errors: errors,
+      summary: {
+        total: athletes.length,
+        successful: results.length,
+        failed: errors.length,
+        invitations_to_send: results.filter(r => r.invitation_sent).length
       }
-    }, 201);
+    }});
 
   } catch (error) {
     console.error('Bulk registration error:', error);
-    return ApiResponse.error(res, 'Failed to process bulk registration', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to process bulk registration' });
   }
 };
 
@@ -157,7 +154,7 @@ exports.searchClaimableAthletes = async (req, res) => {
     const { name, date_of_birth, school_name, phone } = req.query;
 
     if (!name && !phone) {
-      return ApiResponse.error(res, 'Either athlete name or guardian phone is required', 400);
+      return sendResponse(res, { success: false, status: 400, message: 'Either athlete name or guardian phone is required' });
     }
 
     let searchQuery = `
@@ -212,15 +209,14 @@ exports.searchClaimableAthletes = async (req, res) => {
 
     const result = await pool.query(searchQuery, queryParams);
 
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       athletes: result.rows,
-      count: result.rows.length,
-      message: result.rows.length > 0 ? 'Found claimable athletes' : 'No claimable athletes found'
-    });
+      count: result.rows.length
+    }, message: result.rows.length > 0 ? 'Found claimable athletes' : 'No claimable athletes found' });
 
   } catch (error) {
     console.error('Search claimable athletes error:', error);
-    return ApiResponse.error(res, 'Failed to search athletes', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to search athletes' });
   }
 };
 
@@ -247,7 +243,7 @@ exports.claimAthleteProfile = async (req, res) => {
     const result = await pool.query(athleteQuery, [claimCode]);
 
     if (result.rows.length === 0) {
-      return ApiResponse.error(res, 'Invalid claim code or athlete already claimed', 404);
+      return sendResponse(res, { success: false, status: 404, message: 'Invalid claim code or athlete already claimed' });
     }
 
     const athlete = result.rows[0];
@@ -273,16 +269,15 @@ exports.claimAthleteProfile = async (req, res) => {
 
         const updateResult = await pool.query(updateQuery, [athlete.athlete_id]);
 
-        return ApiResponse.success(res, {
-          message: 'Athlete profile claimed successfully',
+        return sendResponse(res, { message: 'Athlete profile claimed successfully', data: {
           athlete: updateResult.rows[0],
           next_step: 'complete_profile'
-        });
+        }});
       }
     }
 
     // Return athlete info for guardian to verify
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       athlete: {
         athlete_id: athlete.athlete_id,
         full_name: athlete.full_name,
@@ -293,13 +288,12 @@ exports.claimAthleteProfile = async (req, res) => {
         school_name: athlete.school_name,
         guardian_phone_hint: athlete.guardian_phone ? `***${athlete.guardian_phone.slice(-4)}` : null
       },
-      message: 'Verify guardian details to claim profile',
       requires_verification: true
-    });
+    }, message: 'Verify guardian details to claim profile' });
 
   } catch (error) {
     console.error('Claim athlete profile error:', error);
-    return ApiResponse.error(res, 'Failed to claim athlete profile', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to claim athlete profile' });
   }
 };
 
@@ -320,7 +314,7 @@ exports.completeAthleteProfile = async (req, res) => {
     );
 
     if (athlete.rows.length === 0) {
-      return ApiResponse.error(res, 'Athlete not found or cannot be completed', 404);
+      return sendResponse(res, { success: false, status: 404, message: 'Athlete not found or cannot be completed' });
     }
 
     // Build update query dynamically based on provided data
@@ -465,16 +459,15 @@ exports.completeAthleteProfile = async (req, res) => {
       [Math.min(completionScore, 100), athleteId]
     );
 
-    return ApiResponse.success(res, {
-      message: 'Athlete profile completed successfully',
+    return sendResponse(res, { message: 'Athlete profile completed successfully', data: {
       athlete: completedAthlete,
       profile_completion: Math.min(completionScore, 100),
       status: 'ready_for_verification'
-    });
+    }});
 
   } catch (error) {
     console.error('Complete athlete profile error:', error);
-    return ApiResponse.error(res, 'Failed to complete athlete profile', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to complete athlete profile' });
   }
 };
 
@@ -500,7 +493,7 @@ exports.getAthleteStatus = async (req, res) => {
     `, [athleteId]);
 
     if (result.rows.length === 0) {
-      return ApiResponse.error(res, 'Athlete not found', 404);
+      return sendResponse(res, { success: false, status: 404, message: 'Athlete not found' });
     }
 
     const athlete = result.rows[0];
@@ -540,7 +533,7 @@ exports.getAthleteStatus = async (req, res) => {
         nextSteps = ['Contact administrator for status update'];
     }
 
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       athlete: {
         athlete_id: athlete.athlete_id,
         full_name: athlete.full_name,
@@ -553,11 +546,11 @@ exports.getAthleteStatus = async (req, res) => {
       },
       next_steps: nextSteps,
       workflow_stage: this.getWorkflowStage(athlete.verification_status)
-    });
+    }});
 
   } catch (error) {
     console.error('Get athlete status error:', error);
-    return ApiResponse.error(res, 'Failed to get athlete status', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to get athlete status' });
   }
 };
 

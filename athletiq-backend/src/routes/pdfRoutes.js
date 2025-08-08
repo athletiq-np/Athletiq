@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const ScoresheetGeneratorService = require('../services/pdfGeneration/ScoresheetGeneratorService');
+const { sendResponse } = require('../utils/response');
 
 /**
  * PDF Generation Routes
@@ -14,18 +15,10 @@ const ScoresheetGeneratorService = require('../services/pdfGeneration/Scoresheet
 router.get('/sports', async (req, res) => {
   try {
     const sports = ScoresheetGeneratorService.getSupportedSports();
-    res.json({
-      success: true,
-      data: sports,
-      count: sports.length
-    });
+  sendResponse(res, { message: 'Supported sports fetched', data: { sports, count: sports.length } });
   } catch (error) {
     console.error('Error getting sports list:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get sports list',
-      message: error.message
-    });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to get sports list', errors: [{ msg: error.message }] });
   }
 });
 
@@ -36,17 +29,10 @@ router.get('/sports', async (req, res) => {
 router.get('/status', async (req, res) => {
   try {
     const status = await ScoresheetGeneratorService.getStatus();
-    res.json({
-      success: true,
-      data: status
-    });
+  sendResponse(res, { message: 'PDF service status', data: { status } });
   } catch (error) {
     console.error('Error getting service status:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to get service status',
-      message: error.message
-    });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to get service status', errors: [{ msg: error.message }] });
   }
 });
 
@@ -59,29 +45,15 @@ router.post('/preview', async (req, res) => {
     const { sport, data, options } = req.body;
 
     if (!sport) {
-      return res.status(400).json({
-        success: false,
-        error: 'Sport is required'
-      });
+  return sendResponse(res, { success: false, status: 400, message: 'Sport is required' });
     }
 
     const html = ScoresheetGeneratorService.generatePreview(sport, data, options);
     
-    res.json({
-      success: true,
-      data: {
-        html,
-        sport,
-        generated: new Date().toISOString()
-      }
-    });
+  sendResponse(res, { message: 'Preview generated', data: { html, sport, generated: new Date().toISOString() } });
   } catch (error) {
     console.error('Error generating preview:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate preview',
-      message: error.message
-    });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to generate preview', errors: [{ msg: error.message }] });
   }
 });
 
@@ -94,17 +66,11 @@ router.post('/single', async (req, res) => {
     const { sport, data, options } = req.body;
 
     if (!sport) {
-      return res.status(400).json({
-        success: false,
-        error: 'Sport is required'
-      });
+  return sendResponse(res, { success: false, status: 400, message: 'Sport is required' });
     }
 
     if (!data) {
-      return res.status(400).json({
-        success: false,
-        error: 'Data is required'
-      });
+  return sendResponse(res, { success: false, status: 400, message: 'Data is required' });
     }
 
     const pdfBuffer = await ScoresheetGeneratorService.generateSingleScoresheet(sport, data, options);
@@ -118,11 +84,7 @@ router.post('/single', async (req, res) => {
     res.send(pdfBuffer);
   } catch (error) {
     console.error('Error generating single PDF:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate PDF',
-      message: error.message
-    });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to generate PDF', errors: [{ msg: error.message }] });
   }
 });
 
@@ -135,10 +97,7 @@ router.post('/batch', async (req, res) => {
     const { scoresheets, options } = req.body;
 
     if (!scoresheets || !Array.isArray(scoresheets) || scoresheets.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Scoresheets array is required and must not be empty'
-      });
+  return sendResponse(res, { success: false, status: 400, message: 'Scoresheets array is required and must not be empty' });
     }
 
     const zipBuffer = await ScoresheetGeneratorService.generateBatchScoresheets(scoresheets, options);
@@ -152,11 +111,7 @@ router.post('/batch', async (req, res) => {
     res.send(zipBuffer);
   } catch (error) {
     console.error('Error generating batch PDFs:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate batch PDFs',
-      message: error.message
-    });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to generate batch PDFs', errors: [{ msg: error.message }] });
   }
 });
 
@@ -169,24 +124,15 @@ router.post('/round', async (req, res) => {
     const { sport, matches, tournament, options } = req.body;
 
     if (!sport) {
-      return res.status(400).json({
-        success: false,
-        error: 'Sport is required'
-      });
+  return sendResponse(res, { success: false, status: 400, message: 'Sport is required' });
     }
 
     if (!matches || !Array.isArray(matches) || matches.length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: 'Matches array is required and must not be empty'
-      });
+  return sendResponse(res, { success: false, status: 400, message: 'Matches array is required and must not be empty' });
     }
 
     if (!tournament) {
-      return res.status(400).json({
-        success: false,
-        error: 'Tournament information is required'
-      });
+  return sendResponse(res, { success: false, status: 400, message: 'Tournament information is required' });
     }
 
     const zipBuffer = await ScoresheetGeneratorService.generateRoundScoresheets(sport, matches, tournament, options);
@@ -200,11 +146,7 @@ router.post('/round', async (req, res) => {
     res.send(zipBuffer);
   } catch (error) {
     console.error('Error generating round PDFs:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate round PDFs',
-      message: error.message
-    });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to generate round PDFs', errors: [{ msg: error.message }] });
   }
 });
 
@@ -233,11 +175,7 @@ router.get('/sample/:sport', async (req, res) => {
     res.send(pdfBuffer);
   } catch (error) {
     console.error('Error generating sample PDF:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate sample PDF',
-      message: error.message
-    });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to generate sample PDF', errors: [{ msg: error.message }] });
   }
 });
 
@@ -250,10 +188,7 @@ router.post('/sample', async (req, res) => {
     const { sport, format, options } = req.body;
 
     if (!sport) {
-      return res.status(400).json({
-        success: false,
-        error: 'Sport is required'
-      });
+  return sendResponse(res, { success: false, status: 400, message: 'Sport is required' });
     }
 
     // Get sample data for the sport
@@ -273,11 +208,7 @@ router.post('/sample', async (req, res) => {
     res.send(pdfBuffer);
   } catch (error) {
     console.error('Error generating sample PDF:', error);
-    res.status(500).json({
-      success: false,
-      error: 'Failed to generate sample PDF',
-      message: error.message
-    });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to generate sample PDF', errors: [{ msg: error.message }] });
   }
 });
 
@@ -286,11 +217,7 @@ router.post('/sample', async (req, res) => {
  */
 router.use((error, req, res, next) => {
   console.error('PDF API Error:', error);
-  res.status(500).json({
-    success: false,
-    error: 'Internal server error',
-    message: error.message
-  });
+  sendResponse(res, { success: false, status: 500, message: 'Internal server error', errors: [{ msg: error.message }] });
 });
 
 module.exports = router;

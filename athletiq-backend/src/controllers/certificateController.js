@@ -2,7 +2,7 @@
 // Comprehensive Certificate Management System for Tournament Awards
 
 const { pool } = require('../config/db');
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 
 /**
  * @desc    Create a new certificate template
@@ -43,10 +43,10 @@ const createCertificateTemplate = async (req, res) => {
 
     const result = await pool.query(query, values);
     
-    return ApiResponse.success(res, result.rows[0], 'Certificate template created successfully', 201);
+  return sendResponse(res, { status: 201, data: result.rows[0], message: 'Certificate template created successfully' });
   } catch (error) {
-    console.error('Error creating certificate template:', error);
-    return ApiResponse.error(res, 'Failed to create certificate template', 500);
+  console.error('Error creating certificate template:', error);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to create certificate template' });
   }
 };
 
@@ -67,7 +67,7 @@ const generateTournamentCertificates = async (req, res) => {
     );
 
     if (tournamentQuery.rows.length === 0) {
-      return ApiResponse.error(res, 'Tournament not found', 404);
+      return sendResponse(res, { success: false, status: 404, message: 'Tournament not found' });
     }
 
     const tournament = tournamentQuery.rows[0];
@@ -123,15 +123,15 @@ const generateTournamentCertificates = async (req, res) => {
       });
     }
 
-    return ApiResponse.success(res, {
+  return sendResponse(res, { data: {
       tournament_id: tournamentId,
       certificates_generated: generatedCertificates.length,
       certificates: generatedCertificates
-    }, 'Certificates generated successfully');
+  }, message: 'Certificates generated successfully' });
 
   } catch (error) {
-    console.error('Error generating certificates:', error);
-    return ApiResponse.error(res, 'Failed to generate certificates', 500);
+  console.error('Error generating certificates:', error);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to generate certificates' });
   }
 };
 
@@ -161,7 +161,7 @@ const verifyCertificate = async (req, res) => {
     const result = await pool.query(query, [verificationCode]);
 
     if (result.rows.length === 0) {
-      return ApiResponse.error(res, 'Certificate not found or invalid', 404);
+      return sendResponse(res, { success: false, status: 404, message: 'Certificate not found or invalid' });
     }
 
     const certificate = result.rows[0];
@@ -174,15 +174,15 @@ const verifyCertificate = async (req, res) => {
       [certificate.id, verificationCode, req.ip, req.get('User-Agent')]
     );
 
-    return ApiResponse.success(res, {
+  return sendResponse(res, { data: {
       certificate,
       verification_status: 'valid',
       verified_at: new Date().toISOString()
-    }, 'Certificate verified successfully');
+  }, message: 'Certificate verified successfully' });
 
   } catch (error) {
-    console.error('Error verifying certificate:', error);
-    return ApiResponse.error(res, 'Failed to verify certificate', 500);
+  console.error('Error verifying certificate:', error);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to verify certificate' });
   }
 };
 
@@ -225,14 +225,14 @@ const getTournamentCertificates = async (req, res) => {
 
     const result = await pool.query(query, params);
 
-    return ApiResponse.success(res, {
+  return sendResponse(res, { data: {
       tournament_id: tournamentId,
       certificates: result.rows
-    }, 'Tournament certificates retrieved successfully');
+  }, message: 'Tournament certificates retrieved successfully' });
 
   } catch (error) {
-    console.error('Error getting tournament certificates:', error);
-    return ApiResponse.error(res, 'Failed to retrieve certificates', 500);
+  console.error('Error getting tournament certificates:', error);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve certificates' });
   }
 };
 

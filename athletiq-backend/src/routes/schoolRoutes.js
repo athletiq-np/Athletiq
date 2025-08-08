@@ -2,16 +2,9 @@ const express = require('express');
 const router = express.Router();
 const schoolController = require('../controllers/schoolController');
 const { protect, checkRole } = require('../middlewares/authMiddleware');
-// const { validateSchoolRegistration } = require('../middlewares/validation');
-// const { generalLimiter } = require('../middlewares/rateLimiter');
-
-// Mock middleware for disabled features
-const generalLimiter = (req, res, next) => next();
-const validateSchoolRegistration = (req, res, next) => next();
+const { validateSchoolRegistration } = require('../middlewares/validation');
+const { generalLimiter } = require('../middlewares/rateLimiter');
 const multer = require('multer');
-
-// Import Nepal Athlete Monitor routes
-const schoolNepalAthleteRoutes = require('./schoolNepalAthleteRoutes');
 
 // Configure multer for file uploads if needed for specific routes
 const upload = multer({ dest: 'uploads/' });
@@ -116,13 +109,6 @@ router.put('/me/teams/:teamId/players/positions', generalLimiter, protect, check
 router.get('/me/athletes', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getMySchoolAthletes);
 
 /**
- * @route   GET /api/schools/me/players
- * @desc    Get players/athletes for the school (alias for /athletes)
- * @access  Private (SchoolAdmin)
- */
-router.get('/me/players', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.getMySchoolAthletes);
-
-/**
  * @route   GET /api/schools/me/tournament-stats
  * @desc    Get tournament statistics for the school
  * @access  Private (SchoolAdmin)
@@ -163,9 +149,6 @@ router.get('/activities', generalLimiter, protect, checkRole(['SchoolAdmin']), s
  * @access  Private (SchoolAdmin)
  */
 router.get('/me/export', generalLimiter, protect, checkRole(['SchoolAdmin']), schoolController.exportSchoolData);
-
-// Nepal Athlete Monitor routes for schools
-router.use('/', schoolNepalAthleteRoutes);
 
 // You can add the update route here later, pointing to a controller function
 // router.patch('/:id', protect, upload.fields([...]), schoolController.updateSchool);

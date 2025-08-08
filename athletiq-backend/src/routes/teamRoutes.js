@@ -4,6 +4,7 @@ const express = require('express');
 const router = express.Router();
 const { protect: authMiddleware } = require('../middlewares/authMiddleware');
 const { pool, query } = require('../config/db');
+const { sendResponse } = require('../utils/response');
 
 /**
  * Create a team (school admin only)
@@ -11,14 +12,12 @@ const { pool, query } = require('../config/db');
  */
 router.post('/', authMiddleware, async (req, res) => {
   if (req.user.role !== 'school_admin')
-    return res.status(403).json({ message: 'Access denied: school admin only.' });
+    return sendResponse(res, { success: false, status: 403, message: 'Access denied: school admin only.' });
 
   const { name, sport, coach, gender, age_group, description, status = 'active' } = req.body;
 
   if (!name || !sport || !gender || !age_group) {
-    return res.status(400).json({ 
-      message: 'Team name, sport, gender, and age group are required.' 
-    });
+    return sendResponse(res, { success: false, status: 400, message: 'Team name, sport, gender, and age group are required.' });
   }
 
   try {
@@ -28,7 +27,7 @@ router.post('/', authMiddleware, async (req, res) => {
       [req.user.id]
     );
     if (school.rows.length === 0) {
-      return res.status(400).json({ message: 'School not found for this admin.' });
+      return sendResponse(res, { success: false, status: 400, message: 'School not found for this admin.' });
     }
 
     const teamRes = await query(
@@ -38,14 +37,10 @@ router.post('/', authMiddleware, async (req, res) => {
       [name, sport, coach || null, gender, age_group, description || null, status, school.rows[0].id]
     );
     
-    res.status(201).json({ 
-      success: true,
-      message: 'Team created successfully',
-      data: teamRes.rows[0] 
-    });
+  sendResponse(res, { status: 201, message: 'Team created successfully', data: teamRes.rows[0] });
   } catch (err) {
     console.error('Create team error:', err);
-    res.status(500).json({ message: 'Server error' });
+  sendResponse(res, { success: false, status: 500, message: 'Server error' });
   }
 });
 
@@ -66,15 +61,15 @@ router.patch('/:id', authMiddleware, async (req, res) => {
         [req.user.id]
       );
       if (school.rows.length === 0)
-        return res.status(400).json({ message: 'School not found for this admin.' });
+        return sendResponse(res, { success: false, status: 400, message: 'School not found for this admin.' });
       teamCheck = await query(
         'SELECT * FROM teams WHERE id = $1 AND school_id = $2',
         [id, school.rows[0].id]
       );
       if (teamCheck.rows.length === 0)
-        return res.status(403).json({ message: 'Not authorized to edit this team.' });
+        return sendResponse(res, { success: false, status: 403, message: 'Not authorized to edit this team.' });
     } else if (req.user.role !== 'super_admin') {
-      return res.status(403).json({ message: 'Access denied.' });
+      return sendResponse(res, { success: false, status: 403, message: 'Access denied.' });
     }
 
     // Build query dynamically
@@ -92,23 +87,19 @@ router.patch('/:id', authMiddleware, async (req, res) => {
     values.push(id);
 
     if (fields.length === 1) // Only updated_at
-      return res.status(400).json({ message: 'No fields to update.' });
+      return sendResponse(res, { success: false, status: 400, message: 'No fields to update.' });
 
     const result = await query(
       `UPDATE teams SET ${fields.join(', ')} WHERE id = $${idx} RETURNING *`,
       values
     );
     if (result.rows.length === 0)
-      return res.status(404).json({ message: 'Team not found.' });
+      return sendResponse(res, { success: false, status: 404, message: 'Team not found.' });
 
-    res.json({ 
-      success: true,
-      message: 'Team updated successfully',
-      data: result.rows[0] 
-    });
+  sendResponse(res, { message: 'Team updated successfully', data: result.rows[0] });
   } catch (err) {
     console.error('Edit team error:', err);
-    res.status(500).json({ message: 'Server error' });
+  sendResponse(res, { success: false, status: 500, message: 'Server error' });
   }
 });
 
@@ -128,25 +119,25 @@ router.delete('/:id', authMiddleware, async (req, res) => {
         [req.user.id]
       );
       if (school.rows.length === 0)
-        return res.status(400).json({ message: 'School not found for this admin.' });
+        return sendResponse(res, { success: false, status: 400, message: 'School not found for this admin.' });
       teamCheck = await query(
         'SELECT * FROM teams WHERE id = $1 AND school_id = $2',
         [id, school.rows[0].id]
       );
       if (teamCheck.rows.length === 0)
-        return res.status(403).json({ message: 'Not authorized to delete this team.' });
+        return sendResponse(res, { success: false, status: 403, message: 'Not authorized to delete this team.' });
     } else if (req.user.role !== 'super_admin') {
-      return res.status(403).json({ message: 'Access denied.' });
+      return sendResponse(res, { success: false, status: 403, message: 'Access denied.' });
     }
 
     const result = await query('DELETE FROM teams WHERE id = $1 RETURNING *', [id]);
     if (result.rows.length === 0)
-      return res.status(404).json({ message: 'Team not found.' });
+      return sendResponse(res, { success: false, status: 404, message: 'Team not found.' });
 
-    res.json({ message: 'Team deleted.' });
+  sendResponse(res, { message: 'Team deleted.' });
   } catch (err) {
     console.error('Delete team error:', err);
-    res.status(500).json({ message: 'Server error' });
+  sendResponse(res, { success: false, status: 500, message: 'Server error' });
   }
 });
 
@@ -163,7 +154,7 @@ router.get('/', authMiddleware, async (req, res) => {
         [req.user.id]
       );
       if (school.rows.length === 0)
-        return res.status(400).json({ message: 'School not found for this admin.' });
+        return sendResponse(res, { success: false, status: 400, message: 'School not found for this admin.' });
       
       // Enhanced query with player count
       result = await query(
@@ -212,16 +203,13 @@ router.get('/', authMiddleware, async (req, res) => {
          ORDER BY t.created_at DESC`
       );
     } else {
-      return res.status(403).json({ message: 'Access denied.' });
+  return sendResponse(res, { success: false, status: 403, message: 'Access denied.' });
     }
     
-    res.json({ 
-      success: true,
-      data: result.rows 
-    });
+  sendResponse(res, { data: result.rows });
   } catch (err) {
     console.error('List teams error:', err);
-    res.status(500).json({ message: 'Server error' });
+  sendResponse(res, { success: false, status: 500, message: 'Server error' });
   }
 });
 
@@ -240,7 +228,7 @@ router.get('/:id', authMiddleware, async (req, res) => {
         [req.user.id]
       );
       if (school.rows.length === 0)
-        return res.status(400).json({ message: 'School not found for this admin.' });
+        return sendResponse(res, { success: false, status: 400, message: 'School not found for this admin.' });
       
       teamQuery = await query(
         `SELECT t.*, 
@@ -288,20 +276,17 @@ router.get('/:id', authMiddleware, async (req, res) => {
         [id]
       );
     } else {
-      return res.status(403).json({ message: 'Access denied.' });
+  return sendResponse(res, { success: false, status: 403, message: 'Access denied.' });
     }
     
     if (teamQuery.rows.length === 0) {
-      return res.status(404).json({ message: 'Team not found.' });
+  return sendResponse(res, { success: false, status: 404, message: 'Team not found.' });
     }
     
-    res.json({ 
-      success: true,
-      data: teamQuery.rows[0] 
-    });
+  sendResponse(res, { data: teamQuery.rows[0] });
   } catch (err) {
     console.error('Get team error:', err);
-    res.status(500).json({ message: 'Server error' });
+  sendResponse(res, { success: false, status: 500, message: 'Server error' });
   }
 });
 
@@ -314,7 +299,7 @@ router.post('/:id/players', authMiddleware, async (req, res) => {
   const { student_id, position } = req.body;
   
   if (!student_id) {
-    return res.status(400).json({ message: 'Student ID is required.' });
+    return sendResponse(res, { success: false, status: 400, message: 'Student ID is required.' });
   }
   
   try {
@@ -325,16 +310,16 @@ router.post('/:id/players', authMiddleware, async (req, res) => {
         [req.user.id]
       );
       if (school.rows.length === 0)
-        return res.status(400).json({ message: 'School not found for this admin.' });
+        return sendResponse(res, { success: false, status: 400, message: 'School not found for this admin.' });
       
       const teamCheck = await query(
         'SELECT * FROM teams WHERE id = $1 AND school_id = $2',
         [teamId, school.rows[0].id]
       );
       if (teamCheck.rows.length === 0)
-        return res.status(403).json({ message: 'Not authorized to modify this team.' });
+        return sendResponse(res, { success: false, status: 403, message: 'Not authorized to modify this team.' });
     } else if (req.user.role !== 'super_admin') {
-      return res.status(403).json({ message: 'Access denied.' });
+      return sendResponse(res, { success: false, status: 403, message: 'Access denied.' });
     }
     
     // Check if player already in team
@@ -343,7 +328,7 @@ router.post('/:id/players', authMiddleware, async (req, res) => {
       [teamId, student_id]
     );
     if (existingPlayer.rows.length > 0) {
-      return res.status(409).json({ message: 'Player already in this team.' });
+      return sendResponse(res, { success: false, status: 409, message: 'Player already in this team.' });
     }
     
     // Add player to team
@@ -354,14 +339,10 @@ router.post('/:id/players', authMiddleware, async (req, res) => {
       [teamId, student_id, position || null]
     );
     
-    res.status(201).json({ 
-      success: true,
-      message: 'Player added to team successfully',
-      data: result.rows[0] 
-    });
+  sendResponse(res, { status: 201, message: 'Player added to team successfully', data: result.rows[0] });
   } catch (err) {
     console.error('Add player to team error:', err);
-    res.status(500).json({ message: 'Server error' });
+  sendResponse(res, { success: false, status: 500, message: 'Server error' });
   }
 });
 
@@ -380,16 +361,16 @@ router.delete('/:id/players/:playerId', authMiddleware, async (req, res) => {
         [req.user.id]
       );
       if (school.rows.length === 0)
-        return res.status(400).json({ message: 'School not found for this admin.' });
+        return sendResponse(res, { success: false, status: 400, message: 'School not found for this admin.' });
       
       const teamCheck = await query(
         'SELECT * FROM teams WHERE id = $1 AND school_id = $2',
         [teamId, school.rows[0].id]
       );
       if (teamCheck.rows.length === 0)
-        return res.status(403).json({ message: 'Not authorized to modify this team.' });
+        return sendResponse(res, { success: false, status: 403, message: 'Not authorized to modify this team.' });
     } else if (req.user.role !== 'super_admin') {
-      return res.status(403).json({ message: 'Access denied.' });
+      return sendResponse(res, { success: false, status: 403, message: 'Access denied.' });
     }
     
     // Remove player from team
@@ -399,16 +380,13 @@ router.delete('/:id/players/:playerId', authMiddleware, async (req, res) => {
     );
     
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Player not found in this team.' });
+      return sendResponse(res, { success: false, status: 404, message: 'Player not found in this team.' });
     }
     
-    res.json({ 
-      success: true,
-      message: 'Player removed from team successfully' 
-    });
+  sendResponse(res, { message: 'Player removed from team successfully' });
   } catch (err) {
     console.error('Remove player from team error:', err);
-    res.status(500).json({ message: 'Server error' });
+  sendResponse(res, { success: false, status: 500, message: 'Server error' });
   }
 });
 
@@ -428,16 +406,16 @@ router.patch('/:id/players/:playerId', authMiddleware, async (req, res) => {
         [req.user.id]
       );
       if (school.rows.length === 0)
-        return res.status(400).json({ message: 'School not found for this admin.' });
+        return sendResponse(res, { success: false, status: 400, message: 'School not found for this admin.' });
       
       const teamCheck = await query(
         'SELECT * FROM teams WHERE id = $1 AND school_id = $2',
         [teamId, school.rows[0].id]
       );
       if (teamCheck.rows.length === 0)
-        return res.status(403).json({ message: 'Not authorized to modify this team.' });
+        return sendResponse(res, { success: false, status: 403, message: 'Not authorized to modify this team.' });
     } else if (req.user.role !== 'super_admin') {
-      return res.status(403).json({ message: 'Access denied.' });
+      return sendResponse(res, { success: false, status: 403, message: 'Access denied.' });
     }
     
     // Update player position
@@ -447,17 +425,13 @@ router.patch('/:id/players/:playerId', authMiddleware, async (req, res) => {
     );
     
     if (result.rows.length === 0) {
-      return res.status(404).json({ message: 'Player not found in this team.' });
+      return sendResponse(res, { success: false, status: 404, message: 'Player not found in this team.' });
     }
     
-    res.json({ 
-      success: true,
-      message: 'Player position updated successfully',
-      data: result.rows[0] 
-    });
+  sendResponse(res, { message: 'Player position updated successfully', data: result.rows[0] });
   } catch (err) {
     console.error('Update player position error:', err);
-    res.status(500).json({ message: 'Server error' });
+  sendResponse(res, { success: false, status: 500, message: 'Server error' });
   }
 });
 

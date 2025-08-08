@@ -6,11 +6,7 @@
 const pool = require('../config/simple-database');
 const { validationResult } = require('express-validator');
 
-// Simple API response helper
-const ApiResponse = {
-  success: (data, message = 'Success') => ({ success: true, message, data }),
-  error: (message, errors = null) => ({ success: false, message, errors })
-};
+const { sendResponse } = require('../utils/response');
 
 /**
  * @desc    Get live tournament dashboard - Simplified Version
@@ -36,7 +32,7 @@ const getLiveTournamentDashboard = async (req, res, next) => {
     
     const tournamentResult = await pool.query(tournamentQuery, [id]);
     if (tournamentResult.rows.length === 0) {
-      return res.status(404).json(ApiResponse.error('Tournament not found'));
+  return sendResponse(res, { success: false, status: 404, message: 'Tournament not found' });
     }
 
     const tournament = tournamentResult.rows[0];
@@ -79,11 +75,11 @@ const getLiveTournamentDashboard = async (req, res, next) => {
       last_updated: new Date().toISOString()
     };
 
-    return res.json(ApiResponse.success(dashboardData, 'Live tournament dashboard retrieved successfully'));
+  return sendResponse(res, { data: dashboardData, message: 'Live tournament dashboard retrieved successfully' });
 
   } catch (error) {
     console.error('Dashboard error:', error);
-    return res.status(500).json(ApiResponse.error('Internal server error'));
+  return sendResponse(res, { success: false, status: 500, message: 'Internal server error' });
   }
 };
 
@@ -101,13 +97,13 @@ const startLiveMatch = async (req, res, next) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json(ApiResponse.error('Match not found'));
+  return sendResponse(res, { success: false, status: 404, message: 'Match not found' });
     }
 
-    return res.json(ApiResponse.success(result.rows[0], 'Match started successfully'));
+  return sendResponse(res, { data: result.rows[0], message: 'Match started successfully' });
   } catch (error) {
     console.error('Start match error:', error);
-    return res.status(500).json(ApiResponse.error('Internal server error'));
+  return sendResponse(res, { success: false, status: 500, message: 'Internal server error' });
   }
 };
 
@@ -125,13 +121,13 @@ const updateLiveScore = async (req, res, next) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json(ApiResponse.error('Match not found'));
+  return sendResponse(res, { success: false, status: 404, message: 'Match not found' });
     }
 
-    return res.json(ApiResponse.success(result.rows[0], 'Score updated successfully'));
+  return sendResponse(res, { data: result.rows[0], message: 'Score updated successfully' });
   } catch (error) {
     console.error('Update score error:', error);
-    return res.status(500).json(ApiResponse.error('Internal server error'));
+  return sendResponse(res, { success: false, status: 500, message: 'Internal server error' });
   }
 };
 
@@ -148,13 +144,13 @@ const endLiveMatch = async (req, res, next) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json(ApiResponse.error('Match not found'));
+  return sendResponse(res, { success: false, status: 404, message: 'Match not found' });
     }
 
-    return res.json(ApiResponse.success(result.rows[0], 'Match ended successfully'));
+  return sendResponse(res, { data: result.rows[0], message: 'Match ended successfully' });
   } catch (error) {
     console.error('End match error:', error);
-    return res.status(500).json(ApiResponse.error('Internal server error'));
+  return sendResponse(res, { success: false, status: 500, message: 'Internal server error' });
   }
 };
 
@@ -177,13 +173,13 @@ const getLiveMatchDetails = async (req, res, next) => {
 
     const result = await pool.query(query, [id]);
     if (result.rows.length === 0) {
-      return res.status(404).json(ApiResponse.error('Match not found'));
+  return sendResponse(res, { success: false, status: 404, message: 'Match not found' });
     }
 
-    return res.json(ApiResponse.success(result.rows[0], 'Match details retrieved successfully'));
+  return sendResponse(res, { data: result.rows[0], message: 'Match details retrieved successfully' });
   } catch (error) {
     console.error('Get match details error:', error);
-    return res.status(500).json(ApiResponse.error('Internal server error'));
+  return sendResponse(res, { success: false, status: 500, message: 'Internal server error' });
   }
 };
 
@@ -209,10 +205,10 @@ const getLiveLeaderboard = async (req, res, next) => {
 
     const result = await pool.query(query, [id]);
 
-    return res.json(ApiResponse.success(result.rows, 'Live leaderboard retrieved successfully'));
+  return sendResponse(res, { data: result.rows, message: 'Live leaderboard retrieved successfully' });
   } catch (error) {
     console.error('Get leaderboard error:', error);
-    return res.status(500).json(ApiResponse.error('Internal server error'));
+  return sendResponse(res, { success: false, status: 500, message: 'Internal server error' });
   }
 };
 

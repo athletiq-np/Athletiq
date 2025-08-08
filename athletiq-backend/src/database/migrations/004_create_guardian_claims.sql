@@ -1,19 +1,37 @@
 -- Guardian Claims Table Migration
 -- Creates table to manage guardian verification and claim codes
 
-CREATE TABLE IF NOT EXISTS guardian_claims (
-    id SERIAL PRIMARY KEY,
-    athlete_id VARCHAR(8) NOT NULL REFERENCES players(athlete_id) ON DELETE CASCADE,
-    guardian_phone VARCHAR(20),
-    guardian_email VARCHAR(100),
-    claim_code VARCHAR(8) NOT NULL UNIQUE,
-    status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'expired')),
-    expires_at TIMESTAMP NOT NULL,
-    reminder_sent BOOLEAN DEFAULT FALSE,
-    completed_at TIMESTAMP,
-    created_at TIMESTAMP DEFAULT NOW(),
-    updated_at TIMESTAMP DEFAULT NOW()
-);
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.tables WHERE table_name = 'guardian_claims'
+    ) THEN
+        CREATE TABLE guardian_claims (
+            id SERIAL PRIMARY KEY,
+            athlete_id VARCHAR(8) NOT NULL REFERENCES players(athlete_id) ON DELETE CASCADE,
+            guardian_phone VARCHAR(20),
+            guardian_email VARCHAR(100),
+            claim_code VARCHAR(8) NOT NULL UNIQUE,
+            status VARCHAR(20) DEFAULT 'pending' CHECK (status IN ('pending', 'completed', 'expired')),
+            expires_at TIMESTAMP NOT NULL,
+            reminder_sent BOOLEAN DEFAULT FALSE,
+            completed_at TIMESTAMP,
+            created_at TIMESTAMP DEFAULT NOW(),
+            updated_at TIMESTAMP DEFAULT NOW()
+        );
+    ELSE
+        -- Table exists, add missing columns safely
+        ALTER TABLE guardian_claims ADD COLUMN IF NOT EXISTS guardian_phone VARCHAR(20);
+        ALTER TABLE guardian_claims ADD COLUMN IF NOT EXISTS guardian_email VARCHAR(100);
+        ALTER TABLE guardian_claims ADD COLUMN IF NOT EXISTS claim_code VARCHAR(8);
+        ALTER TABLE guardian_claims ADD COLUMN IF NOT EXISTS status VARCHAR(20) DEFAULT 'pending';
+        ALTER TABLE guardian_claims ADD COLUMN IF NOT EXISTS expires_at TIMESTAMP;
+        ALTER TABLE guardian_claims ADD COLUMN IF NOT EXISTS reminder_sent BOOLEAN DEFAULT FALSE;
+        ALTER TABLE guardian_claims ADD COLUMN IF NOT EXISTS completed_at TIMESTAMP;
+        ALTER TABLE guardian_claims ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT NOW();
+        ALTER TABLE guardian_claims ADD COLUMN IF NOT EXISTS updated_at TIMESTAMP DEFAULT NOW();
+    END IF;
+END $$;
 
 -- Create indexes for performance
 CREATE INDEX IF NOT EXISTS idx_guardian_claims_athlete_id ON guardian_claims(athlete_id);

@@ -12,7 +12,7 @@ const pool = require('../config/db');
 const { getCache, setCache, deleteCache } = require('../config/cache');
 const { logPerformanceMetric } = require('../config/monitoring');
 const { v4: uuidv4 } = require('uuid');
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 
 /**
  * Advanced tournament bracket management with custom seeding
@@ -31,7 +31,7 @@ const customizeBracketSeeding = async (req, res) => {
     );
     
     if (tournamentResult.rows.length === 0) {
-      return ApiResponse.error(res, 'Tournament not found', 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Tournament not found' });
     }
     
     const tournament = tournamentResult.rows[0];
@@ -58,15 +58,15 @@ const customizeBracketSeeding = async (req, res) => {
       seedingCount: seedingData.length
     });
     
-    return ApiResponse.success(res, {
+  return sendResponse(res, { data: {
       tournamentId,
       seedingCount: seedingData.length,
       message: 'Bracket seeding updated successfully'
-    });
+  } });
     
   } catch (error) {
     console.error('Error customizing bracket seeding:', error);
-    return ApiResponse.error(res, 'Failed to customize bracket seeding', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to customize bracket seeding' });
   }
 };
 
@@ -96,7 +96,7 @@ const scheduleMatchesAdvanced = async (req, res) => {
     );
     
     if (tournamentResult.rows.length === 0) {
-      return ApiResponse.error(res, 'Tournament not found', 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Tournament not found' });
     }
     
     const tournament = tournamentResult.rows[0];
@@ -118,7 +118,7 @@ const scheduleMatchesAdvanced = async (req, res) => {
     const matches = matchesResult.rows;
     
     if (matches.length === 0) {
-      return ApiResponse.error(res, 'No matches found to schedule', 400);
+  return sendResponse(res, { success: false, status: 400, message: 'No matches found to schedule' });
     }
     
     // Generate optimized schedule
@@ -169,15 +169,15 @@ const scheduleMatchesAdvanced = async (req, res) => {
       venuesCount: venues.length
     });
     
-    return ApiResponse.success(res, {
+  return sendResponse(res, { data: {
       tournamentId,
       matchesScheduled: schedule.length,
       schedule: schedule
-    }, 'Matches scheduled successfully');
+  }, message: 'Matches scheduled successfully' });
     
   } catch (error) {
     console.error('Error scheduling matches:', error);
-    return ApiResponse.error(res, 'Failed to schedule matches', 500);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to schedule matches' });
   }
 };
 
@@ -281,11 +281,11 @@ const getMatchScheduleDetailed = async (req, res) => {
       responseData.analytics = analytics;
     }
     
-    return ApiResponse.success(res, responseData);
+  return sendResponse(res, { data: responseData });
     
   } catch (error) {
-    console.error('Error getting detailed match schedule:', error);
-    return ApiResponse.error(res, 'Failed to get match schedule', 500);
+  console.error('Error getting detailed match schedule:', error);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to get match schedule' });
   }
 };
 
@@ -305,7 +305,7 @@ const validateTournamentSetup = async (req, res) => {
     );
     
     if (tournamentResult.rows.length === 0) {
-      return ApiResponse.error(res, 'Tournament not found', 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Tournament not found' });
     }
     
     const tournament = tournamentResult.rows[0];
@@ -437,11 +437,11 @@ const validateTournamentSetup = async (req, res) => {
       checksCount: validationResults.checks.length
     });
     
-    return ApiResponse.success(res, validationResults);
+  return sendResponse(res, { data: validationResults });
     
   } catch (error) {
-    console.error('Error validating tournament setup:', error);
-    return ApiResponse.error(res, 'Failed to validate tournament setup', 500);
+  console.error('Error validating tournament setup:', error);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to validate tournament setup' });
   }
 };
 
@@ -461,7 +461,7 @@ const generatePreTournamentReport = async (req, res) => {
     );
     
     if (tournamentResult.rows.length === 0) {
-      return ApiResponse.error(res, 'Tournament not found', 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Tournament not found' });
     }
     
     const tournament = tournamentResult.rows[0];
@@ -552,11 +552,11 @@ const generatePreTournamentReport = async (req, res) => {
       readinessScore
     });
     
-    return ApiResponse.success(res, report);
+  return sendResponse(res, { data: report });
     
   } catch (error) {
-    console.error('Error generating pre-tournament report:', error);
-    return ApiResponse.error(res, 'Failed to generate pre-tournament report', 500);
+  console.error('Error generating pre-tournament report:', error);
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to generate pre-tournament report' });
   }
 };
 

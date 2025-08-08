@@ -1481,7 +1481,7 @@
 // Comprehensive Certificate Management System for Tournament Awards
 &nbsp;
 const { pool } = require('../config/db');
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 &nbsp;
 /**
  * @desc    Create a new certificate template
@@ -1522,10 +1522,10 @@ const createCertificateTemplate = <span class="fstat-no" title="function not cov
 &nbsp;
     const result = <span class="cstat-no" title="statement not covered" >await pool.query(query, values);</span>
     
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, result.rows[0], 'Certificate template created successfully', 201);</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { status: 201, data: result.rows[0], message: 'Certificate template created successfully' });</span>
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error creating certificate template:', error);</span>
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.error(res, 'Failed to create certificate template', 500);</span>
+<span class="cstat-no" title="statement not covered" >  console.error('Error creating certificate template:', error);</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { success: false, status: 500, message: 'Failed to create certificate template' });</span>
   }
 };
 &nbsp;
@@ -1546,7 +1546,7 @@ const generateTournamentCertificates = <span class="fstat-no" title="function no
     );
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (tournamentQuery.rows.length === 0) {</span>
-<span class="cstat-no" title="statement not covered" >      return ApiResponse.error(res, 'Tournament not found', 404);</span>
+<span class="cstat-no" title="statement not covered" >      return sendResponse(res, { success: false, status: 404, message: 'Tournament not found' });</span>
     }
 &nbsp;
     const tournament = <span class="cstat-no" title="statement not covered" >tournamentQuery.rows[0];</span>
@@ -1602,15 +1602,15 @@ const generateTournamentCertificates = <span class="fstat-no" title="function no
       });
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { data: {</span>
       tournament_id: tournamentId,
       certificates_generated: generatedCertificates.length,
       certificates: generatedCertificates
-    }, 'Certificates generated successfully');
+  }, message: 'Certificates generated successfully' });
 &nbsp;
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error generating certificates:', error);</span>
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.error(res, 'Failed to generate certificates', 500);</span>
+<span class="cstat-no" title="statement not covered" >  console.error('Error generating certificates:', error);</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { success: false, status: 500, message: 'Failed to generate certificates' });</span>
   }
 };
 &nbsp;
@@ -1640,7 +1640,7 @@ const verifyCertificate = <span class="fstat-no" title="function not covered" >a
     const result = <span class="cstat-no" title="statement not covered" >await pool.query(query, [verificationCode]);</span>
 &nbsp;
 <span class="cstat-no" title="statement not covered" >    if (result.rows.length === 0) {</span>
-<span class="cstat-no" title="statement not covered" >      return ApiResponse.error(res, 'Certificate not found or invalid', 404);</span>
+<span class="cstat-no" title="statement not covered" >      return sendResponse(res, { success: false, status: 404, message: 'Certificate not found or invalid' });</span>
     }
 &nbsp;
     const certificate = <span class="cstat-no" title="statement not covered" >result.rows[0];</span>
@@ -1653,15 +1653,15 @@ const verifyCertificate = <span class="fstat-no" title="function not covered" >a
       [certificate.id, verificationCode, req.ip, req.get('User-Agent')]
     );
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { data: {</span>
       certificate,
       verification_status: 'valid',
       verified_at: new Date().toISOString()
-    }, 'Certificate verified successfully');
+  }, message: 'Certificate verified successfully' });
 &nbsp;
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error verifying certificate:', error);</span>
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.error(res, 'Failed to verify certificate', 500);</span>
+<span class="cstat-no" title="statement not covered" >  console.error('Error verifying certificate:', error);</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { success: false, status: 500, message: 'Failed to verify certificate' });</span>
   }
 };
 &nbsp;
@@ -1704,14 +1704,14 @@ const getTournamentCertificates = <span class="fstat-no" title="function not cov
 &nbsp;
     const result = <span class="cstat-no" title="statement not covered" >await pool.query(query, params);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { data: {</span>
       tournament_id: tournamentId,
       certificates: result.rows
-    }, 'Tournament certificates retrieved successfully');
+  }, message: 'Tournament certificates retrieved successfully' });
 &nbsp;
   } catch (error) {
-<span class="cstat-no" title="statement not covered" >    console.error('Error getting tournament certificates:', error);</span>
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.error(res, 'Failed to retrieve certificates', 500);</span>
+<span class="cstat-no" title="statement not covered" >  console.error('Error getting tournament certificates:', error);</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve certificates' });</span>
   }
 };
 &nbsp;
@@ -2191,7 +2191,7 @@ module.exports = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-15T07:22:31.113Z
+                at 2025-08-08T18:43:31.679Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

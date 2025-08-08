@@ -17,6 +17,7 @@ const AthleteIdGenerator = require('../services/ai/athleteIdGenerator');
 const QueueProcessor = require('../services/queue/queueProcessor');
 const OCRService = require('../services/ai/ocrService');
 const { pool, query } = require('../config/db');
+const { sendResponse } = require('../utils/response');
 
 // Initialize service instances
 const athleteIdGenerator = new AthleteIdGenerator();
@@ -108,11 +109,7 @@ router.post('/athlete-ids/generate',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation failed',
-          errors: errors.array()
-        });
+        return sendResponse(res, { success: false, status: 400, message: 'Validation failed', errors: errors.array() });
       }
 
       const { player_ids, school_id, batch_size = 10 } = req.body;
@@ -126,10 +123,7 @@ router.post('/athlete-ids/generate',
         );
         
         if (schoolCheck.rows.length === 0) {
-          return res.status(403).json({
-            success: false,
-            message: 'Access denied: You can only generate IDs for your own school'
-          });
+          return sendResponse(res, { success: false, status: 403, message: 'Access denied: You can only generate IDs for your own school' });
         }
       }
 
@@ -141,19 +135,11 @@ router.post('/athlete-ids/generate',
         generated_by: user_id
       });
 
-      res.json({
-        success: true,
-        message: `Generated ${result.generated_count} athlete IDs`,
-        data: result
-      });
+  sendResponse(res, { message: `Generated ${result.generated_count} athlete IDs`, data: result });
 
     } catch (error) {
       console.error('Athlete ID generation error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to generate athlete IDs',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to generate athlete IDs', errors: process.env.NODE_ENV === 'development' ? [{ msg: error.message }] : null });
     }
   }
 );
@@ -257,9 +243,7 @@ router.get('/athlete-ids/stats',
         ? (stats.players_with_ids / stats.total_players) * 100 
         : 0;
 
-      res.json({
-        success: true,
-        data: {
+      sendResponse(res, { data: {
           total_players: parseInt(stats.total_players),
           players_with_ids: parseInt(stats.players_with_ids),
           players_without_ids: parseInt(stats.players_without_ids),
@@ -271,16 +255,11 @@ router.get('/athlete-ids/stats',
             total_players: parseInt(row.total_players),
             players_with_ids: parseInt(row.players_with_ids)
           }))
-        }
-      });
+        } });
 
     } catch (error) {
       console.error('Athlete ID stats error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve athlete ID statistics',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve athlete ID statistics', errors: process.env.NODE_ENV === 'development' ? [{ msg: error.message }] : null });
     }
   }
 );
@@ -362,11 +341,7 @@ router.get('/queue/status',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation failed',
-          errors: errors.array()
-        });
+        return sendResponse(res, { success: false, status: 400, message: 'Validation failed', errors: errors.array() });
       }
 
       const { queue_type = 'all', status } = req.query;
@@ -424,9 +399,7 @@ router.get('/queue/status',
         queue_stats[row.status] = parseInt(row.count);
       });
 
-      res.json({
-        success: true,
-        data: {
+      sendResponse(res, { data: {
           queue_stats,
           recent_jobs: recentJobsResult.rows.map(job => ({
             id: job.id,
@@ -437,16 +410,11 @@ router.get('/queue/status',
             created_at: job.created_at,
             updated_at: job.updated_at
           }))
-        }
-      });
+        } });
 
     } catch (error) {
       console.error('Queue status error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve queue status',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve queue status', errors: process.env.NODE_ENV === 'development' ? [{ msg: error.message }] : null });
     }
   }
 );
@@ -494,11 +462,7 @@ router.post('/queue/retry',
     try {
       const errors = validationResult(req);
       if (!errors.isEmpty()) {
-        return res.status(400).json({
-          success: false,
-          message: 'Validation failed',
-          errors: errors.array()
-        });
+        return sendResponse(res, { success: false, status: 400, message: 'Validation failed', errors: errors.array() });
       }
 
       const { job_ids, retry_failed_all } = req.body;
@@ -513,10 +477,7 @@ router.post('/queue/retry',
         // Retry specific jobs
         retryResult = await queueProcessor.retryJobs(job_ids);
       } else {
-        return res.status(400).json({
-          success: false,
-          message: 'Either job_ids or retry_failed_all must be provided'
-        });
+  return sendResponse(res, { success: false, status: 400, message: 'Either job_ids or retry_failed_all must be provided' });
       }
 
       // Log the retry action
@@ -530,19 +491,11 @@ router.post('/queue/retry',
         ]
       );
 
-      res.json({
-        success: true,
-        message: 'Jobs queued for retry',
-        data: retryResult
-      });
+  sendResponse(res, { message: 'Jobs queued for retry', data: retryResult });
 
     } catch (error) {
       console.error('Queue retry error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to retry jobs',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to retry jobs', errors: process.env.NODE_ENV === 'development' ? [{ msg: error.message }] : null });
     }
   }
 );
@@ -592,20 +545,11 @@ router.get('/ocr/templates',
     try {
       const templates = ocrService.getDocumentTemplates();
       
-      res.json({
-        success: true,
-        data: {
-          templates
-        }
-      });
+  sendResponse(res, { data: { templates } });
 
     } catch (error) {
       console.error('OCR templates error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Failed to retrieve OCR templates',
-        error: process.env.NODE_ENV === 'development' ? error.message : 'Internal server error'
-      });
+  sendResponse(res, { success: false, status: 500, message: 'Failed to retrieve OCR templates', errors: process.env.NODE_ENV === 'development' ? [{ msg: error.message }] : null });
     }
   }
 );

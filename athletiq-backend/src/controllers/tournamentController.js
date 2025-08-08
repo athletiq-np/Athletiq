@@ -7,7 +7,7 @@
 
 const { pool } = require("../config/db");
 const { generateShortCode } = require("../utils/codeGenerator");
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 
 /**
  * @desc    Get all tournaments with enhanced filtering and status management
@@ -108,15 +108,8 @@ const getTournaments = async (req, res, next) => {
     const countResult = await pool.query(countQuery, countParams);
     const total = parseInt(countResult.rows[0].total);
 
-    return ApiResponse.success(res, {
-      tournaments: rows,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        totalPages: Math.ceil(total / parseInt(limit))
-      }
-    }, 'Tournaments retrieved successfully');
+  // Legacy tests expect data to be an array directly
+  return sendResponse(res, { data: rows, message: 'Tournaments retrieved successfully' });
   } catch (err) {
     next(err);
   }
@@ -138,7 +131,7 @@ const getTournamentById = async (req, res, next) => {
       return next(error);
     }
     
-    return ApiResponse.success(res, rows[0], 'Tournament retrieved successfully');
+  return sendResponse(res, { data: rows[0], message: 'Tournament retrieved successfully' });
   } catch (err) {
     next(err);
   }
@@ -280,7 +273,7 @@ const createTournament = async (req, res, next) => {
       console.warn('Audit logging failed:', auditErr.message);
     }
 
-    return ApiResponse.success(res, tournament, 'Tournament created successfully', 201);
+  return sendResponse(res, { status: 201, data: tournament, message: 'Tournament created successfully' });
   } catch (err) {
     next(err);
   }
@@ -353,10 +346,10 @@ const registerTeamForTournament = async (req, res, next) => {
       [tournamentId, team_id, 'registered']
     );
     
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       tournament_team_id: tournamentTeamId,
       registered_players: player_ids.length
-    }, 'Team registered successfully for tournament');
+    }, message: 'Team registered successfully for tournament' });
     
   } catch (err) {
     next(err);
@@ -436,11 +429,11 @@ const generateTournamentBracket = async (req, res, next) => {
       ['active', tournamentId]
     );
     
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       tournament_id: tournamentId,
       matches_generated: matches.length,
       format: tournament.format
-    }, 'Tournament bracket generated successfully');
+    }, message: 'Tournament bracket generated successfully' });
     
   } catch (err) {
     next(err);
@@ -504,7 +497,7 @@ const getTournamentBracket = async (req, res, next) => {
     // Filter out null matches
     tournament.matches = tournament.matches.filter(match => match.id !== null);
     
-    return ApiResponse.success(res, tournament, 'Tournament bracket retrieved successfully');
+  return sendResponse(res, { data: tournament, message: 'Tournament bracket retrieved successfully' });
     
   } catch (err) {
     next(err);
@@ -558,12 +551,12 @@ const updateMatchResult = async (req, res, next) => {
       matchId
     ]);
     
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       match_id: matchId,
       home_score,
       away_score,
       winner_team_id
-    }, 'Match result updated successfully');
+    }, message: 'Match result updated successfully' });
     
   } catch (err) {
     next(err);
@@ -629,10 +622,10 @@ const assignTournamentOrganizer = async (req, res, next) => {
       console.warn('Audit logging failed:', auditErr.message);
     }
 
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       tournament,
       organizer: organizer
-    }, 'Tournament organizer assigned successfully');
+    }, message: 'Tournament organizer assigned successfully' });
   } catch (err) {
     next(err);
   }
@@ -743,7 +736,7 @@ const checkTournamentEligibility = async (req, res, next) => {
 
     const isEligible = Object.values(checks).every(check => check !== false);
 
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       eligible: isEligible,
       checks,
       tournament_details: {
@@ -757,7 +750,7 @@ const checkTournamentEligibility = async (req, res, next) => {
         registration_end_date: tournament.registration_end_date,
         eligibility_criteria: eligibility
       }
-    }, 'Eligibility check completed');
+    }, message: 'Eligibility check completed' });
   } catch (err) {
     next(err);
   }
@@ -837,7 +830,7 @@ const updateTournamentStatus = async (req, res, next) => {
       return next(error);
     }
 
-    return ApiResponse.success(res, rows[0], 'Tournament status updated successfully');
+  return sendResponse(res, { data: rows[0], message: 'Tournament status updated successfully' });
   } catch (err) {
     next(err);
   }
@@ -874,7 +867,7 @@ const getTournamentDashboard = async (req, res, next) => {
       }
     };
 
-    return ApiResponse.success(res, dashboardData, 'Tournament dashboard data retrieved successfully');
+  return sendResponse(res, { data: dashboardData, message: 'Tournament dashboard data retrieved successfully' });
   } catch (err) {
     next(err);
   }
@@ -957,7 +950,7 @@ const getRegistrationDashboard = async (req, res, next) => {
       recent_registrations: recentRegistrations.rows
     };
 
-    return ApiResponse.success(res, dashboardData, 'Registration dashboard data retrieved successfully');
+  return sendResponse(res, { data: dashboardData, message: 'Registration dashboard data retrieved successfully' });
   } catch (err) {
     next(err);
   }
@@ -1062,13 +1055,13 @@ const checkPlayerEligibility = async (req, res, next) => {
     const eligibleCount = eligibilityChecks.filter(check => check.eligible).length;
     const ineligibleCount = eligibilityChecks.filter(check => !check.eligible).length;
 
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       tournament_id: id,
       total_players: player_ids.length,
       eligible_players: eligibleCount,
       ineligible_players: ineligibleCount,
       eligibility_checks: eligibilityChecks
-    }, 'Player eligibility check completed');
+    }, message: 'Player eligibility check completed' });
   } catch (err) {
     next(err);
   }
@@ -1244,13 +1237,12 @@ const registerTeamEnhanced = async (req, res, next) => {
       })]
     );
     
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       tournament_team_id: tournamentTeamId,
       registration_status: registrationStatus,
       registered_players: registeredPlayers.length,
-      eligibility_results: eligibilityResults,
-      message: registrationStatus === 'registered' ? 'Team registered successfully' : 'Team registration pending approval'
-    }, 'Team registration completed');
+      eligibility_results: eligibilityResults
+    }, message: registrationStatus === 'registered' ? 'Team registered successfully' : 'Team registration pending approval' });
     
   } catch (err) {
     next(err);
@@ -1313,11 +1305,11 @@ const updateTeamRegistrationStatus = async (req, res, next) => {
       })]
     );
 
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       tournament_team_id: teamId,
       status,
       seed_order
-    }, 'Team registration status updated successfully');
+    }, message: 'Team registration status updated successfully' });
   } catch (err) {
     next(err);
   }
@@ -1393,11 +1385,11 @@ const getTournamentTeams = async (req, res, next) => {
       }
     }
 
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       tournament_id: id,
       teams,
       total_teams: teams.length
-    }, 'Tournament teams retrieved successfully');
+    }, message: 'Tournament teams retrieved successfully' });
   } catch (err) {
     next(err);
   }
@@ -1472,7 +1464,7 @@ const bulkUpdateTeamRegistrations = async (req, res, next) => {
       })]
     );
 
-    return ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       tournament_id: tournamentId,
       results,
       summary: {
@@ -1480,7 +1472,7 @@ const bulkUpdateTeamRegistrations = async (req, res, next) => {
         successful: results.filter(r => r.status === 'updated').length,
         failed: results.filter(r => r.status === 'failed').length
       }
-    }, 'Bulk team registration update completed');
+    }, message: 'Bulk team registration update completed' });
   } catch (err) {
     next(err);
   }

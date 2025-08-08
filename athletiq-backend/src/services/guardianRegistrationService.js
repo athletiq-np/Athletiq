@@ -1,6 +1,6 @@
 // src/services/guardianRegistrationService.js
 const nodemailer = require('nodemailer');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 const crypto = require('crypto');
 const pool = require('../config/db');
 const AthleteIdGenerator = require('./ai/athleteIdGenerator');

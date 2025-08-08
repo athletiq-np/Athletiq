@@ -7,6 +7,7 @@ const fs = require('fs');
 const BulkRegistrationService = require('../services/bulkRegistrationService');
 const { protect, checkRole } = require('../middlewares/authMiddleware');
 const { generalLimiter } = require('../middlewares/rateLimiter');
+const { sendResponse } = require('../utils/response');
 
 // Configure multer for CSV uploads
 const storage = multer.diskStorage({
@@ -52,11 +53,7 @@ router.get('/template', protect, checkRole(['SchoolAdmin', 'SuperAdmin']), (req,
     res.send(template.content);
     
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to generate template',
-      error: error.message
-    });
+    sendResponse(res, { success: false, status: 500, message: 'Failed to generate template', errors: [{ msg: error.message }] });
   }
 });
 
@@ -68,23 +65,16 @@ router.get('/template-info', protect, checkRole(['SchoolAdmin', 'SuperAdmin']), 
   try {
     const template = bulkService.generateCSVTemplate();
     
-    res.json({
-      success: true,
-      template: {
+    sendResponse(res, { data: { template: {
         filename: template.filename,
         instructions: template.instructions,
         required_columns: bulkService.requiredColumns,
         optional_columns: bulkService.optionalColumns,
         max_rows: 100
-      }
-    });
+      } } });
     
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: 'Failed to get template info',
-      error: error.message
-    });
+    sendResponse(res, { success: false, status: 500, message: 'Failed to get template info', errors: [{ msg: error.message }] });
   }
 });
 
@@ -102,10 +92,7 @@ router.post('/validate',
     
     try {
       if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: 'CSV file is required'
-        });
+  return sendResponse(res, { success: false, status: 400, message: 'CSV file is required' });
       }
 
       filePath = req.file.path;
@@ -113,22 +100,15 @@ router.post('/validate',
       // Validate the CSV file
       const validation = await bulkService.validateCSVFile(filePath);
       
-      res.json({
-        success: true,
-        validation: {
+      sendResponse(res, { data: { validation: {
           is_valid: validation.isValid,
           total_rows: validation.totalRows,
           errors: validation.errors,
           preview: validation.data.slice(0, 5) // Show first 5 rows as preview
-        }
-      });
+        } } });
 
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Validation failed',
-        error: error.message
-      });
+      sendResponse(res, { success: false, status: 500, message: 'Validation failed', errors: [{ msg: error.message }] });
     } finally {
       // Cleanup uploaded file
       if (filePath) {
@@ -152,31 +132,21 @@ router.post('/process',
     
     try {
       if (!req.file) {
-        return res.status(400).json({
-          success: false,
-          message: 'CSV file is required'
-        });
+  return sendResponse(res, { success: false, status: 400, message: 'CSV file is required' });
       }
 
       filePath = req.file.path;
       const schoolId = req.body.school_id || req.user.school_id;
       
       if (!schoolId) {
-        return res.status(400).json({
-          success: false,
-          message: 'School ID is required'
-        });
+  return sendResponse(res, { success: false, status: 400, message: 'School ID is required' });
       }
 
       // Validate the CSV file first
       const validation = await bulkService.validateCSVFile(filePath);
       
       if (!validation.isValid) {
-        return res.status(400).json({
-          success: false,
-          message: 'CSV validation failed',
-          errors: validation.errors
-        });
+  return sendResponse(res, { success: false, status: 400, message: 'CSV validation failed', errors: validation.errors });
       }
 
       // Process bulk registration
@@ -195,30 +165,21 @@ router.post('/process',
       // Generate report
       const report = bulkService.generateReport(results, schoolName);
 
-      res.status(201).json({
-        success: true,
-        message: `Bulk registration completed. ${results.successful}/${results.total} athletes registered successfully.`,
-        results: {
+      sendResponse(res, { status: 201, message: `Bulk registration completed. ${results.successful}/${results.total} athletes registered successfully.`, data: { results: {
           summary: report.summary,
           successful_registrations: results.successful,
           failed_registrations: results.failed,
           total_processed: results.total
-        },
-        report,
+        }, report,
         athletes: results.athletes.map(athlete => ({
           nepal_id: athlete.athlete_id,
           name: athlete.full_name,
           grade: athlete.grade
-        }))
-      });
+        })) } });
 
     } catch (error) {
       console.error('Bulk registration error:', error);
-      res.status(500).json({
-        success: false,
-        message: 'Bulk registration failed',
-        error: error.message
-      });
+      sendResponse(res, { success: false, status: 500, message: 'Bulk registration failed', errors: [{ msg: error.message }] });
     } finally {
       // Cleanup uploaded file
       if (filePath) {
@@ -272,22 +233,14 @@ router.get('/history',
         created_by_names: row.created_by_users.map(id => userMap[id] || 'Unknown')
       }));
 
-      res.json({
-        success: true,
-        history,
-        pagination: {
+      sendResponse(res, { data: { history, pagination: {
           limit,
           offset,
           total: result.rowCount
-        }
-      });
+        } } });
 
     } catch (error) {
-      res.status(500).json({
-        success: false,
-        message: 'Failed to get history',
-        error: error.message
-      });
+      sendResponse(res, { success: false, status: 500, message: 'Failed to get history', errors: [{ msg: error.message }] });
     }
   }
 );

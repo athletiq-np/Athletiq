@@ -6,11 +6,7 @@
 const pool = require('../config/simple-database');
 const { validationResult } = require('express-validator');
 
-// Simple API response helper
-const ApiResponse = {
-  success: (data, message = 'Success') => ({ success: true, message, data }),
-  error: (message, errors = null) => ({ success: false, message, errors })
-};
+const { sendResponse } = require('../utils/response');
 
 /**
  * @desc    Get live tournament dashboard
@@ -36,7 +32,7 @@ const getLiveTournamentDashboard = async (req, res, next) => {
     
     const tournamentResult = await pool.query(tournamentQuery, [id]);
     if (tournamentResult.rows.length === 0) {
-      return ApiResponse.error(res, 'Tournament not found', 404);
+      return sendResponse(res, { success: false, status: 404, message: 'Tournament not found' });
     }
 
     const tournament = tournamentResult.rows[0];
@@ -85,7 +81,7 @@ const getLiveTournamentDashboard = async (req, res, next) => {
       }
     };
 
-    ApiResponse.success(res, dashboardData, 'Live tournament dashboard retrieved successfully');
+  return sendResponse(res, { data: dashboardData, message: 'Live tournament dashboard retrieved successfully' });
   } catch (error) {
     next(error);
   }
@@ -120,7 +116,7 @@ const startLiveMatch = async (req, res, next) => {
       
       if (matchResult.rows.length === 0) {
         await client.query('ROLLBACK');
-        return ApiResponse.error(res, 'Match not found or cannot be started', 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Match not found or cannot be started' });
       }
 
       // Initialize match score record
@@ -149,7 +145,7 @@ const startLiveMatch = async (req, res, next) => {
 
       await client.query('COMMIT');
 
-      ApiResponse.success(res, matchResult.rows[0], 'Match started successfully');
+  return sendResponse(res, { data: matchResult.rows[0], message: 'Match started successfully' });
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -190,7 +186,7 @@ const updateLiveScore = async (req, res, next) => {
       
       if (scoreResult.rows.length === 0) {
         await client.query('ROLLBACK');
-        return ApiResponse.error(res, 'Match not found or not active', 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Match not found or not active' });
       }
 
       // Log scoring event
@@ -215,7 +211,7 @@ const updateLiveScore = async (req, res, next) => {
       // Emit real-time update (if WebSocket is implemented)
       // TODO: Add WebSocket broadcasting for live updates
 
-      ApiResponse.success(res, scoreResult.rows[0], 'Score updated successfully');
+  return sendResponse(res, { data: scoreResult.rows[0], message: 'Score updated successfully' });
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -254,7 +250,7 @@ const endLiveMatch = async (req, res, next) => {
       
       if (matchResult.rows.length === 0) {
         await client.query('ROLLBACK');
-        return ApiResponse.error(res, 'Active match not found', 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Active match not found' });
       }
 
       const match = matchResult.rows[0];
@@ -313,14 +309,14 @@ const endLiveMatch = async (req, res, next) => {
 
       await client.query('COMMIT');
 
-      ApiResponse.success(res, {
+      return sendResponse(res, { data: {
         match: updatedMatch.rows[0],
         winner_team_id: determinedWinner,
         final_score: {
           team1_score: match.team1_score,
           team2_score: match.team2_score
         }
-      }, 'Match completed successfully');
+      }, message: 'Match completed successfully' });
     } catch (error) {
       await client.query('ROLLBACK');
       throw error;
@@ -361,7 +357,7 @@ const getLiveMatchDetails = async (req, res, next) => {
     const matchResult = await pool.query(matchQuery, [id]);
     
     if (matchResult.rows.length === 0) {
-      return ApiResponse.error(res, 'Match not found', 404);
+      return sendResponse(res, { success: false, status: 404, message: 'Match not found' });
     }
 
     // Get match events/timeline
@@ -397,7 +393,7 @@ const getLiveMatchDetails = async (req, res, next) => {
         null
     };
 
-    ApiResponse.success(res, liveMatchData, 'Live match details retrieved successfully');
+  return sendResponse(res, { data: liveMatchData, message: 'Live match details retrieved successfully' });
   } catch (error) {
     next(error);
   }
@@ -435,7 +431,7 @@ const getLiveLeaderboard = async (req, res, next) => {
     
     const leaderboard = await pool.query(leaderboardQuery, [id]);
 
-    ApiResponse.success(res, leaderboard.rows, 'Live leaderboard retrieved successfully');
+  return sendResponse(res, { data: leaderboard.rows, message: 'Live leaderboard retrieved successfully' });
   } catch (error) {
     next(error);
   }

@@ -3,7 +3,8 @@
 //
 const { pool } = require('../config/db');
 const bcrypt = require('bcryptjs');
-const { ApiResponse, getPaginationInfo } = require('../utils/apiResponse');
+const { getPaginationInfo } = require('../utils/pagination');
+const { sendResponse } = require('../utils/response');
 const { logInfo, logError, logSecurityEvent } = require('../utils/logger');
 
 /**
@@ -17,7 +18,7 @@ exports.registerSuperAdmin = async (req, res, next) => {
     const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
     if (existing.rowCount > 0) {
       logSecurityEvent('Duplicate super admin registration attempt', { email, ip: req.ip });
-      return ApiResponse.conflict(res, 'Email already in use');
+  return sendResponse(res, { success: false, status: 409, message: 'Email already in use' });
     }
     
     const hashedPassword = await bcrypt.hash(password, 12); // Increased rounds for admin
@@ -29,7 +30,7 @@ exports.registerSuperAdmin = async (req, res, next) => {
     logSecurityEvent('Super admin created', { adminId: result.rows[0].id, email, createdBy: req.user?.id });
     logInfo('Super admin registered successfully', { email, adminId: result.rows[0].id });
     
-    return ApiResponse.created(res, result.rows[0], 'Super admin created successfully');
+  return sendResponse(res, { status: 201, data: result.rows[0], message: 'Super admin created successfully' });
   } catch (err) {
     logError('Super admin registration failed', err, { email });
     next(err);
@@ -74,7 +75,7 @@ exports.getDashboardStats = async (req, res, next) => {
     };
 
     logInfo('Dashboard stats retrieved', { userId: req.user.id });
-    return ApiResponse.success(res, stats, 'Dashboard statistics retrieved successfully');
+  return sendResponse(res, { data: stats, message: 'Dashboard statistics retrieved successfully' });
   } catch (error) {
     logError('Failed to get dashboard stats', error, { userId: req.user.id });
     next(error);
@@ -121,7 +122,7 @@ exports.changeSchoolPassword = async (req, res, next) => {
       [passwordHash, adminUserId]
     );
     
-    res.status(200).json({ success: true, message: 'School admin password updated successfully.' });
+  return sendResponse(res, { message: 'School admin password updated successfully.' });
   } catch (error) {
     next(error);
   } finally {
@@ -180,15 +181,14 @@ exports.getAllPlayers = async (req, res, next) => {
     const countResult = await pool.query(countQuery, countParams);
     const totalCount = parseInt(countResult.rows[0].count);
     
-    res.status(200).json({
-      success: true,
-      data: result.rows,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(totalCount / limit),
-        totalCount,
-        hasNext: page * limit < totalCount,
-        hasPrev: page > 1
+    return sendResponse(res, { data: result.rows, meta: {
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNext: page * limit < totalCount,
+          hasPrev: page > 1
+        }
       }
     });
   } catch (error) {
@@ -237,15 +237,14 @@ exports.getAllSchools = async (req, res, next) => {
     const countResult = await pool.query(countQuery, countParams);
     const totalCount = parseInt(countResult.rows[0].count);
     
-    res.status(200).json({
-      success: true,
-      data: result.rows,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(totalCount / limit),
-        totalCount,
-        hasNext: page * limit < totalCount,
-        hasPrev: page > 1
+    return sendResponse(res, { data: result.rows, meta: {
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNext: page * limit < totalCount,
+          hasPrev: page > 1
+        }
       }
     });
   } catch (error) {
@@ -290,15 +289,14 @@ exports.getAllTournaments = async (req, res, next) => {
     const countResult = await pool.query(countQuery, countParams);
     const totalCount = parseInt(countResult.rows[0].count);
     
-    res.status(200).json({
-      success: true,
-      data: result.rows,
-      pagination: {
-        currentPage: parseInt(page),
-        totalPages: Math.ceil(totalCount / limit),
-        totalCount,
-        hasNext: page * limit < totalCount,
-        hasPrev: page > 1
+    return sendResponse(res, { data: result.rows, meta: {
+        pagination: {
+          currentPage: parseInt(page),
+          totalPages: Math.ceil(totalCount / limit),
+          totalCount,
+          hasNext: page * limit < totalCount,
+          hasPrev: page > 1
+        }
       }
     });
   } catch (error) {
@@ -342,7 +340,7 @@ exports.getNotifications = async (req, res, next) => {
       }
     ];
 
-    return ApiResponse.success(res, mockNotifications, 'Notifications retrieved successfully');
+  return sendResponse(res, { data: mockNotifications, message: 'Notifications retrieved successfully' });
   } catch (error) {
     logError('Failed to get notifications', error, { userId: req.user.id });
     next(error);
@@ -397,7 +395,7 @@ exports.getActivities = async (req, res, next) => {
       }
     ];
 
-    return ApiResponse.success(res, mockActivities, 'Activities retrieved successfully');
+  return sendResponse(res, { data: mockActivities, message: 'Activities retrieved successfully' });
   } catch (error) {
     logError('Failed to get activities', error, { userId: req.user.id });
     next(error);

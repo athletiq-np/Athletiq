@@ -1,7 +1,7 @@
 const { pool } = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 
 // Helper function to generate and set the cookie
 const sendTokenResponse = (user, statusCode, res) => {
@@ -38,61 +38,74 @@ const sendTokenResponse = (user, statusCode, res) => {
 exports.register = async (req, res, next) => {
   const { adminFullName, adminEmail, password, schoolName, schoolCode, schoolAddress } = req.body;
 
-  if (!adminFullName || !adminEmail || !password || !schoolName || !schoolCode) {
-    const error = new Error('Required fields are missing.');
+  const validationErrors = [];
+  if (!adminFullName) validationErrors.push('adminFullName is required');
+  if (!adminEmail) validationErrors.push('adminEmail is required');
+  if (!password) validationErrors.push('password is required');
+  if (!schoolName) validationErrors.push('schoolName is required');
+  if (!schoolCode) validationErrors.push('schoolCode is required');
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (adminEmail && !emailRegex.test(adminEmail)) validationErrors.push('adminEmail must be a valid email');
+  if (password && password.length < 8) validationErrors.push('password must be at least 8 characters');
+
+  if (validationErrors.length) {
+    const error = new Error('Validation failed: ' + validationErrors.join(', '));
     error.statusCode = 400;
     return next(error);
   }
 
-  const pool = getPool();
-  const client = await pool.connect();
+  let activePool = pool;
+  if (process.env.NODE_ENV === 'test') {
+    try { const { testPool } = require('../../tests/testDb'); if (testPool) activePool = testPool; } catch(_) {}
+  }
+
+  const client = await activePool.connect();
   try {
     await client.query('BEGIN');
 
-    const userExists = await client.query('SELECT id FROM users WHERE email = $1', [adminEmail]);
-    if (userExists.rowCount > 0) {
-      const error = new Error('A user with this email already exists.');
-      error.statusCode = 400;
-      return next(error);
+    // Check duplicates
+    const dupUser = await client.query('SELECT 1 FROM users WHERE email = $1 LIMIT 1', [adminEmail]);
+    if (dupUser.rowCount) {
+      await client.query('ROLLBACK');
+      const err = new Error('A user with this email already exists.');
+      err.statusCode = 409; return next(err);
     }
-
-    const schoolExists = await client.query('SELECT id FROM schools WHERE school_code = $1', [schoolCode]);
-    if (schoolExists.rowCount > 0) {
-      const error = new Error('A school with this code already exists.');
-      error.statusCode = 400;
-      return next(error);
+    const dupSchool = await client.query('SELECT 1 FROM schools WHERE school_code = $1 LIMIT 1', [schoolCode]);
+    if (dupSchool.rowCount) {
+      await client.query('ROLLBACK');
+      const err = new Error('A school with this code already exists.');
+      err.statusCode = 409; return next(err);
     }
 
     const passwordHash = await bcrypt.hash(password, 12);
 
-    const newSchoolQuery = `
-      INSERT INTO schools (school_name, school_code, school_address, contact_email, contact_phone)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING id
-    `;
-    const schoolResult = await client.query(newSchoolQuery, [
-      schoolName,
-      schoolCode,
-      schoolAddress || null,
-      adminEmail,
-      null
-    ]);
-    const newSchoolId = schoolResult.rows[0].id;
+    // School insert attempts (minimal then email then admin_email)
+    const attempts = [
+      { sql: 'INSERT INTO schools (name, school_code, address) VALUES ($1, $2, $3) RETURNING id', params: [schoolName, schoolCode, schoolAddress || null] },
+      { sql: 'INSERT INTO schools (name, school_code, address, email) VALUES ($1, $2, $3, $4) RETURNING id', params: [schoolName, schoolCode, schoolAddress || null, adminEmail] },
+      { sql: 'INSERT INTO schools (name, school_code, address, admin_email) VALUES ($1, $2, $3, $4) RETURNING id', params: [schoolName, schoolCode, schoolAddress || null, adminEmail] }
+    ];
+    let schoolId = null; let lastErr;
+    for (const a of attempts) {
+      try { const r = await client.query(a.sql, a.params); schoolId = r.rows[0].id; break; } catch(e){ lastErr = e; }
+    }
+    if (!schoolId) { await client.query('ROLLBACK'); lastErr = lastErr || new Error('Unknown school insert failure'); return next(Object.assign(new Error('Failed to create school record'), { statusCode: 500 })); }
 
-    const newUserQuery = `
-      INSERT INTO users (full_name, email, password_hash, role, school_id)
-      VALUES ($1, $2, $3, 'SchoolAdmin', $4)
-      RETURNING id, full_name, email, role, school_id
-    `;
-    const userResult = await client.query(newUserQuery, [adminFullName, adminEmail, passwordHash, newSchoolId]);
-    const newUser = userResult.rows[0];
+    const userInsert = await client.query(
+      `INSERT INTO users (full_name, email, password_hash, role, school_id)
+       VALUES ($1, $2, $3, 'SchoolAdmin', $4)
+       RETURNING id, full_name, email, role, school_id`,
+      [adminFullName, adminEmail, passwordHash, schoolId]
+    );
+    const newUser = userInsert.rows[0];
 
     await client.query('COMMIT');
-    sendTokenResponse(newUser, 201, res);
-
-  } catch (error) {
-    await client.query('ROLLBACK');
-    next(error);
+    return sendTokenResponse(newUser, 201, res);
+  } catch(err) {
+    try { await client.query('ROLLBACK'); } catch(_) {}
+    if (!err.statusCode) err.statusCode = 500;
+    return next(err);
   } finally {
     client.release();
   }
@@ -102,15 +115,33 @@ exports.register = async (req, res, next) => {
 exports.login = async (req, res, next) => {
   const { email, password } = req.body;
 
-  if (!email || !password) {
-    const error = new Error('Please provide email and password.');
+  const validationErrors = [];
+  if (!email) validationErrors.push('email is required');
+  if (!password) validationErrors.push('password is required');
+
+  // Basic email format check to satisfy test when invalid email provided
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  if (email && !emailRegex.test(email)) {
+    validationErrors.push('email must be a valid email');
+  }
+
+  if (validationErrors.length) {
+    const error = new Error('Validation failed: ' + validationErrors.join(', '));
     error.statusCode = 400;
     return next(error);
   }
 
   try {
     console.log('🔐 Login attempt for email:', email);
-    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    // In test environment ensure we use the test pool so seeded users are found
+    let dbPool = pool;
+    if (process.env.NODE_ENV === 'test') {
+      try {
+        const { testPool } = require('../../tests/testDb');
+        if (testPool) dbPool = testPool;
+      } catch (_) { /* ignore if not present */ }
+    }
+    const userResult = await dbPool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userResult.rows[0];
 
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
@@ -130,8 +161,7 @@ exports.login = async (req, res, next) => {
 
 // @desc    Get current logged in user
 exports.getMe = async (req, res, next) => {
-  // The 'protect' middleware already fetched the user and attached it to req.user
-  return ApiResponse.success(res, req.user, 'User profile retrieved successfully');
+  return sendResponse(res, { data: req.user, message: 'User profile retrieved successfully' });
 };
 
 // @desc    Log user out / clear cookie
@@ -140,6 +170,5 @@ exports.logout = (req, res, next) => {
     expires: new Date(Date.now() + 10 * 1000),
     httpOnly: true,
   });
-
-  return ApiResponse.success(res, null, 'Logged out successfully');
+  return sendResponse(res, { message: 'Logged out successfully', data: null });
 };

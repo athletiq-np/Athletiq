@@ -23,8 +23,60 @@ class MigrationRunner {
         id SERIAL PRIMARY KEY,
         filename VARCHAR(255) NOT NULL UNIQUE,
         executed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-        checksum VARCHAR(64)
+        checksum VARCHAR(64),
+        execution_time INTEGER
       );
+  -- Legacy support: ensure version column exists if older tooling created it
+  ALTER TABLE ${this.migrationTableName} ADD COLUMN IF NOT EXISTS version VARCHAR(50);
+      -- Widen version column to accommodate full filenames (legacy may have length 20)
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='schema_migrations' AND column_name='version'
+        ) THEN
+          BEGIN
+            ALTER TABLE ${this.migrationTableName} ALTER COLUMN version TYPE VARCHAR(255);
+          EXCEPTION WHEN others THEN
+            -- ignore if already widened or incompatible
+          END;
+        END IF;
+      END$$;
+      -- Backward compatibility: if an older table used column 'name', rename it to 'filename'
+      DO $$
+      BEGIN
+        IF EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='schema_migrations' AND column_name='name'
+        ) AND NOT EXISTS (
+          SELECT 1 FROM information_schema.columns
+          WHERE table_name='schema_migrations' AND column_name='filename'
+        ) THEN
+          EXECUTE 'ALTER TABLE ${this.migrationTableName} RENAME COLUMN name TO filename';
+        END IF;
+      END$$;
+      -- Ensure filename column exists (if rename not possible for some reason)
+      ALTER TABLE ${this.migrationTableName} ADD COLUMN IF NOT EXISTS filename VARCHAR(255);
+      -- Ensure uniqueness on filename
+      DO $$
+      BEGIN
+        IF NOT EXISTS (
+          SELECT 1 FROM pg_indexes WHERE tablename='schema_migrations' AND indexname='schema_migrations_filename_key'
+        ) THEN
+          BEGIN
+            ALTER TABLE ${this.migrationTableName} ADD CONSTRAINT schema_migrations_filename_key UNIQUE (filename);
+          EXCEPTION WHEN others THEN
+            -- ignore if constraint already exists under different name
+          END;
+        END IF;
+      END$$;
+      ALTER TABLE ${this.migrationTableName} ADD COLUMN IF NOT EXISTS execution_time INTEGER;
+      -- Backfill version values to full filename (without extension) if truncated
+      UPDATE ${this.migrationTableName}
+        SET version = regexp_replace(filename, '\\.sql$', '')
+      WHERE version IS NOT NULL
+        AND version <> regexp_replace(filename, '\\.sql$', '')
+        AND length(regexp_replace(filename, '\\.sql$', '')) <= 255;
     `;
     
     try {
@@ -56,10 +108,21 @@ class MigrationRunner {
    */
   async getExecutedMigrations() {
     try {
-      const result = await pool.query(
-        `SELECT name FROM ${this.migrationTableName} ORDER BY executed_at`
-      );
-      return result.rows.map(row => row.name);
+      let result;
+      try {
+        // Preferred path (modern schema)
+        result = await pool.query(
+          `SELECT filename FROM ${this.migrationTableName} ORDER BY executed_at`
+        );
+        return result.rows.map(row => row.filename).filter(Boolean);
+      } catch (primaryErr) {
+        // Fallback legacy path using 'name' column
+        logInfo('Falling back to legacy migration column "name"');
+        result = await pool.query(
+          `SELECT name FROM ${this.migrationTableName} ORDER BY executed_at`
+        );
+        return result.rows.map(row => row.name).filter(Boolean);
+      }
     } catch (error) {
       logError('Failed to get executed migrations', error);
       return [];
@@ -97,10 +160,37 @@ class MigrationRunner {
         
         // Record the migration
         const executionTime = Date.now() - startTime;
-        await client.query(
-          `INSERT INTO ${this.migrationTableName} (version, name, checksum, execution_time) VALUES ($1, $2, $3, $4)`,
-          [Date.now(), filename, checksum, executionTime]
-        );
+        // Determine if version column exists and is required (NOT NULL)
+        let hasVersionColumn = false;
+        let versionNotNull = false;
+        try {
+          const colRes = await client.query(
+            `SELECT column_name, is_nullable FROM information_schema.columns WHERE table_name=$1 AND column_name IN ('version')`,
+            [this.migrationTableName]
+          );
+          if (colRes.rowCount > 0) {
+            hasVersionColumn = true;
+            versionNotNull = colRes.rows[0].is_nullable === 'NO';
+          }
+        } catch (e) {
+          // ignore metadata check failure
+        }
+
+        // Derive version from filename prefix before first underscore, fallback to full filename
+  // Use full filename (without extension) as version to avoid collisions on numeric prefixes (e.g., multiple 010_*)
+  let versionPart = filename.replace(/\.sql$/, '');
+
+        if (hasVersionColumn) {
+          await client.query(
+            `INSERT INTO ${this.migrationTableName} (version, filename, checksum, execution_time) VALUES ($1, $2, $3, $4)`,
+            [versionPart, filename, checksum, executionTime]
+          );
+        } else {
+          await client.query(
+            `INSERT INTO ${this.migrationTableName} (filename, checksum, execution_time) VALUES ($1, $2, $3)`,
+            [filename, checksum, executionTime]
+          );
+        }
         
         await client.query('COMMIT');
         logInfo(`Migration completed: ${filename} (${executionTime}ms)`);

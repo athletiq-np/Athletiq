@@ -1,7 +1,7 @@
 const { pool } = require('../config/db');
 const bcrypt = require('bcryptjs');
 const { generateSchoolCode } = require('../utils/codeGenerator'); // Assuming you have this utility
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 
 /**
  * @desc    Register a new school and its primary admin user
@@ -18,7 +18,7 @@ exports.registerSchool = async (req, res) => {
 
   // Basic validation
   if (!name || !address || !admin_name || !admin_email || !password) {
-    return ApiResponse.error(res, 'Missing required fields for school and admin.', 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Missing required fields for school and admin.' });
   }
 
   const client = await pool.connect();
@@ -64,19 +64,19 @@ exports.registerSchool = async (req, res) => {
     // --- Commit Transaction ---
     await client.query('COMMIT');
 
-    ApiResponse.success(res, 
-      { 
-        school_id: school_id, 
-        school_code: new_school_code 
-      }, 
-      'School and admin registered successfully!',
-      201
-    );
+    sendResponse(res, {
+      status: 201,
+      data: {
+        school_id: school_id,
+        school_code: new_school_code
+      },
+      message: 'School and admin registered successfully!'
+    });
 
   } catch (err) {
     await client.query('ROLLBACK');
     console.error("Register school error:", err);
-    ApiResponse.error(res, err.message || "Server error during registration.", 500);
+  sendResponse(res, { success: false, status: 500, message: err.message || 'Server error during registration.' });
   } finally {
     client.release();
   }
@@ -91,14 +91,14 @@ exports.registerSchool = async (req, res) => {
 exports.getAllSchools = async (req, res) => {
   // This check ensures only SuperAdmins can get the full list
   if (req.user.role !== 'SuperAdmin') {
-    return ApiResponse.error(res, 'Access denied.', 403);
+    return sendResponse(res, { success: false, status: 403, message: 'Access denied.' });
   }
   try {
     const result = await pool.query('SELECT * FROM schools ORDER BY created_at DESC');
-    ApiResponse.success(res, result.rows, 'Schools retrieved successfully');
+  sendResponse(res, { data: result.rows, message: 'Schools retrieved successfully' });
   } catch (error) {
     console.error('Error fetching all schools:', error);
-    ApiResponse.error(res, 'Server error while fetching schools.', 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching schools.' });
   }
 };
 
@@ -119,7 +119,7 @@ exports.getMySchoolProfile = async (req, res) => {
     
     if (!schoolId) {
         console.log('❌ No school_id found');
-        return ApiResponse.error(res, "No school associated with this user.", 404);
+  return sendResponse(res, { success: false, status: 404, message: 'No school associated with this user.' });
     }
     
     console.log('🔍 Querying database for school ID:', schoolId);
@@ -128,15 +128,15 @@ exports.getMySchoolProfile = async (req, res) => {
     
     if (!rows.length) {
       console.log('❌ No school found');
-      return ApiResponse.error(res, "Associated school not found.", 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Associated school not found.' });
     }
     
     console.log('✅ School found:', rows[0].name);
     console.log('📤 Sending response');
-    ApiResponse.success(res, rows[0], 'School profile retrieved successfully');
+  sendResponse(res, { data: rows[0], message: 'School profile retrieved successfully' });
   } catch (err) {
     console.error("Get my school error:", err);
-    ApiResponse.error(res, "Server error while fetching school profile.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school profile.' });
   }
 };
 
@@ -150,7 +150,7 @@ exports.updateMySchoolProfile = async (req, res) => {
   try {
     const schoolId = req.user.school_id;
     if (!schoolId) {
-      return ApiResponse.error(res, "No school associated with this user.", 404);
+  return sendResponse(res, { success: false, status: 404, message: 'No school associated with this user.' });
     }
 
     const {
@@ -213,7 +213,7 @@ exports.updateMySchoolProfile = async (req, res) => {
     }
 
     if (updateFields.length === 0) {
-      return ApiResponse.error(res, "No fields to update.", 400);
+  return sendResponse(res, { success: false, status: 400, message: 'No fields to update.' });
     }
 
     // Add updated_at timestamp
@@ -232,13 +232,13 @@ exports.updateMySchoolProfile = async (req, res) => {
     const { rows } = await pool.query(query, values);
     
     if (!rows.length) {
-      return ApiResponse.error(res, "School not found.", 404);
+      return sendResponse(res, { success: false, status: 404, message: 'School not found.' });
     }
 
-    ApiResponse.success(res, rows[0], 'School profile updated successfully');
+    sendResponse(res, { data: rows[0], message: 'School profile updated successfully' });
   } catch (err) {
     console.error("Update my school error:", err);
-    ApiResponse.error(res, "Server error while updating school profile.", 500);
+    sendResponse(res, { success: false, status: 500, message: 'Server error while updating school profile.' });
   }
 };
 
@@ -252,21 +252,13 @@ exports.getMySchoolTournaments = async (req, res) => {
   try {
     console.log('🏫 getMySchoolTournaments - req.user:', req.user);
     
-    // Development mode: Allow testing without full authentication
-    let schoolId = req.user?.school_id;
-    
-    if (!schoolId) {
-      console.log('❌ No school_id found for user:', req.user?.id);
-      
-      // For development testing, use a default school_id
-      if (process.env.NODE_ENV === 'development' || !req.user) {
-        console.log('🔧 Development mode: Using default school_id = 1');
-        schoolId = 1;
-      } else {
-        return ApiResponse.error(res, "No school associated with this user.", 404);
-      }
+    // Ensure user is authenticated
+    if (!req.user || !req.user.school_id) {
+      console.log('❌ No authenticated user or school_id found');
+  return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
     }
     
+    const schoolId = req.user.school_id;
     console.log('🏫 Fetching tournaments for school_id:', schoolId);
     
     // Get tournaments where school's teams are registered OR tournaments organized by school users
@@ -329,14 +321,16 @@ exports.getMySchoolTournaments = async (req, res) => {
       ORDER BY t.start_date ASC
     `, [schoolId]);
     
-    ApiResponse.success(res, {
+    sendResponse(res, { data: {
       registered_tournaments: rows,
       available_tournaments: availableTournaments
-    }, 'School tournaments retrieved successfully');
+    }, message: 'School tournaments retrieved successfully' });
     
   } catch (err) {
     console.error("Get school tournaments error:", err);
-    ApiResponse.error(res, `Server error while fetching school tournaments: ${err.message}`, 500);
+    console.error("Error details:", err.message);
+    console.error("Error stack:", err.stack);
+  sendResponse(res, { success: false, status: 500, message: `Server error while fetching school tournaments: ${err.message}` });
   }
 };
 
@@ -347,17 +341,12 @@ exports.getMySchoolTournaments = async (req, res) => {
  */
 exports.getMySchoolTeams = async (req, res) => {
   try {
-    // Development mode: Allow testing without full authentication
-    let schoolId = req.user?.school_id;
-    
-    if (!schoolId) {
-      // For development testing, use a default school_id
-      if (process.env.NODE_ENV === 'development' || !req.user) {
-        schoolId = 1;
-      } else {
-        return ApiResponse.error(res, "No school associated with this user.", 404);
-      }
+    // Ensure user is authenticated
+    if (!req.user || !req.user.school_id) {
+  return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
     }
+    
+    const schoolId = req.user.school_id;
     
     const { rows } = await pool.query(`
       SELECT 
@@ -383,216 +372,63 @@ exports.getMySchoolTeams = async (req, res) => {
       ORDER BY t.team_name, t.season DESC
     `, [schoolId]);
     
-    ApiResponse.success(res, rows, 'School teams retrieved successfully');
+  sendResponse(res, { data: rows, message: 'School teams retrieved successfully' });
     
   } catch (err) {
     console.error("Get school teams error:", err);
-    ApiResponse.error(res, "Server error while fetching school teams.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school teams.' });
   }
 };
 
 /**
- * @desc    Get school athletes/players with comprehensive data
+ * @desc    Get school athletes
  * @route   GET /api/schools/me/athletes
  * @access  Private (SchoolAdmin)
  */
 exports.getMySchoolAthletes = async (req, res) => {
-  console.log('🔍 DEBUG: getMySchoolAthletes called - version 2025-07-14 latest');
   try {
-    // Development mode: Allow testing without full authentication
-    let schoolId = req.user?.school_id;
+    // Ensure user is authenticated
+    if (!req.user || !req.user.school_id) {
+  return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
+    }
     
-    if (!schoolId) {
-      // For development testing, use a default school_id
-      if (process.env.NODE_ENV === 'development' || !req.user) {
-        schoolId = 1;
-      } else {
-        return ApiResponse.error(res, "No school associated with this user.", 404);
-      }
-    }
-
-    // Handle pagination
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 100;
-    const offset = (page - 1) * limit;
-
-    // Handle filters
-    const { grade, house, sport, status, search } = req.query;
-    let whereConditions = ['p.school_id = $1'];
-    let queryParams = [schoolId];
-    let paramIndex = 2;
-
-    if (grade && grade !== 'all') {
-      whereConditions.push(`p.grade = $${paramIndex}`);
-      queryParams.push(grade);
-      paramIndex++;
-    }
-
-    if (sport && sport !== 'all') {
-      whereConditions.push(`p.registered_sports ? $${paramIndex}`);
-      queryParams.push(sport);
-      paramIndex++;
-    }
-
-    if (status && status !== 'all') {
-      whereConditions.push(`p.active_status = $${paramIndex}`);
-      queryParams.push(status);
-      paramIndex++;
-    }
-
-    if (search) {
-      whereConditions.push(`(p.full_name ILIKE $${paramIndex} OR p.full_name_nepali ILIKE $${paramIndex})`);
-      queryParams.push(`%${search}%`);
-      paramIndex++;
-    }
-
-    const whereClause = whereConditions.join(' AND ');
-    
-    console.log('🔍 DEBUG: About to execute query with whereClause:', whereClause);
-    console.log('🔍 DEBUG: Query params:', queryParams);
+    const schoolId = req.user.school_id;
     
     const { rows } = await pool.query(`
       SELECT 
         p.id,
         p.athlete_id,
         p.full_name,
-        p.full_name_nepali,
-        p.profile_photo_url,
-        p.gender,
         p.date_of_birth,
-        p.nationality,
-        p.citizenship_no,
-        p.grade,
+        p.gender,
+        p.class,
         p.section,
-        p.guardian_name,
-        p.relationship_to_player,
-        p.guardian_phone,
-        p.guardian_email,
-        p.address,
-        p.province,
-        p.district,
-        p.municipality_or_rural_municipality,
-        p.ward_no,
-        p.school_name,
-        p.school_code,
-        p.admission_no,
-        p.enrollment_status,
-        p.registered_sports,
-        p.primary_sport,
-        p.player_position,
-        p.jersey_number,
-        p.team_ids,
-        p.tournaments_participated,
-        p.birth_certificate_url,
-        p.citizenship_certificate_url,
-        p.parent_national_id_url,
-        p.photo_verified,
-        p.document_verified,
-        p.registration_method,
-        p.verification_status,
-        p.blood_group,
-        p.medical_conditions,
-        p.allergies,
-        p.emergency_contact,
-        p.parental_consent,
-        p.nickname,
-        p.bio,
-        p.achievements,
-        p.social_links,
-        p.profile_completion,
-        p.active_status,
-        p.profile_status,
+        p.contact_no,
+        p.email,
+        p.registration_status,
+        p.is_active,
         p.created_at,
-        p.updated_at
+        json_agg(
+          json_build_object(
+            'sport', s.name,
+            'team', t.team_name,
+            'position', psp.event_category
+          )
+        ) FILTER (WHERE s.id IS NOT NULL) as sports_participation
       FROM players p
-      WHERE ${whereClause}
+      LEFT JOIN player_sport_participation psp ON p.id = psp.athlete_id
+      LEFT JOIN sports s ON psp.sport_id = s.id
+      LEFT JOIN teams t ON psp.team_id = t.id
+      WHERE p.school_id = $1
+      GROUP BY p.id, p.athlete_id, p.full_name, p.date_of_birth, p.gender, p.class, p.section, p.contact_no, p.email, p.registration_status, p.is_active, p.created_at
       ORDER BY p.full_name
-      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
-    `, [...queryParams, limit, offset]);
-
-    // Get total count for pagination
-    const countResult = await pool.query(`
-      SELECT COUNT(*) as total
-      FROM players p
-      WHERE ${whereClause}
-    `, queryParams);
-
-    const total = parseInt(countResult.rows[0].total);
-    const totalPages = Math.ceil(total / limit);
-
-    ApiResponse.success(res, {
-      players: rows,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages,
-        hasNext: page < totalPages,
-        hasPrev: page > 1
-      }
-    }, 'School athletes retrieved successfully');
+    `, [schoolId]);
+    
+  sendResponse(res, { data: rows, message: 'School athletes retrieved successfully' });
     
   } catch (err) {
     console.error("Get school athletes error:", err);
-    console.error("Error details:", err.stack);
-    
-    // Return mock data in development mode if database query fails
-    if (process.env.NODE_ENV === 'development') {
-      const mockPlayers = [
-        {
-          id: 1,
-          athlete_id: 'uuid-1',
-          full_name: 'Ram Bahadur Thapa',
-          full_name_nepali: 'राम बहादुर थापा',
-          profile_photo_url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face',
-          gender: 'Male',
-          date_of_birth: '2008-03-15',
-          grade: '10',
-          section: 'A',
-          guardian_name: 'Gopal Thapa',
-          guardian_phone: '+977-9841234567',
-          address: 'Kathmandu, Nepal',
-          registered_sports: ['Football', 'Athletics'],
-          primary_sport: 'Football',
-          verification_status: 'Approved',
-          active_status: 'Active',
-          profile_completion: 85
-        },
-        {
-          id: 2,
-          athlete_id: 'uuid-2',
-          full_name: 'Sita Kumari Poudel',
-          full_name_nepali: 'सीता कुमारी पौडेल',
-          profile_photo_url: 'https://images.unsplash.com/photo-1494790108755-2616b612b47c?w=150&h=150&fit=crop&crop=face',
-          gender: 'Female',
-          date_of_birth: '2009-07-22',
-          grade: '9',
-          section: 'B',
-          guardian_name: 'Krishna Poudel',
-          guardian_phone: '+977-9851234567',
-          address: 'Lalitpur, Nepal',
-          registered_sports: ['Basketball', 'Volleyball'],
-          primary_sport: 'Basketball',
-          verification_status: 'Approved',
-          active_status: 'Active',
-          profile_completion: 90
-        }
-      ];
-
-      return ApiResponse.success(res, {
-        players: mockPlayers,
-        pagination: {
-          page: 1,
-          limit: 100,
-          total: mockPlayers.length,
-          totalPages: 1,
-          hasNext: false,
-          hasPrev: false
-        }
-      }, 'Mock school athletes data (development mode)');
-    }
-    
-    ApiResponse.error(res, "Server error while fetching school athletes.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school athletes.' });
   }
 };
 
@@ -603,17 +439,12 @@ exports.getMySchoolAthletes = async (req, res) => {
  */
 exports.getMySchoolTournamentStats = async (req, res) => {
   try {
-    // Development mode: Allow testing without full authentication
-    let schoolId = req.user?.school_id;
-    
-    if (!schoolId) {
-      // For development testing, use a default school_id
-      if (process.env.NODE_ENV === 'development' || !req.user) {
-        schoolId = 1;
-      } else {
-        return ApiResponse.error(res, "No school associated with this user.", 404);
-      }
+    // Ensure user is authenticated
+    if (!req.user || !req.user.school_id) {
+  return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
     }
+    
+    const schoolId = req.user.school_id;
     
     // Get tournament statistics
     const { rows } = await pool.query(`
@@ -652,14 +483,14 @@ exports.getMySchoolTournamentStats = async (req, res) => {
       ? ((stats.matches_won / stats.total_matches_played) * 100).toFixed(2)
       : 0;
     
-    ApiResponse.success(res, {
+    sendResponse(res, { data: {
       ...stats,
       win_rate: winRate
-    }, 'School tournament statistics retrieved successfully');
+    }, message: 'School tournament statistics retrieved successfully' });
     
   } catch (err) {
     console.error("Get school tournament stats error:", err);
-    ApiResponse.error(res, "Server error while fetching school tournament statistics.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school tournament statistics.' });
   }
 };
 
@@ -706,10 +537,10 @@ exports.getSchoolHouses = async (req, res) => {
       }
     ];
 
-    ApiResponse.success(res, houses, 'School houses retrieved successfully');
+  sendResponse(res, { data: houses, message: 'School houses retrieved successfully' });
   } catch (err) {
     console.error("Get school houses error:", err);
-    ApiResponse.error(res, "Server error while fetching school houses.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school houses.' });
   }
 };
 
@@ -748,10 +579,10 @@ exports.getSchoolStaff = async (req, res) => {
       }
     ];
 
-    ApiResponse.success(res, staff, 'School staff retrieved successfully');
+  sendResponse(res, { data: staff, message: 'School staff retrieved successfully' });
   } catch (err) {
     console.error("Get school staff error:", err);
-    ApiResponse.error(res, "Server error while fetching school staff.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school staff.' });
   }
 };
 
@@ -793,10 +624,10 @@ exports.getSchoolNotifications = async (req, res) => {
       }
     ];
 
-    ApiResponse.success(res, notifications, 'School notifications retrieved successfully');
+  sendResponse(res, { data: notifications, message: 'School notifications retrieved successfully' });
   } catch (err) {
     console.error("Get school notifications error:", err);
-    ApiResponse.error(res, "Server error while fetching school notifications.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school notifications.' });
   }
 };
 
@@ -841,10 +672,10 @@ exports.getSchoolActivities = async (req, res) => {
       }
     ];
 
-    ApiResponse.success(res, activities, 'School activities retrieved successfully');
+  sendResponse(res, { data: activities, message: 'School activities retrieved successfully' });
   } catch (err) {
     console.error("Get school activities error:", err);
-    ApiResponse.error(res, "Server error while fetching school activities.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school activities.' });
   }
 };
 
@@ -862,7 +693,7 @@ exports.createSchoolTeam = async (req, res) => {
     const { name, sport, coach, gender, age_group, description, status = "active" } = req.body;
 
     if (!name || !sport || !gender || !age_group) {
-      return ApiResponse.error(res, "Team name, sport, gender, and age group are required.", 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Team name, sport, gender, and age group are required.' });
     }
 
     // Mock response for now - will be replaced with actual database implementation
@@ -881,10 +712,10 @@ exports.createSchoolTeam = async (req, res) => {
       athletes: []
     };
 
-    ApiResponse.success(res, mockTeam, "Team created successfully", 201);
+  sendResponse(res, { status: 201, data: mockTeam, message: 'Team created successfully' });
   } catch (err) {
     console.error("Create school team error:", err);
-    ApiResponse.error(res, "Server error while creating team.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while creating team.' });
   }
 };
 
@@ -905,10 +736,10 @@ exports.updateSchoolTeam = async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-    ApiResponse.success(res, mockUpdatedTeam, "Team updated successfully");
+  sendResponse(res, { data: mockUpdatedTeam, message: 'Team updated successfully' });
   } catch (err) {
     console.error("Update school team error:", err);
-    ApiResponse.error(res, "Server error while updating team.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while updating team.' });
   }
 };
 
@@ -921,10 +752,10 @@ exports.deleteSchoolTeam = async (req, res) => {
   try {
     const { id } = req.params;
     // Mock deletion
-    ApiResponse.success(res, null, "Team deleted successfully");
+  sendResponse(res, { data: null, message: 'Team deleted successfully' });
   } catch (err) {
     console.error("Delete school team error:", err);
-    ApiResponse.error(res, "Server error while deleting team.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while deleting team.' });
   }
 };
 
@@ -950,10 +781,10 @@ exports.getSchoolTeam = async (req, res) => {
       athletes: []
     };
 
-    ApiResponse.success(res, mockTeam, "Team retrieved successfully");
+  sendResponse(res, { data: mockTeam, message: 'Team retrieved successfully' });
   } catch (err) {
     console.error("Get school team error:", err);
-    ApiResponse.error(res, "Server error while fetching team.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching team.' });
   }
 };
 
@@ -968,7 +799,7 @@ exports.addAthleteToTeam = async (req, res) => {
     const { athlete_id, position } = req.body;
 
     if (!athlete_id) {
-      return ApiResponse.error(res, "Athlete ID is required.", 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Athlete ID is required.' });
     }
 
     // Mock response
@@ -979,10 +810,10 @@ exports.addAthleteToTeam = async (req, res) => {
       created_at: new Date().toISOString()
     };
 
-    ApiResponse.success(res, mockResult, "Athlete added to team successfully", 201);
+  sendResponse(res, { status: 201, data: mockResult, message: 'Athlete added to team successfully' });
   } catch (err) {
     console.error("Add athlete to team error:", err);
-    ApiResponse.error(res, "Server error while adding athlete to team.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while adding athlete to team.' });
   }
 };
 
@@ -995,10 +826,10 @@ exports.removeAthleteFromTeam = async (req, res) => {
   try {
     const { id: teamId, athleteId } = req.params;
     // Mock removal
-    ApiResponse.success(res, null, "Athlete removed from team successfully");
+  sendResponse(res, { data: null, message: 'Athlete removed from team successfully' });
   } catch (err) {
     console.error("Remove athlete from team error:", err);
-    ApiResponse.error(res, "Server error while removing athlete from team.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while removing athlete from team.' });
   }
 };
 
@@ -1013,10 +844,10 @@ exports.updateAthletePosition = async (req, res) => {
     const { position } = req.body;
 
     // Mock response
-    ApiResponse.success(res, null, "Athlete position updated successfully");
+  sendResponse(res, { data: null, message: 'Athlete position updated successfully' });
   } catch (err) {
     console.error("Update athlete position error:", err);
-    ApiResponse.error(res, "Server error while updating athlete position.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while updating athlete position.' });
   }
 };
 
@@ -1068,10 +899,10 @@ exports.getSchoolTeams = async (req, res) => {
     `;
 
     const result = await pool.query(query, [schoolId]);
-    ApiResponse.success(res, result.rows, "Teams retrieved successfully");
+  sendResponse(res, { data: result.rows, message: 'Teams retrieved successfully' });
   } catch (err) {
     console.error("Get teams error:", err);
-    ApiResponse.error(res, "Server error while fetching teams.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching teams.' });
   }
 };
 
@@ -1091,10 +922,10 @@ exports.getSportsConfig = async (req, res) => {
     `;
 
     const result = await pool.query(query);
-    ApiResponse.success(res, result.rows, "Sports configuration retrieved successfully");
+  sendResponse(res, { data: result.rows, message: 'Sports configuration retrieved successfully' });
   } catch (err) {
     console.error("Get sports config error:", err);
-    ApiResponse.error(res, "Server error while fetching sports configuration.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching sports configuration.' });
   }
 };
 
@@ -1110,7 +941,7 @@ exports.createSchoolTeam = async (req, res) => {
     const { name, sport, maxPlayers, minPlayers } = req.body;
 
     if (!name || !sport) {
-      return ApiResponse.error(res, "Team name and sport are required.", 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Team name and sport are required.' });
     }
 
     // Check for duplicate team name within school and sport
@@ -1120,7 +951,7 @@ exports.createSchoolTeam = async (req, res) => {
     );
 
     if (existingTeam.rows.length > 0) {
-      return ApiResponse.error(res, "A team with this name already exists for this sport.", 409);
+  return sendResponse(res, { success: false, status: 409, message: 'A team with this name already exists for this sport.' });
     }
 
     const query = `
@@ -1130,10 +961,10 @@ exports.createSchoolTeam = async (req, res) => {
     `;
 
     const result = await pool.query(query, [schoolId, name, sport, maxPlayers || 11, minPlayers || 7, createdBy]);
-    ApiResponse.success(res, result.rows[0], "Team created successfully", 201);
+  sendResponse(res, { status: 201, data: result.rows[0], message: 'Team created successfully' });
   } catch (err) {
     console.error("Create team error:", err);
-    ApiResponse.error(res, "Server error while creating team.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while creating team.' });
   }
 };
 
@@ -1149,7 +980,7 @@ exports.updateSchoolTeam = async (req, res) => {
     const { name, sport, maxPlayers, minPlayers } = req.body;
 
     if (!name || !sport) {
-      return ApiResponse.error(res, "Team name and sport are required.", 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Team name and sport are required.' });
     }
 
     // Check if team belongs to school
@@ -1159,7 +990,7 @@ exports.updateSchoolTeam = async (req, res) => {
     );
 
     if (teamCheck.rows.length === 0) {
-      return ApiResponse.error(res, "Team not found or access denied.", 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
     }
 
     const query = `
@@ -1170,10 +1001,10 @@ exports.updateSchoolTeam = async (req, res) => {
     `;
 
     const result = await pool.query(query, [name, sport, maxPlayers, minPlayers, teamId, schoolId]);
-    ApiResponse.success(res, result.rows[0], "Team updated successfully");
+  sendResponse(res, { data: result.rows[0], message: 'Team updated successfully' });
   } catch (err) {
     console.error("Update team error:", err);
-    ApiResponse.error(res, "Server error while updating team.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while updating team.' });
   }
 };
 
@@ -1194,7 +1025,7 @@ exports.deleteSchoolTeam = async (req, res) => {
     );
 
     if (teamCheck.rows.length === 0) {
-      return ApiResponse.error(res, "Team not found or access denied.", 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
     }
 
     // Soft delete - update status to inactive
@@ -1209,10 +1040,10 @@ exports.deleteSchoolTeam = async (req, res) => {
       ['inactive', teamId]
     );
 
-    ApiResponse.success(res, { id: teamId }, "Team deleted successfully");
+  sendResponse(res, { data: { id: teamId }, message: 'Team deleted successfully' });
   } catch (err) {
     console.error("Delete team error:", err);
-    ApiResponse.error(res, "Server error while deleting team.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while deleting team.' });
   }
 };
 
@@ -1228,7 +1059,7 @@ exports.addPlayerToTeam = async (req, res) => {
     const { name, studentId, grade, position } = req.body;
 
     if (!name || !studentId) {
-      return ApiResponse.error(res, "Player name and student ID are required.", 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Player name and student ID are required.' });
     }
 
     // Check if team belongs to school
@@ -1238,7 +1069,7 @@ exports.addPlayerToTeam = async (req, res) => {
     );
 
     if (teamCheck.rows.length === 0) {
-      return ApiResponse.error(res, "Team not found or access denied.", 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
     }
 
     const maxPlayers = teamCheck.rows[0].max_players;
@@ -1250,7 +1081,7 @@ exports.addPlayerToTeam = async (req, res) => {
     );
 
     if (parseInt(playerCount.rows[0].count) >= maxPlayers) {
-      return ApiResponse.error(res, `Team is full. Maximum ${maxPlayers} players allowed.`, 409);
+  return sendResponse(res, { success: false, status: 409, message: `Team is full. Maximum ${maxPlayers} players allowed.` });
     }
 
     // Check if player already exists in school
@@ -1270,7 +1101,7 @@ exports.addPlayerToTeam = async (req, res) => {
       );
 
       if (playerInTeam.rows.length > 0) {
-        return ApiResponse.error(res, "Player is already in this team.", 409);
+  return sendResponse(res, { success: false, status: 409, message: 'Player is already in this team.' });
       }
     } else {
       // Create new player record
@@ -1291,10 +1122,10 @@ exports.addPlayerToTeam = async (req, res) => {
     `;
 
     const result = await pool.query(addPlayerQuery, [teamId, playerId, position, name, grade]);
-    ApiResponse.success(res, result.rows[0], "Player added to team successfully", 201);
+  sendResponse(res, { status: 201, data: result.rows[0], message: 'Player added to team successfully' });
   } catch (err) {
     console.error("Add player error:", err);
-    ApiResponse.error(res, "Server error while adding player to team.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while adding player to team.' });
   }
 };
 
@@ -1315,7 +1146,7 @@ exports.removePlayerFromTeam = async (req, res) => {
     );
 
     if (teamCheck.rows.length === 0) {
-      return ApiResponse.error(res, "Team not found or access denied.", 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
     }
 
     // Remove player from team
@@ -1325,13 +1156,13 @@ exports.removePlayerFromTeam = async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return ApiResponse.error(res, "Player not found in team.", 404);
+      return sendResponse(res, { success: false, status: 404, message: 'Player not found in team.' });
     }
 
-    ApiResponse.success(res, { playerId }, "Player removed from team successfully");
+    sendResponse(res, { data: { playerId }, message: 'Player removed from team successfully' });
   } catch (err) {
     console.error("Remove player error:", err);
-    ApiResponse.error(res, "Server error while removing player from team.", 500);
+    sendResponse(res, { success: false, status: 500, message: 'Server error while removing player from team.' });
   }
 };
 
@@ -1347,7 +1178,7 @@ exports.updatePlayerPositions = async (req, res) => {
     const { updates } = req.body;
 
     if (!Array.isArray(updates)) {
-      return ApiResponse.error(res, "Updates must be an array.", 400);
+  return sendResponse(res, { success: false, status: 400, message: 'Updates must be an array.' });
     }
 
     // Check if team belongs to school
@@ -1357,7 +1188,7 @@ exports.updatePlayerPositions = async (req, res) => {
     );
 
     if (teamCheck.rows.length === 0) {
-      return ApiResponse.error(res, "Team not found or access denied.", 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
     }
 
     // Update positions for each player
@@ -1373,7 +1204,7 @@ exports.updatePlayerPositions = async (req, res) => {
       }
 
       await client.query('COMMIT');
-      ApiResponse.success(res, { teamId, updates }, "Player positions updated successfully");
+      sendResponse(res, { data: { teamId, updates }, message: 'Player positions updated successfully' });
     } catch (err) {
       await client.query('ROLLBACK');
       throw err;
@@ -1382,7 +1213,7 @@ exports.updatePlayerPositions = async (req, res) => {
     }
   } catch (err) {
     console.error("Update player positions error:", err);
-    ApiResponse.error(res, "Server error while updating player positions.", 500);
+    sendResponse(res, { success: false, status: 500, message: 'Server error while updating player positions.' });
   }
 };
 
@@ -1400,7 +1231,7 @@ exports.exportSchoolData = async (req, res) => {
       if (process.env.NODE_ENV === 'development') {
         schoolId = 1;
       } else {
-        return ApiResponse.error(res, "No school associated with this user.", 404);
+  return sendResponse(res, { success: false, status: 404, message: 'No school associated with this user.' });
       }
     }
 
@@ -1449,7 +1280,7 @@ exports.exportSchoolData = async (req, res) => {
     
   } catch (err) {
     console.error("Export school data error:", err);
-    ApiResponse.error(res, "Server error while exporting school data.", 500);
+  sendResponse(res, { success: false, status: 500, message: 'Server error while exporting school data.' });
   }
 };
 

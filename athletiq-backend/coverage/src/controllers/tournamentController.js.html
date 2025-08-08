@@ -1561,15 +1561,7 @@
 <a name='L1496'></a><a href='#L1496'>1496</a>
 <a name='L1497'></a><a href='#L1497'>1497</a>
 <a name='L1498'></a><a href='#L1498'>1498</a>
-<a name='L1499'></a><a href='#L1499'>1499</a>
-<a name='L1500'></a><a href='#L1500'>1500</a>
-<a name='L1501'></a><a href='#L1501'>1501</a>
-<a name='L1502'></a><a href='#L1502'>1502</a>
-<a name='L1503'></a><a href='#L1503'>1503</a>
-<a name='L1504'></a><a href='#L1504'>1504</a>
-<a name='L1505'></a><a href='#L1505'>1505</a>
-<a name='L1506'></a><a href='#L1506'>1506</a>
-<a name='L1507'></a><a href='#L1507'>1507</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
+<a name='L1499'></a><a href='#L1499'>1499</a></td><td class="line-coverage quiet"><span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -1679,15 +1671,8 @@
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
+<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -2816,7 +2801,6 @@
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
 <span class="cline-any cline-neutral">&nbsp;</span>
@@ -3084,7 +3068,7 @@
 &nbsp;
 const { pool } = require("../config/db");
 const { generateShortCode } = require("../utils/codeGenerator");
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 &nbsp;
 /**
  * @desc    Get all tournaments with enhanced filtering and status management
@@ -3185,15 +3169,8 @@ const getTournaments = <span class="fstat-no" title="function not covered" >as</
     const countResult = <span class="cstat-no" title="statement not covered" >await pool.query(countQuery, countParams);</span>
     const total = <span class="cstat-no" title="statement not covered" >parseInt(countResult.rows[0].total);</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
-      tournaments: rows,
-      pagination: {
-        page: parseInt(page),
-        limit: parseInt(limit),
-        total,
-        totalPages: Math.ceil(total / parseInt(limit))
-      }
-    }, 'Tournaments retrieved successfully');
+  // Legacy tests expect data to be an array directly
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { data: rows, message: 'Tournaments retrieved successfully' });</span>
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -3215,7 +3192,7 @@ const getTournamentById = <span class="fstat-no" title="function not covered" >a
 <span class="cstat-no" title="statement not covered" >      return next(error);</span>
     }
     
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, rows[0], 'Tournament retrieved successfully');</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { data: rows[0], message: 'Tournament retrieved successfully' });</span>
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -3357,7 +3334,7 @@ const createTournament = <span class="fstat-no" title="function not covered" >as
 <span class="cstat-no" title="statement not covered" >      console.warn('Audit logging failed:', auditErr.message);</span>
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, tournament, 'Tournament created successfully', 201);</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { status: 201, data: tournament, message: 'Tournament created successfully' });</span>
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -3430,10 +3407,10 @@ const registerTeamForTournament = <span class="fstat-no" title="function not cov
       [tournamentId, team_id, 'registered']
     );
     
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >    return sendResponse(res, { data: {</span>
       tournament_team_id: tournamentTeamId,
       registered_players: player_ids.length
-    }, 'Team registered successfully for tournament');
+    }, message: 'Team registered successfully for tournament' });
     
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
@@ -3513,11 +3490,11 @@ const generateTournamentBracket = <span class="fstat-no" title="function not cov
       ['active', tournamentId]
     );
     
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >    return sendResponse(res, { data: {</span>
       tournament_id: tournamentId,
       matches_generated: matches.length,
       format: tournament.format
-    }, 'Tournament bracket generated successfully');
+    }, message: 'Tournament bracket generated successfully' });
     
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
@@ -3581,7 +3558,7 @@ const getTournamentBracket = <span class="fstat-no" title="function not covered"
     // Filter out null matches
 <span class="cstat-no" title="statement not covered" >    tournament.matches = tournament.matches.filter(<span class="fstat-no" title="function not covered" >ma</span>tch =&gt; <span class="cstat-no" title="statement not covered" >match.id !== null)</span>;</span>
     
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, tournament, 'Tournament bracket retrieved successfully');</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { data: tournament, message: 'Tournament bracket retrieved successfully' });</span>
     
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
@@ -3635,12 +3612,12 @@ const updateMatchResult = <span class="fstat-no" title="function not covered" >a
       matchId
     ]);
     
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >    return sendResponse(res, { data: {</span>
       match_id: matchId,
       home_score,
       away_score,
       winner_team_id
-    }, 'Match result updated successfully');
+    }, message: 'Match result updated successfully' });
     
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
@@ -3706,10 +3683,10 @@ const assignTournamentOrganizer = <span class="fstat-no" title="function not cov
 <span class="cstat-no" title="statement not covered" >      console.warn('Audit logging failed:', auditErr.message);</span>
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >    return sendResponse(res, { data: {</span>
       tournament,
       organizer: organizer
-    }, 'Tournament organizer assigned successfully');
+    }, message: 'Tournament organizer assigned successfully' });
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -3820,7 +3797,7 @@ const checkTournamentEligibility = <span class="fstat-no" title="function not co
 &nbsp;
     const isEligible = <span class="cstat-no" title="statement not covered" >Object.values(checks).every(<span class="fstat-no" title="function not covered" >ch</span>eck =&gt; <span class="cstat-no" title="statement not covered" >check !== false)</span>;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >    return sendResponse(res, { data: {</span>
       eligible: isEligible,
       checks,
       tournament_details: {
@@ -3834,7 +3811,7 @@ const checkTournamentEligibility = <span class="fstat-no" title="function not co
         registration_end_date: tournament.registration_end_date,
         eligibility_criteria: eligibility
       }
-    }, 'Eligibility check completed');
+    }, message: 'Eligibility check completed' });
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -3914,7 +3891,7 @@ const updateTournamentStatus = <span class="fstat-no" title="function not covere
 <span class="cstat-no" title="statement not covered" >      return next(error);</span>
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, rows[0], 'Tournament status updated successfully');</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { data: rows[0], message: 'Tournament status updated successfully' });</span>
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -3951,7 +3928,7 @@ const getTournamentDashboard = <span class="fstat-no" title="function not covere
       }
     };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, dashboardData, 'Tournament dashboard data retrieved successfully');</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { data: dashboardData, message: 'Tournament dashboard data retrieved successfully' });</span>
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -4034,7 +4011,7 @@ const getRegistrationDashboard = <span class="fstat-no" title="function not cove
       recent_registrations: recentRegistrations.rows
     };
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, dashboardData, 'Registration dashboard data retrieved successfully');</span>
+<span class="cstat-no" title="statement not covered" >  return sendResponse(res, { data: dashboardData, message: 'Registration dashboard data retrieved successfully' });</span>
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -4139,13 +4116,13 @@ const checkPlayerEligibility = <span class="fstat-no" title="function not covere
     const eligibleCount = <span class="cstat-no" title="statement not covered" >eligibilityChecks.filter(<span class="fstat-no" title="function not covered" >ch</span>eck =&gt; <span class="cstat-no" title="statement not covered" >check.eligible)</span>.length;</span>
     const ineligibleCount = <span class="cstat-no" title="statement not covered" >eligibilityChecks.filter(<span class="fstat-no" title="function not covered" >ch</span>eck =&gt; <span class="cstat-no" title="statement not covered" >!check.eligible)</span>.length;</span>
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >    return sendResponse(res, { data: {</span>
       tournament_id: id,
       total_players: player_ids.length,
       eligible_players: eligibleCount,
       ineligible_players: ineligibleCount,
       eligibility_checks: eligibilityChecks
-    }, 'Player eligibility check completed');
+    }, message: 'Player eligibility check completed' });
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -4321,13 +4298,12 @@ const registerTeamEnhanced = <span class="fstat-no" title="function not covered"
       })]
     );
     
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >    return sendResponse(res, { data: {</span>
       tournament_team_id: tournamentTeamId,
       registration_status: registrationStatus,
       registered_players: registeredPlayers.length,
-      eligibility_results: eligibilityResults,
-      message: registrationStatus === 'registered' ? 'Team registered successfully' : 'Team registration pending approval'
-    }, 'Team registration completed');
+      eligibility_results: eligibilityResults
+    }, message: registrationStatus === 'registered' ? 'Team registered successfully' : 'Team registration pending approval' });
     
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
@@ -4390,11 +4366,11 @@ const updateTeamRegistrationStatus = <span class="fstat-no" title="function not 
       })]
     );
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >    return sendResponse(res, { data: {</span>
       tournament_team_id: teamId,
       status,
       seed_order
-    }, 'Team registration status updated successfully');
+    }, message: 'Team registration status updated successfully' });
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -4470,11 +4446,11 @@ const getTournamentTeams = <span class="fstat-no" title="function not covered" >
       }
     }
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >    return sendResponse(res, { data: {</span>
       tournament_id: id,
       teams,
       total_teams: teams.length
-    }, 'Tournament teams retrieved successfully');
+    }, message: 'Tournament teams retrieved successfully' });
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -4549,7 +4525,7 @@ const bulkUpdateTeamRegistrations = <span class="fstat-no" title="function not c
       })]
     );
 &nbsp;
-<span class="cstat-no" title="statement not covered" >    return ApiResponse.success(res, {</span>
+<span class="cstat-no" title="statement not covered" >    return sendResponse(res, { data: {</span>
       tournament_id: tournamentId,
       results,
       summary: {
@@ -4557,7 +4533,7 @@ const bulkUpdateTeamRegistrations = <span class="fstat-no" title="function not c
         successful: results.filter(<span class="fstat-no" title="function not covered" >r </span>=&gt; <span class="cstat-no" title="statement not covered" >r.status === 'updated')</span>.length,
         failed: results.filter(<span class="fstat-no" title="function not covered" >r </span>=&gt; <span class="cstat-no" title="statement not covered" >r.status === 'failed')</span>.length
       }
-    }, 'Bulk team registration update completed');
+    }, message: 'Bulk team registration update completed' });
   } catch (err) {
 <span class="cstat-no" title="statement not covered" >    next(err);</span>
   }
@@ -4588,7 +4564,7 @@ module.exports = {
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-15T07:22:31.189Z
+                at 2025-08-08T18:43:31.767Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

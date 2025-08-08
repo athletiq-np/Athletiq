@@ -1,269 +1,71 @@
-// src/utils/apiResponse.js
+// LEGACY RESPONSE ADAPTER (Soft-deprecated)
+// ----------------------------------------
+// Older test suites & some routes still import { ApiResponse, getPaginationInfo }.
+// We provide a thin adapter over the new unified sendResponse helper to avoid
+// widespread breaking changes while migration completes.
+// NOTE: New code should import { sendResponse } from ./response instead.
 
-/**
- * Standardized API response utility
- */
-class ApiResponse {
-  /**
-   * Success response
-   * @param {Object} res - Express response object
-   * @param {*} data - Response data
-   * @param {string} message - Success message
-   * @param {number} statusCode - HTTP status code
-   * @param {Object} meta - Additional metadata (pagination, etc.)
-   */
-  static success(res, data = null, message = 'Success', statusCode = 200, meta = {}) {
-    const response = {
-      success: true,
-      message,
-      data,
-      ...meta
-    };
+const { sendResponse } = require('./response');
 
-    // Remove null/undefined fields
-    Object.keys(response).forEach(key => {
-      if (response[key] === null || response[key] === undefined) {
-        delete response[key];
-      }
-    });
-
-    return res.status(statusCode).json(response);
+function success(res, data = undefined, message = 'Success', status = 200, meta = undefined) {
+  // For legacy unit tests we must NOT wrap the response in { status, success } when no meta
+  // They expect exactly: { success, message, data? , pagination? }
+  if (meta && meta.pagination) {
+    const payload = { success: true, message };
+    if (data !== undefined) payload.data = data;
+    // Legacy flattened pagination only (unit test asserts exact object, so exclude meta wrapper)
+    payload.pagination = meta.pagination;
+    if (res.locals?.requestId) payload.request_id = res.locals.requestId;
+    return res.status(status).json(payload);
   }
-
-  /**
-   * Error response
-   * @param {Object} res - Express response object
-   * @param {string} message - Error message
-   * @param {number} statusCode - HTTP status code
-   * @param {*} errors - Detailed error information
-   */
-  static error(res, message = 'Internal Server Error', statusCode = 500, errors = null) {
-    const response = {
-      success: false,
-      message,
-      ...(errors && { errors })
-    };
-
-    return res.status(statusCode).json(response);
-  }
-
-  /**
-   * Validation error response
-   * @param {Object} res - Express response object
-   * @param {Array} errors - Validation errors array
-   * @param {string} message - Error message
-   */
-  static validationError(res, errors, message = 'Validation failed') {
-    return res.status(400).json({
-      success: false,
-      message,
-      errors: errors.map(err => ({
-        field: err.param || err.path,
-        message: err.msg || err.message,
-        value: err.value
-      }))
-    });
-  }
-
-  /**
-   * Unauthorized response
-   * @param {Object} res - Express response object
-   * @param {string} message - Error message
-   */
-  static unauthorized(res, message = 'Unauthorized access') {
-    return res.status(401).json({
-      success: false,
-      message
-    });
-  }
-
-  /**
-   * Forbidden response
-   * @param {Object} res - Express response object
-   * @param {string} message - Error message
-   */
-  static forbidden(res, message = 'Access forbidden') {
-    return res.status(403).json({
-      success: false,
-      message
-    });
-  }
-
-  /**
-   * Not found response
-   * @param {Object} res - Express response object
-   * @param {string} message - Error message
-   */
-  static notFound(res, message = 'Resource not found') {
-    return res.status(404).json({
-      success: false,
-      message
-    });
-  }
-
-  /**
-   * Conflict response
-   * @param {Object} res - Express response object
-   * @param {string} message - Error message
-   */
-  static conflict(res, message = 'Resource conflict') {
-    return res.status(409).json({
-      success: false,
-      message
-    });
-  }
-
-  /**
-   * Too many requests response
-   * @param {Object} res - Express response object
-   * @param {string} message - Error message
-   */
-  static tooManyRequests(res, message = 'Too many requests') {
-    return res.status(429).json({
-      success: false,
-      message
-    });
-  }
-
-  /**
-   * Paginated response
-   * @param {Object} res - Express response object
-   * @param {Array} data - Array of data
-   * @param {Object} pagination - Pagination info
-   * @param {string} message - Success message
-   */
-  static paginated(res, data, pagination, message = 'Success') {
-    return res.status(200).json({
-      success: true,
-      message,
-      data,
-      pagination: {
-        currentPage: parseInt(pagination.currentPage),
-        totalPages: parseInt(pagination.totalPages),
-        totalCount: parseInt(pagination.totalCount),
-        limit: parseInt(pagination.limit),
-        hasNext: pagination.hasNext,
-        hasPrev: pagination.hasPrev
-      }
-    });
-  }
-
-  /**
-   * Created response
-   * @param {Object} res - Express response object
-   * @param {*} data - Created resource data
-   * @param {string} message - Success message
-   */
-  static created(res, data, message = 'Resource created successfully') {
-    return ApiResponse.success(res, data, message, 201);
-  }
-
-  /**
-   * Updated response
-   * @param {Object} res - Express response object
-   * @param {*} data - Updated resource data
-   * @param {string} message - Success message
-   */
-  static updated(res, data, message = 'Resource updated successfully') {
-    return ApiResponse.success(res, data, message, 200);
-  }
-
-  /**
-   * Deleted response
-   * @param {Object} res - Express response object
-   * @param {string} message - Success message
-   */
-  static deleted(res, message = 'Resource deleted successfully') {
-    return res.status(200).json({
-      success: true,
-      message
-    });
-  }
-
-  /**
-   * No content response
-   * @param {Object} res - Express response object
-   */
-  static noContent(res) {
-    return res.status(204).send();
-  }
+  const payload = { success: true, message };
+  if (data !== undefined) payload.data = data;
+  return res.status(status).json(payload);
 }
 
-/**
- * Pagination helper
- * @param {number} page - Current page
- * @param {number} limit - Items per page
- * @param {number} totalCount - Total number of items
- */
-const getPaginationInfo = (page, limit, totalCount) => {
-  const totalPages = Math.ceil(totalCount / limit);
-  const currentPage = parseInt(page);
-  
+function error(res, message = 'Error', status = 400, errors = undefined) {
+  return sendResponse(res, { status, success: false, message, errors });
+}
+
+function unauthorized(res, message = 'Unauthorized access') {
+  return error(res, message, 401);
+}
+
+function forbidden(res, message = 'Forbidden access') {
+  return error(res, message, 403);
+}
+
+function notFound(res, message = 'Resource not found') {
+  return error(res, message, 404);
+}
+
+function created(res, data, message = 'Resource created successfully') {
+  return success(res, data, message, 201);
+}
+
+function deleted(res, message = 'Resource deleted successfully') {
+  return success(res, undefined, message, 200);
+}
+
+// Pagination helper retained for legacy unit tests
+function getPaginationInfo(page = 1, limit = 10, totalCount = 0) {
+  page = Number(page) || 1;
+  limit = Number(limit) || 10;
+  totalCount = Number(totalCount) || 0;
+  const totalPages = limit > 0 ? Math.max(1, Math.ceil(totalCount / limit)) : 1;
+  const currentPage = Math.min(Math.max(1, page), totalPages);
+  const offset = (currentPage - 1) * limit;
   return {
     currentPage,
     totalPages,
     totalCount,
-    limit: parseInt(limit),
+    limit,
     hasNext: currentPage < totalPages,
     hasPrev: currentPage > 1,
-    offset: (currentPage - 1) * limit
+    offset
   };
-};
+}
 
-/**
- * Build database query with pagination and filters
- * @param {Object} options - Query options
- */
-const buildQuery = (options = {}) => {
-  const {
-    baseQuery,
-    page = 1,
-    limit = 50,
-    sortBy = 'created_at',
-    sortOrder = 'DESC',
-    filters = {}
-  } = options;
+const ApiResponse = { success, error, unauthorized, forbidden, notFound, created, deleted };
 
-  let query = baseQuery;
-  const params = [];
-  let paramIndex = 1;
-
-  // Add filters
-  const whereConditions = [];
-  Object.keys(filters).forEach(key => {
-    if (filters[key] !== undefined && filters[key] !== null && filters[key] !== '') {
-      if (typeof filters[key] === 'string' && key.includes('search')) {
-        whereConditions.push(`${key.replace('_search', '')} ILIKE $${paramIndex}`);
-        params.push(`%${filters[key]}%`);
-      } else {
-        whereConditions.push(`${key} = $${paramIndex}`);
-        params.push(filters[key]);
-      }
-      paramIndex++;
-    }
-  });
-
-  if (whereConditions.length > 0) {
-    query += ` WHERE ${whereConditions.join(' AND ')}`;
-  }
-
-  // Add sorting
-  query += ` ORDER BY ${sortBy} ${sortOrder.toUpperCase()}`;
-
-  // Add pagination
-  const pagination = getPaginationInfo(page, limit, 0); // totalCount will be calculated separately
-  query += ` LIMIT $${paramIndex} OFFSET $${paramIndex + 1}`;
-  params.push(pagination.limit, pagination.offset);
-
-  return {
-    query,
-    params,
-    pagination
-  };
-};
-
-module.exports = {
-  ApiResponse,
-  getPaginationInfo,
-  buildQuery
-};
+module.exports = { ApiResponse, getPaginationInfo };

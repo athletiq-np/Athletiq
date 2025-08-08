@@ -25,28 +25,32 @@ const { generalLimiter } = require('../../middlewares/rateLimiter');
  *         content:
  *           application/json:
  *             schema:
- *               allOf:
- *                 - $ref: '#/components/schemas/ApiResponse'
- *                 - type: object
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Health check passed
+ *                 data:
+ *                   type: object
  *                   properties:
- *                     data:
- *                       type: object
- *                       properties:
- *                         status:
- *                           type: string
- *                           example: OK
- *                         timestamp:
- *                           type: string
- *                           format: date-time
- *                         uptime:
- *                           type: number
- *                           description: Server uptime in seconds
- *                         environment:
- *                           type: string
- *                           example: development
- *                         version:
- *                           type: string
- *                           example: 1.0.0
+ *                     status:
+ *                       type: string
+ *                       example: OK
+ *                     timestamp:
+ *                       type: string
+ *                       format: date-time
+ *                     uptime:
+ *                       type: number
+ *                       description: Server uptime in seconds
+ *                     environment:
+ *                       type: string
+ *                       example: development
+ *                     version:
+ *                       type: string
+ *                       example: 1.0.0
  *       500:
  *         description: Health check failed
  *       429:

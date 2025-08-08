@@ -137,6 +137,7 @@ const logSecurityEvent = (event, details = {}) => {
 
 module.exports = {
   logger,
+  createLogger: () => logger, // Add createLogger function
   logError,
   logInfo,
   logWarn,

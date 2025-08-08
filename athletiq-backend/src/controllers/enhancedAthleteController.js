@@ -1,6 +1,6 @@
 const pool = require('../config/db');
 const { generateShortCode } = require('../utils/codeGenerator');
-const ApiResponse = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 
 /**
  * Enhanced Athlete Controller
@@ -35,7 +35,7 @@ exports.getAthleteDashboard = async (req, res) => {
     const athleteResult = await pool.query(athleteQuery, [athleteId]);
     
     if (athleteResult.rowCount === 0) {
-      return ApiResponse.error(res, 'Athlete not found', 404);
+      return sendResponse(res, { success: false, status: 404, message: 'Athlete not found' });
     }
 
     const athlete = athleteResult.rows[0];
@@ -115,11 +115,11 @@ exports.getAthleteDashboard = async (req, res) => {
       }
     };
 
-    ApiResponse.success(res, dashboardData, 'Athlete dashboard retrieved successfully');
+  return sendResponse(res, { data: dashboardData, message: 'Athlete dashboard retrieved successfully' });
 
   } catch (err) {
-    console.error('Get athlete dashboard error:', err);
-    ApiResponse.error(res, 'Server error while fetching athlete dashboard', 500);
+  console.error('Get athlete dashboard error:', err);
+  return sendResponse(res, { success: false, status: 500, message: 'Server error while fetching athlete dashboard' });
   }
 };
 
@@ -134,11 +134,11 @@ exports.checkAthleteEligibility = async (req, res) => {
     
     const eligibility = await checkAthleteEligibility(athleteId);
     
-    ApiResponse.success(res, eligibility, 'Athlete eligibility checked');
+  return sendResponse(res, { data: eligibility, message: 'Athlete eligibility checked' });
 
   } catch (err) {
-    console.error('Check athlete eligibility error:', err);
-    ApiResponse.error(res, 'Server error while checking eligibility', 500);
+  console.error('Check athlete eligibility error:', err);
+  return sendResponse(res, { success: false, status: 500, message: 'Server error while checking eligibility' });
   }
 };
 
@@ -227,11 +227,11 @@ exports.getAthleteAnalytics = async (req, res) => {
       period: period
     };
 
-    ApiResponse.success(res, analyticsData, 'Athlete analytics retrieved successfully');
+  return sendResponse(res, { data: analyticsData, message: 'Athlete analytics retrieved successfully' });
 
   } catch (err) {
-    console.error('Get athlete analytics error:', err);
-    ApiResponse.error(res, 'Server error while fetching analytics', 500);
+  console.error('Get athlete analytics error:', err);
+  return sendResponse(res, { success: false, status: 500, message: 'Server error while fetching analytics' });
   }
 };
 
@@ -267,13 +267,13 @@ exports.recordAthleteStats = async (req, res) => {
     await client.query('COMMIT');
     client.release();
 
-    ApiResponse.success(res, insertedStats, 'Athlete statistics recorded successfully', 201);
+  return sendResponse(res, { status: 201, data: insertedStats, message: 'Athlete statistics recorded successfully' });
 
   } catch (err) {
-    await client?.query('ROLLBACK');
-    client?.release();
-    console.error('Record athlete stats error:', err);
-    ApiResponse.error(res, 'Server error while recording statistics', 500);
+  await client?.query('ROLLBACK');
+  client?.release();
+  console.error('Record athlete stats error:', err);
+  return sendResponse(res, { success: false, status: 500, message: 'Server error while recording statistics' });
   }
 };
 
@@ -322,11 +322,11 @@ exports.awardAchievement = async (req, res) => {
     // await generateCertificate(result.rows[0]);
     // await sendAchievementNotification(athleteId, result.rows[0]);
 
-    ApiResponse.success(res, result.rows[0], 'Achievement awarded successfully', 201);
+  return sendResponse(res, { status: 201, data: result.rows[0], message: 'Achievement awarded successfully' });
 
   } catch (err) {
-    console.error('Award achievement error:', err);
-    ApiResponse.error(res, 'Server error while awarding achievement', 500);
+  console.error('Award achievement error:', err);
+  return sendResponse(res, { success: false, status: 500, message: 'Server error while awarding achievement' });
   }
 };
 
@@ -353,11 +353,11 @@ exports.getAthleteCertificates = async (req, res) => {
 
     const result = await pool.query(certificatesQuery, [athleteId]);
 
-    ApiResponse.success(res, result.rows, 'Athlete certificates retrieved successfully');
+  return sendResponse(res, { data: result.rows, message: 'Athlete certificates retrieved successfully' });
 
   } catch (err) {
-    console.error('Get athlete certificates error:', err);
-    ApiResponse.error(res, 'Server error while fetching certificates', 500);
+  console.error('Get athlete certificates error:', err);
+  return sendResponse(res, { success: false, status: 500, message: 'Server error while fetching certificates' });
   }
 };
 
@@ -392,7 +392,7 @@ exports.approveAthleteTransfer = async (req, res) => {
     if (transferResult.rowCount === 0) {
       await client.query('ROLLBACK');
       client.release();
-      return ApiResponse.error(res, 'Transfer request not found', 404);
+  return sendResponse(res, { success: false, status: 404, message: 'Transfer request not found' });
     }
 
     const transfer = transferResult.rows[0];
@@ -423,14 +423,14 @@ exports.approveAthleteTransfer = async (req, res) => {
     // TODO: Send notification to athlete/guardian
     // await sendTransferNotification(transfer);
 
-    const message = approved ? 'Transfer approved successfully' : 'Transfer rejected';
-    ApiResponse.success(res, transfer, message);
+  const message = approved ? 'Transfer approved successfully' : 'Transfer rejected';
+  return sendResponse(res, { data: transfer, message });
 
   } catch (err) {
-    await client?.query('ROLLBACK');
-    client?.release();
-    console.error('Approve athlete transfer error:', err);
-    ApiResponse.error(res, 'Server error while processing transfer', 500);
+  await client?.query('ROLLBACK');
+  client?.release();
+  console.error('Approve athlete transfer error:', err);
+  return sendResponse(res, { success: false, status: 500, message: 'Server error while processing transfer' });
   }
 };
 
@@ -448,7 +448,7 @@ exports.generateAthleteQRCode = async (req, res) => {
     const athleteResult = await pool.query(athleteQuery, [athleteId]);
 
     if (athleteResult.rowCount === 0) {
-      return ApiResponse.error(res, 'Athlete not found', 404);
+      return sendResponse(res, { success: false, status: 404, message: 'Athlete not found' });
     }
 
     const qrData = {
@@ -461,15 +461,15 @@ exports.generateAthleteQRCode = async (req, res) => {
     // TODO: Generate actual QR code image
     // const qrCodeUrl = await generateQRCodeImage(JSON.stringify(qrData));
 
-    ApiResponse.success(res, {
+    return sendResponse(res, { data: {
       athlete_id: athleteId,
       qr_data: qrData,
       qr_url: `data:text/plain;base64,${Buffer.from(JSON.stringify(qrData)).toString('base64')}`
-    }, 'QR code generated successfully');
+    }, message: 'QR code generated successfully' });
 
   } catch (err) {
-    console.error('Generate athlete QR code error:', err);
-    ApiResponse.error(res, 'Server error while generating QR code', 500);
+  console.error('Generate athlete QR code error:', err);
+  return sendResponse(res, { success: false, status: 500, message: 'Server error while generating QR code' });
   }
 };
 
@@ -488,12 +488,12 @@ async function checkAthleteEligibility(athleteId) {
 }
 
 module.exports = {
-  getAthleteDashboard,
-  checkAthleteEligibility,
-  getAthleteAnalytics,
-  recordAthleteStats,
-  awardAchievement,
-  getAthleteCertificates,
-  approveAthleteTransfer,
-  generateAthleteQRCode
+  getAthleteDashboard: exports.getAthleteDashboard,
+  checkAthleteEligibility: exports.checkAthleteEligibility,
+  getAthleteAnalytics: exports.getAthleteAnalytics,
+  recordAthleteStats: exports.recordAthleteStats,
+  awardAchievement: exports.awardAchievement,
+  getAthleteCertificates: exports.getAthleteCertificates,
+  approveAthleteTransfer: exports.approveAthleteTransfer,
+  generateAthleteQRCode: exports.generateAthleteQRCode
 };

@@ -32,32 +32,34 @@ const options = {
         }
       },
       schemas: {
-        ApiResponse: {
+  // Unified responses now described inline per endpoint using sendResponse shape.
+        GenericResponse: {
           type: 'object',
+          description: 'Standard API response wrapper used by sendResponse utility',
           properties: {
-            success: {
-              type: 'boolean',
-              description: 'Indicates if the request was successful'
+            success: { type: 'boolean', example: true },
+            status: { type: 'integer', example: 200, description: 'HTTP status code (mirrors actual response status)' },
+            message: { type: 'string', example: 'Operation completed successfully' },
+            data: { description: 'Primary payload (type varies per endpoint)' },
+            errors: {
+              type: 'array',
+              nullable: true,
+              description: 'Optional list of validation / domain errors',
+              items: {
+                type: 'object',
+                properties: {
+                  msg: { type: 'string', example: 'Field is required' },
+                  field: { type: 'string', example: 'email' }
+                }
+              }
             },
-            message: {
-              type: 'string',
-              description: 'Human-readable message'
-            },
-            data: {
+            meta: {
               type: 'object',
-              description: 'Response data (null for errors)'
+              nullable: true,
+              description: 'Supplementary metadata (pagination, counts, etc)'
             },
-            error: {
-              type: 'string',
-              description: 'Error message (present only for errors)'
-            },
-            timestamp: {
-              type: 'string',
-              format: 'date-time',
-              description: 'Response timestamp'
-            }
-          },
-          required: ['success', 'message', 'timestamp']
+            timestamp: { type: 'string', format: 'date-time', example: '2024-01-01T12:00:00.000Z' }
+          }
         },
         User: {
           type: 'object',

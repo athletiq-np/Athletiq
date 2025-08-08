@@ -6,7 +6,7 @@ const { generateShortCode } = require('../utils/codeGenerator');
 const { protect, checkRole } = require('../middlewares/authMiddleware');
 const { validatePlayerRegistration } = require('../middlewares/validation');
 const { generalLimiter } = require('../middlewares/rateLimiter');
-const apiResponse = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 
 // Import Nepal Athlete ID Generator
 const AthleteIdGenerator = require('../services/ai/athleteIdGenerator');
@@ -113,12 +113,10 @@ router.post(
         }
       }
 
-      res.status(201).json({
-        success: true,
-        message: "Athlete registered successfully.",
+      sendResponse(res, { status: 201, message: 'Athlete registered successfully.', data: {
         player: newAthlete,
         guardian_notification: notificationResult || { message: 'No guardian contact provided' }
-      });
+      }});
 
     } catch (err) {
       // Pass any errors to our central error handler
@@ -182,8 +180,7 @@ router.get('/', protect, async (req, res, next) => {
     const athletesResult = await pool.query(athletesQuery, [...values, limit, offset]);
 
     // 3. Send the complete response
-    res.status(200).json({
-      success: true,
+    sendResponse(res, { data: {
       count: athletesResult.rowCount,
       total: totalAthletes,
       pagination: {
@@ -191,7 +188,7 @@ router.get('/', protect, async (req, res, next) => {
         totalPages: totalPages
       },
       athletes: athletesResult.rows
-    });
+    }, message: 'Athletes retrieved successfully' });
 
   } catch (err) {
     // Pass any errors to our central error handler
@@ -231,10 +228,7 @@ router.get('/:id', protect, async (req, res, next) => {
       throw error;
     }
 
-    res.status(200).json({
-      success: true,
-      athlete: athlete
-    });
+  sendResponse(res, { data: { athlete }, message: 'Athlete retrieved successfully' });
 
   } catch (err) {
     next(err);
@@ -263,10 +257,7 @@ router.get('/me', protect, checkRole(['Athlete']), async (req, res, next) => {
       throw error;
     }
 
-    res.status(200).json({
-      success: true,
-      athlete: result.rows[0]
-    });
+  sendResponse(res, { data: { athlete: result.rows[0] }, message: 'Current athlete profile retrieved successfully' });
 
   } catch (err) {
     next(err);

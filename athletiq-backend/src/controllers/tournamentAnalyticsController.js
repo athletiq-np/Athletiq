@@ -6,7 +6,7 @@
 //
 
 const pool = require("../config/db");
-const { ApiResponse } = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 
 /**
  * @desc    Get comprehensive tournament analytics
@@ -233,7 +233,7 @@ const getTournamentAnalytics = async (req, res, next) => {
     progressMetrics.overall_progress = progress;
     analytics.engagement_metrics.progress = progressMetrics;
 
-    return ApiResponse.success(res, analytics, 'Tournament analytics retrieved successfully');
+  return sendResponse(res, { data: analytics, message: 'Tournament analytics retrieved successfully' });
   } catch (err) {
     next(err);
   }
@@ -353,7 +353,7 @@ const getTournamentLeaderboard = async (req, res, next) => {
       leaderboard.player_stats = playerStats.rows;
     }
 
-    return ApiResponse.success(res, leaderboard, 'Tournament leaderboard retrieved successfully');
+  return sendResponse(res, { data: leaderboard, message: 'Tournament leaderboard retrieved successfully' });
   } catch (err) {
     next(err);
   }
@@ -489,7 +489,7 @@ const getTournamentInsights = async (req, res, next) => {
       };
     }
 
-    return ApiResponse.success(res, insights, 'Tournament insights retrieved successfully');
+  return sendResponse(res, { data: insights, message: 'Tournament insights retrieved successfully' });
   } catch (err) {
     next(err);
   }

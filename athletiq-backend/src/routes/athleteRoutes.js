@@ -6,7 +6,7 @@ const { generateShortCode } = require('../utils/codeGenerator');
 const { protect, checkRole } = require('../middlewares/authMiddleware');
 const { validateAthleteRegistration } = require('../middlewares/validation');
 const { generalLimiter } = require('../middlewares/rateLimiter');
-const apiResponse = require('../utils/apiResponse');
+const { sendResponse } = require('../utils/response');
 
 // --- Multer Setup for file uploads ---
 const storage = multer.diskStorage({
@@ -78,10 +78,10 @@ router.post(
       
       const result = await pool.query(insertQuery, values);
 
-      res.status(201).json({
-        success: true,
-        message: "Athlete registered successfully.",
-        player: result.rows[0]
+      sendResponse(res, {
+        status: 201,
+        message: 'Athlete registered successfully.',
+        data: { player: result.rows[0] }
       });
 
     } catch (err) {
@@ -146,15 +146,14 @@ router.get('/', protect, async (req, res, next) => {
     const athletesResult = await pool.query(athletesQuery, [...values, limit, offset]);
 
     // 3. Send the complete response
-    res.status(200).json({
-      success: true,
-      count: athletesResult.rowCount,
-      total: totalAthletes,
-      pagination: {
-        currentPage: page,
-        totalPages: totalPages
-      },
-      athletes: athletesResult.rows
+    sendResponse(res, {
+      message: 'Athletes fetched successfully',
+      data: {
+        count: athletesResult.rowCount,
+        total: totalAthletes,
+        pagination: { currentPage: page, totalPages },
+        athletes: athletesResult.rows
+      }
     });
 
   } catch (err) {
@@ -195,10 +194,7 @@ router.get('/:id', protect, async (req, res, next) => {
       throw error;
     }
 
-    res.status(200).json({
-      success: true,
-      athlete: athlete
-    });
+  sendResponse(res, { message: 'Athlete fetched successfully', data: { athlete } });
 
   } catch (err) {
     next(err);
@@ -227,10 +223,7 @@ router.get('/me', protect, checkRole(['Athlete']), async (req, res, next) => {
       throw error;
     }
 
-    res.status(200).json({
-      success: true,
-      athlete: result.rows[0]
-    });
+  sendResponse(res, { message: 'Athlete profile fetched successfully', data: { athlete: result.rows[0] } });
 
   } catch (err) {
     next(err);

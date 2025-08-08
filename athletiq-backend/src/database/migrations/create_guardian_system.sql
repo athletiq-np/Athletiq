@@ -115,20 +115,60 @@ CREATE INDEX IF NOT EXISTS idx_child_documents_child_id ON child_documents(child
 CREATE INDEX IF NOT EXISTS idx_guardian_notifications_guardian_id ON guardian_notifications(guardian_id);
 
 -- Add check constraints
-ALTER TABLE guardian_children 
-ADD CONSTRAINT chk_gender CHECK (gender IN ('Male', 'Female', 'Other'));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE table_name='guardian_children' AND constraint_name='chk_gender'
+    ) THEN
+        ALTER TABLE guardian_children 
+        ADD CONSTRAINT chk_gender CHECK (gender IN ('Male', 'Female', 'Other'));
+    END IF;
+END $$;
 
-ALTER TABLE guardian_children 
-ADD CONSTRAINT chk_athlete_id_status CHECK (athlete_id_status IN ('pending', 'active', 'suspended'));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE table_name='guardian_children' AND constraint_name='chk_athlete_id_status'
+    ) THEN
+        ALTER TABLE guardian_children 
+        ADD CONSTRAINT chk_athlete_id_status CHECK (athlete_id_status IN ('pending', 'active', 'suspended'));
+    END IF;
+END $$;
 
-ALTER TABLE guardian_children 
-ADD CONSTRAINT chk_verification_status CHECK (verification_status IN ('pending_school_approval', 'verified', 'rejected', 'linked_to_school'));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE table_name='guardian_children' AND constraint_name='chk_verification_status'
+    ) THEN
+        ALTER TABLE guardian_children 
+        ADD CONSTRAINT chk_verification_status CHECK (verification_status IN ('pending_school_approval', 'verified', 'rejected', 'linked_to_school'));
+    END IF;
+END $$;
 
-ALTER TABLE pending_registrations 
-ADD CONSTRAINT chk_status CHECK (status IN ('pending_school_approval', 'approved', 'rejected'));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE table_name='pending_registrations' AND constraint_name='chk_status'
+    ) THEN
+        ALTER TABLE pending_registrations 
+        ADD CONSTRAINT chk_status CHECK (status IN ('pending_school_approval', 'approved', 'rejected'));
+    END IF;
+END $$;
 
-ALTER TABLE child_documents 
-ADD CONSTRAINT chk_verification_status CHECK (verification_status IN ('pending', 'verified', 'rejected'));
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.table_constraints 
+        WHERE table_name='child_documents' AND constraint_name='chk_verification_status'
+    ) THEN
+        ALTER TABLE child_documents 
+        ADD CONSTRAINT chk_verification_status CHECK (verification_status IN ('pending', 'verified', 'rejected'));
+    END IF;
+END $$;
 
 -- Sample data for testing
 INSERT INTO guardians (full_name, email, phone, password_hash, address, occupation) 
