@@ -6,6 +6,14 @@
 **/dist
 .next/
 
+# Test coverage (backend reports)
+**/coverage
+**/coverage/**
+**/lcov-report
+*.lcov
+coverage-final.json
+**/.nyc_output
+
 # Caching
 **/.cache
 .eslintcache

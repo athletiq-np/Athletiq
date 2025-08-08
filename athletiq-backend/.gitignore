@@ -9,6 +9,16 @@
 /.nuxt
 /.svelte-kit
 
+# Test coverage & reports (added to prevent massive HTML report commits)
+/coverage
+/coverage/**
+coverage/
+coverage/**
+lcov-report/
+*.lcov
+coverage-final.json
+/.nyc_output
+
 # Log files
 *.log
 npm-debug.log*
