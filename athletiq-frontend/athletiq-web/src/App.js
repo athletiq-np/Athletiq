@@ -38,15 +38,9 @@ import AthleteProfile from '@/pages/athlete/AthleteProfile';
 
 // Import guardian components
 import { 
-  GuardianClaimPortal,
-  ModernGuardianPortal, 
-  SimpleGuardianPortal,
-  GuardianDashboard,
   GuardianAuthProvider,
-  GuardianRegistrationNew
 } from '@/features/guardian';
-import GuardianPortal from '@/features/guardian/pages/GuardianPortal';
-import GuardianDashboardStandalone from '@/features/guardian/pages/GuardianDashboardStandalone';
+import UnifiedGuardianPortal from '@/features/guardian/pages/UnifiedGuardianPortal';
 import GuardianTestPage from '@/pages/test/GuardianTestPage';
 
 // Tournament creation component
@@ -98,14 +92,9 @@ function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
-            {/* --- Guardian Routes --- */}
-            <Route path="/guardian" element={<GuardianPortal />} />
-            <Route path="/guardian/register" element={<GuardianRegistrationNew />} />
-            <Route path="/guardian/dashboard" element={<GuardianDashboardStandalone />} />
-            <Route path="/guardian/claim/:claimCode" element={<GuardianClaimPortal />} />
-            <Route path="/guardian-claim" element={<GuardianClaimPortal />} />
-            <Route path="/guardian-modern" element={<SimpleGuardianPortal />} />
-            <Route path="/guardian-dashboard" element={<GuardianDashboardStandalone />} />
+            {/* --- Guardian Routes (Unified Portal) --- */}
+            <Route path="/guardian" element={<UnifiedGuardianPortal />} />
+            <Route path="/guardian/*" element={<UnifiedGuardianPortal />} />
             <Route path="/guardian-test" element={<GuardianTestPage />} />
             
             {/* --- Test Routes --- */}

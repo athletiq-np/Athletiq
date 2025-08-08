@@ -53,15 +53,15 @@ export default function PremiumSchoolOverview({ school, summary, recentActivitie
     return () => clearInterval(timer);
   }, []);
 
-  // Animation refresh trigger
+  // Animation refresh trigger - Reduced frequency
   useEffect(() => {
     const interval = setInterval(() => {
       setAnimationKey(prev => prev + 1);
-    }, 30000); // Refresh animations every 30 seconds
+    }, 120000); // Refresh animations every 2 minutes instead of 30 seconds
     return () => clearInterval(interval);
   }, []);
 
-  // Real-time system status updates
+  // Real-time system status updates - Reduced frequency
   useEffect(() => {
     const statusTimer = setInterval(() => {
       setSystemStatus(prev => ({
@@ -70,12 +70,12 @@ export default function PremiumSchoolOverview({ school, summary, recentActivitie
         activeUsers: Math.floor(Math.random() * 5) + 1,
         performance: ['excellent', 'good', 'fair'][Math.floor(Math.random() * 3)]
       }));
-    }, 30000); // Update every 30 seconds
+    }, 60000); // Update every 60 seconds instead of 30
 
     return () => clearInterval(statusTimer);
   }, []);
 
-  // Simulate real-time notifications
+  // Simulate real-time notifications - Reduced frequency
   useEffect(() => {
     const notificationTimer = setInterval(() => {
       const mockNotifications = [
@@ -96,7 +96,7 @@ export default function PremiumSchoolOverview({ school, summary, recentActivitie
         },
         ...prev.slice(0, 4) // Keep only latest 5
       ]);
-    }, 45000); // Add notification every 45 seconds
+    }, 300000); // Add notification every 5 minutes instead of 45 seconds
 
     return () => clearInterval(notificationTimer);
   }, []);
@@ -116,7 +116,7 @@ export default function PremiumSchoolOverview({ school, summary, recentActivitie
     window.location.reload();
   };
 
-  // Enhanced export with progress tracking
+  // Enhanced export with progress tracking and better error handling
   const handleExportDataEnhanced = async () => {
     try {
       setLoadingStates(prev => ({ ...prev, export: true }));
@@ -140,21 +140,38 @@ export default function PremiumSchoolOverview({ school, summary, recentActivitie
         link.remove();
         window.URL.revokeObjectURL(url);
         
-        toast.success('📊 School data exported successfully! (JSON format for demo)');
+        toast.success('📊 School data exported successfully!');
       } else {
         throw new Error('Invalid response format');
       }
     } catch (error) {
       console.error('Export error:', error);
-      toast.error('❌ Failed to export data: ' + (error.response?.data?.message || error.message));
+      
+      // Better error handling with specific messages
+      let errorMessage = 'Failed to export data';
+      if (error.response?.status === 401) {
+        errorMessage = 'Authentication required. Please log in again.';
+      } else if (error.response?.status === 403) {
+        errorMessage = 'You do not have permission to export data.';
+      } else if (error.response?.status === 404) {
+        errorMessage = 'Export endpoint not found. Please contact support.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(`❌ ${errorMessage}`);
     } finally {
       setLoadingStates(prev => ({ ...prev, export: false }));
     }
   };
 
-  // Enhanced modal submission handlers with proper API calls
+  // Enhanced modal submission handlers with proper API calls and error handling
   const handleAddStudentSubmit = async (data) => {
     try {
+      setLoadingStates(prev => ({ ...prev, studentModal: true }));
+      
       const response = await apiClient.post('/athletes/register', data);
       if (response.data.success) {
         setShowAddStudentModal(false);
@@ -165,12 +182,29 @@ export default function PremiumSchoolOverview({ school, summary, recentActivitie
       }
     } catch (error) {
       console.error('Student registration error:', error);
-      toast.error('Failed to register student: ' + (error.response?.data?.message || error.message));
+      
+      // Better error handling
+      let errorMessage = 'Failed to register student';
+      if (error.response?.status === 400) {
+        errorMessage = 'Invalid student information. Please check your input.';
+      } else if (error.response?.status === 409) {
+        errorMessage = 'A student with this information already exists.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(`❌ ${errorMessage}`);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, studentModal: false }));
     }
   };
 
   const handleTournamentSubmit = async (data) => {
     try {
+      setLoadingStates(prev => ({ ...prev, tournamentModal: true }));
+      
       const response = await apiClient.post('/tournaments', data);
       if (response.data.success) {
         setShowTournamentModal(false);
@@ -181,7 +215,22 @@ export default function PremiumSchoolOverview({ school, summary, recentActivitie
       }
     } catch (error) {
       console.error('Tournament creation error:', error);
-      toast.error('Failed to create tournament: ' + (error.response?.data?.message || error.message));
+      
+      // Better error handling
+      let errorMessage = 'Failed to create tournament';
+      if (error.response?.status === 400) {
+        errorMessage = 'Invalid tournament information. Please check your input.';
+      } else if (error.response?.status === 409) {
+        errorMessage = 'A tournament with this name already exists.';
+      } else if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      toast.error(`❌ ${errorMessage}`);
+    } finally {
+      setLoadingStates(prev => ({ ...prev, tournamentModal: false }));
     }
   };
 

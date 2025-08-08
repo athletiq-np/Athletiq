@@ -1,0 +1,10 @@
+{
+  "name": "athletiq-monorepo",
+  "private": true,
+  "scripts": {
+    "guard:responses": "node scripts/guard-no-apiresponse.js"
+  },
+  "dependencies": {
+    "joi": "^17.13.3"
+  }
+}

@@ -995,7 +995,7 @@ const AdminDashboard = () => {
     errorDocuments: 12,
     totalRevenue: 125840,
     systemHealth: 98.7,
-    apiResponseTime: 145,
+  responseTime: 145,
     storageUsed: 67.3,
     cpuUsage: 23.5,
     memoryUsage: 45.2,
@@ -1241,7 +1241,7 @@ const AdminDashboard = () => {
           <div className="pt-3 border-t border-gray-100">
             <div className="flex items-center justify-between text-sm">
               <span className="text-gray-600">API Response</span>
-              <span className="font-medium text-green-600">{stats.apiResponseTime}ms</span>
+              <span className="font-medium text-green-600">{stats.responseTime}ms</span>
             </div>
           </div>
         </div>

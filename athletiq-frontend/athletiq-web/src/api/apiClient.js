@@ -1,13 +1,4 @@
-import axios from 'axios';
-
-// Create a pre-configured instance of Axios
-const apiClient = axios.create({
-  // Set the base URL for all API requests
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-
-  // --- THIS IS THE KEY CHANGE ---
-  // This tells Axios to include cookies on all cross-origin requests
-  withCredentials: true,
-});
-
-export default apiClient;
+// DEPRECATED: Use '@/utils/apiClient' instead for full guardian API helper set.
+// This file now simply re-exports the unified configured instance to avoid breaking existing imports.
+// TODO: After refactoring all imports, remove this file.
+export { default } from '../utils/apiClient';
