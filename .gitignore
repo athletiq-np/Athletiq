@@ -14,6 +14,12 @@
 coverage-final.json
 **/.nyc_output
 
+# Log files
+**/logs
+**/logs/**
+*.log
+!logs/.gitkeep
+
 # Caching
 **/.cache
 .eslintcache
