@@ -72,9 +72,10 @@ export default function GuardianClaimPortal() {
       const url = `/guardian/schools${searchTerm ? `?search=${searchTerm}` : ''}`;
       const response = await apiClient.get(url);
       if (response.data.success) {
-        const schoolOptions = response.data.schools.map(school => ({
-          value: school.school_name,
-          label: `${school.school_name} (${school.student_count} students)`,
+        const list = response.data.data || response.data.schools || [];
+        const schoolOptions = list.map(school => ({
+          value: school.name || school.school_name,
+          label: `${school.name || school.school_name}${school.student_count ? ` (${school.student_count} students)` : ''}`,
           ...school
         }));
         setSchools(schoolOptions);
@@ -121,12 +122,10 @@ export default function GuardianClaimPortal() {
   const verifyClaimCode = async (codeToVerify = claimCode) => {
     try {
       setLoading(true);
-      const response = await apiClient.post('/guardian/verify-claim', {
-        claimCode: codeToVerify
-      });
-
+      const response = await apiClient.post('/guardian/verify-claim', { claimCode: codeToVerify });
       if (response.data.success) {
-        setClaimData(response.data.athlete);
+        const athlete = response.data.data?.athlete || response.data.athlete;
+        setClaimData(athlete);
         setStep(2);
         toast.success('Claim code verified successfully!');
       } else {
@@ -312,9 +311,7 @@ export default function GuardianClaimPortal() {
 
   const handleResendClaim = async () => {
     try {
-      await apiClient.post('/guardian/resend-claim', {
-        claim_code: claimCode
-      });
+      await apiClient.post('/guardian/resend-claim', { claim_code: claimCode });
       toast.success('Claim details resent to your contact information');
     } catch (error) {
       toast.error('Error resending claim details');

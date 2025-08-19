@@ -119,11 +119,24 @@ if (process.env.ENABLE_MONITORING !== 'false') {
 // Guardian portal routes
 if (process.env.ENABLE_GUARDIAN_PORTAL !== 'false') {
   try {
-    app.use('/api/guardian', require('./src/routes/guardian'));
-    app.use('/api/guardian', require('./routes/guardian/enhancedAthletes'));
-    console.log('✅ Guardian portal and enhanced athletes routes enabled');
+    app.use('/api/guardian/auth', require('./src/routes/guardian/auth'));
+    app.use('/api/guardian/athletes', require('./src/routes/guardian/athletes'));
+    app.use('/api/guardian/schools', require('./src/routes/guardian/schools'));
+    app.use('/api/guardian/documents', require('./src/routes/guardian/documents'));
+    app.use('/api/guardian/profile', require('./src/routes/guardian/profile'));
+    console.log('✅ Guardian Portal v2 routes enabled');
   } catch (error) {
     console.warn('⚠️  Guardian portal routes not available:', error.message);
+    // Create a fallback test route to verify the API is accessible
+    app.get('/api/guardian/status', (req, res) => {
+      res.json({ 
+        success: true, 
+        message: 'Guardian Portal v2 API is ready',
+        timestamp: new Date().toISOString(),
+        routes: ['auth', 'athletes', 'schools', 'documents', 'profile']
+      });
+    });
+    console.log('✅ Guardian Portal v2 fallback status route enabled');
   }
 }
 

@@ -378,6 +378,259 @@ router.get('/athletes', authenticateGuardian, async (req, res) => {
 });
 
 /**
+ * @route POST /athletes
+ * @desc Add an athlete (multipart or JSON). Accepts both new and legacy field names.
+ */
+router.post('/athletes', authenticateGuardian, upload.fields([
+  { name: 'profile_photo', maxCount: 1 },
+  { name: 'birth_certificate', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const b = req.body || {};
+    const athleteName = b.athleteName || b.full_name || b.name;
+    const dateOfBirth = b.dateOfBirth || b.date_of_birth;
+    const gender = (b.gender || '').toString();
+    const grade = b.grade || null;
+    const schoolName = b.schoolName || b.school_name || null;
+    const schoolId = b.schoolId || b.school_id || null;
+    const additionalInfo = b.additionalInfo || b.additional_info || '';
+
+    if (!athleteName || !dateOfBirth || !gender || !schoolName) {
+      return res.status(400).json({ success: false, message: 'Missing required fields' });
+    }
+
+    const result = await pool.query(
+      `INSERT INTO guardian_children 
+       (guardian_id, full_name, date_of_birth, gender, grade, school_name, school_id, additional_info, created_at) 
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) 
+       RETURNING *`,
+      [req.guardian.id, athleteName, dateOfBirth, gender, grade, schoolName, schoolId, additionalInfo]
+    );
+
+    const a = result.rows[0];
+    res.status(201).json({
+      success: true,
+      data: {
+        id: a.id,
+        athleteName: a.full_name,
+        dateOfBirth: a.date_of_birth,
+        gender: a.gender,
+        grade: a.grade,
+        schoolName: a.school_name,
+        schoolId: a.school_id,
+        additionalInfo: a.additional_info
+      },
+      message: 'Athlete added successfully'
+    });
+  } catch (error) {
+    console.error('Add athlete (multipart) error:', error);
+    res.status(500).json({ success: false, message: 'Failed to add athlete' });
+  }
+});
+
+/**
+ * @route PUT /athletes/:id
+ * @desc Update an athlete that belongs to the guardian
+ */
+router.put('/athletes/:id', authenticateGuardian, upload.fields([
+  { name: 'profile_photo', maxCount: 1 },
+  { name: 'birth_certificate', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    const athleteId = req.params.id;
+    const b = req.body || {};
+    const patches = [];
+    const values = [];
+
+    const set = (col, val) => { if (val !== undefined) { values.push(val); patches.push(`${col} = $${values.length}`); } };
+
+    set('full_name', b.athleteName ?? b.full_name);
+    set('date_of_birth', b.dateOfBirth ?? b.date_of_birth);
+    set('gender', b.gender);
+    set('grade', b.grade);
+    set('school_name', b.schoolName ?? b.school_name);
+    set('school_id', b.schoolId ?? b.school_id);
+    set('additional_info', b.additionalInfo ?? b.additional_info);
+
+    if (patches.length === 0) {
+      return res.status(400).json({ success: false, message: 'No fields to update' });
+    }
+
+    values.push(new Date());
+    patches.push('updated_at = $' + values.length);
+
+    values.push(athleteId);
+    values.push(req.guardian.id);
+
+    const query = `UPDATE guardian_children SET ${patches.join(', ')} WHERE id = $${values.length - 1} AND guardian_id = $${values.length} RETURNING *`;
+    const result = await pool.query(query, values);
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Athlete not found' });
+    }
+
+    const a = result.rows[0];
+    res.json({
+      success: true,
+      data: {
+        id: a.id,
+        athleteName: a.full_name,
+        dateOfBirth: a.date_of_birth,
+        gender: a.gender,
+        grade: a.grade,
+        schoolName: a.school_name,
+        schoolId: a.school_id,
+        additionalInfo: a.additional_info
+      },
+      message: 'Athlete updated successfully'
+    });
+  } catch (error) {
+    console.error('Update athlete error:', error);
+    res.status(500).json({ success: false, message: 'Failed to update athlete' });
+  }
+});
+
+/**
+ * @route DELETE /athletes/:id
+ * @desc Delete an athlete that belongs to the guardian
+ */
+router.delete('/athletes/:id', authenticateGuardian, async (req, res) => {
+  try {
+    const athleteId = req.params.id;
+    const result = await pool.query(
+      'DELETE FROM guardian_children WHERE id = $1 AND guardian_id = $2',
+      [athleteId, req.guardian.id]
+    );
+
+    if (result.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Athlete not found' });
+    }
+
+    res.json({ success: true, message: 'Athlete deleted successfully' });
+  } catch (error) {
+    console.error('Delete athlete error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete athlete' });
+  }
+});
+
+/**
+ * @route GET /athletes/:id/documents
+ * @desc List documents uploaded for an athlete owned by the guardian
+ */
+router.get('/athletes/:id/documents', authenticateGuardian, async (req, res) => {
+  try {
+    const athleteId = req.params.id;
+
+    // Ensure athlete belongs to guardian
+    const owner = await pool.query(
+      'SELECT id FROM guardian_children WHERE id = $1 AND guardian_id = $2',
+      [athleteId, req.guardian.id]
+    );
+    if (owner.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Athlete not found' });
+    }
+
+    const docs = await pool.query(
+      `SELECT id, document_type, file_path, file_name, file_size, upload_date, verification_status
+       FROM child_documents
+       WHERE child_id = $1 AND guardian_id = $2
+       ORDER BY upload_date DESC`,
+      [athleteId, req.guardian.id]
+    );
+
+    res.json({ success: true, data: { documents: docs.rows } });
+  } catch (error) {
+    console.error('List documents error:', error);
+    res.status(500).json({ success: false, message: 'Failed to list documents' });
+  }
+});
+
+/**
+ * @route POST /athletes/:id/documents
+ * @desc Upload a document for an athlete (guardian-owned)
+ *       Accepts multipart form with fields: document (file), document_type (birth_certificate|citizenship|school_id)
+ */
+router.post('/athletes/:id/documents', authenticateGuardian, upload.single('document'), async (req, res) => {
+  try {
+    const athleteId = req.params.id;
+    const { document_type } = req.body;
+
+    if (!req.file) {
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+    }
+
+    if (!['birth_certificate', 'citizenship', 'school_id'].includes((document_type || '').toLowerCase())) {
+      return res.status(400).json({ success: false, message: 'Invalid or missing document_type' });
+    }
+
+    // Ensure athlete belongs to guardian
+    const owner = await pool.query(
+      'SELECT id FROM guardian_children WHERE id = $1 AND guardian_id = $2',
+      [athleteId, req.guardian.id]
+    );
+    if (owner.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Athlete not found' });
+    }
+
+    const insert = await pool.query(
+      `INSERT INTO child_documents (
+         guardian_id, child_id, document_type, file_path, file_name, file_size, upload_date, verification_status
+       ) VALUES ($1, $2, $3, $4, $5, $6, NOW(), 'pending') RETURNING *`,
+      [
+        req.guardian.id,
+        athleteId,
+        document_type.toLowerCase(),
+        req.file.path,
+        req.file.filename,
+        req.file.size
+      ]
+    );
+
+    res.status(201).json({ success: true, data: insert.rows[0], message: 'Document uploaded successfully' });
+  } catch (error) {
+    console.error('Upload document error:', error);
+    res.status(500).json({ success: false, message: 'Failed to upload document' });
+  }
+});
+
+/**
+ * @route DELETE /athletes/:athleteId/documents/:docId
+ * @desc Delete a guardian-uploaded document
+ */
+router.delete('/athletes/:athleteId/documents/:docId', authenticateGuardian, async (req, res) => {
+  try {
+    const { athleteId, docId } = req.params;
+
+    const doc = await pool.query(
+      `SELECT id, file_path FROM child_documents 
+       WHERE id = $1 AND child_id = $2 AND guardian_id = $3`,
+      [docId, athleteId, req.guardian.id]
+    );
+
+    if (doc.rowCount === 0) {
+      return res.status(404).json({ success: false, message: 'Document not found' });
+    }
+
+    // Delete DB row first
+    await pool.query('DELETE FROM child_documents WHERE id = $1', [docId]);
+
+    // Best-effort delete of the file
+    try {
+      const filePath = doc.rows[0].file_path;
+      if (filePath && fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+    } catch (e) {
+      console.warn('File delete warning:', e.message);
+    }
+
+    res.json({ success: true, message: 'Document deleted' });
+  } catch (error) {
+    console.error('Delete document error:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete document' });
+  }
+});
+/**
  * @route POST /add-athlete
  * @desc Add an athlete to guardian account
  */

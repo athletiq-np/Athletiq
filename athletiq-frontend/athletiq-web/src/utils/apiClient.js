@@ -3,8 +3,9 @@ import { mockGuardianAPI, DEMO_MODE } from './demoData';
 import { AUTH_KEYS } from '@/utils/authKeys';
 
 // Create axios instance with base configuration
+// Ensure baseURL includes '/api' to keep all endpoint paths consistent
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000',
+  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
   timeout: 10000,
   headers: {
     'Content-Type': 'application/json',
@@ -246,7 +247,7 @@ export const guardianAPI = {
   // Enhanced athlete search (new modern endpoint)
   searchEnhancedAthletes: async (params = {}) => {
     try {
-      const response = await apiClient.get('/api/enhanced-athletes/search', { params });
+      const response = await apiClient.get('/enhanced-athletes/search', { params });
       return response.data;
     } catch (error) {
       return { success: false, message: error.message };
@@ -256,7 +257,7 @@ export const guardianAPI = {
   // Placeholder athlete-match linkage via enhanced path (to be replaced with dedicated endpoint)
   getEnhancedAthleteMatches: async (athleteId) => {
     try {
-      const response = await apiClient.get(`/api/enhanced-athletes/${athleteId}/matches`);
+      const response = await apiClient.get(`/enhanced-athletes/${athleteId}/matches`);
       return response.data;
     } catch (error) {
       return { success: false, message: error.message };
@@ -265,7 +266,7 @@ export const guardianAPI = {
 
   registerEnhancedGuardian: async (formData) => {
     try {
-      const response = await apiClient.post('/api/enhanced-athletes/register/guardian', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
+      const response = await apiClient.post('/enhanced-athletes/register/guardian', formData, { headers: { 'Content-Type': 'multipart/form-data' } });
       return response.data;
     } catch (error) {
       return { success: false, message: error.message };
@@ -274,7 +275,7 @@ export const guardianAPI = {
 
   bulkEnhancedUpload: async (payload) => {
     try {
-      const response = await apiClient.post('/api/enhanced-athletes/bulk-upload', payload);
+      const response = await apiClient.post('/enhanced-athletes/bulk-upload', payload);
       return response.data;
     } catch (error) {
       return { success: false, message: error.message };
@@ -298,16 +299,25 @@ export const guardianAPI = {
       return mockGuardianAPI.uploadDocument(childId, formData);
     }
     try {
-      const response = await apiClient.post(
-        `/guardian/children/${childId}/documents`,
-        formData,
-        {
-          headers: {
-            'Content-Type': 'multipart/form-data',
-          },
+      // Prefer new athletes path; fallback to legacy children path on 404
+      try {
+        const response = await apiClient.post(
+          `/guardian/athletes/${childId}/documents`,
+          formData,
+          { headers: { 'Content-Type': 'multipart/form-data' } }
+        );
+        return response.data;
+      } catch (err) {
+        if (err.message?.includes('404')) {
+          const response = await apiClient.post(
+            `/guardian/children/${childId}/documents`,
+            formData,
+            { headers: { 'Content-Type': 'multipart/form-data' } }
+          );
+          return response.data;
         }
-      );
-      return response.data;
+        throw err;
+      }
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
       return mockGuardianAPI.uploadDocument(childId, formData);
@@ -319,8 +329,16 @@ export const guardianAPI = {
       return mockGuardianAPI.getDocuments(childId);
     }
     try {
-      const response = await apiClient.get(`/guardian/children/${childId}/documents`);
-      return response.data;
+      try {
+        const response = await apiClient.get(`/guardian/athletes/${childId}/documents`);
+        return response.data;
+      } catch (err) {
+        if (err.message?.includes('404')) {
+          const response = await apiClient.get(`/guardian/children/${childId}/documents`);
+          return response.data;
+        }
+        throw err;
+      }
     } catch (error) {
       console.warn('Backend unavailable, falling back to demo mode:', error.message);
       return mockGuardianAPI.getDocuments(childId);

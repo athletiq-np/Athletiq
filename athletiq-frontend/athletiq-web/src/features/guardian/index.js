@@ -3,8 +3,6 @@
 
 // Pages
 export { default as UnifiedGuardianPortal } from './pages/UnifiedGuardianPortal';
-export { default as SimpleGuardianPortal } from './pages/SimpleGuardianPortal';
-export { default as ModernGuardianPortal } from './pages/ModernGuardianPortal';
 export { default as GuardianClaimPortal } from './pages/GuardianClaimPortal';
 export { default as GuardianPortal } from './pages/GuardianPortal';
 

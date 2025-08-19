@@ -1,9 +1,10 @@
-// src/routes/guardianRoutes.js
+// Guardian Claim Routes
 const express = require('express');
 const router = express.Router();
 const GuardianNotificationService = require('../../services/guardianNotificationService');
 const { generalLimiter } = require('../../middlewares/rateLimiter');
 const { sendResponse } = require('../../utils/response');
+const { pool } = require('../../config/db');
 
 const guardianService = new GuardianNotificationService();
 
@@ -22,10 +23,9 @@ router.post('/verify-claim', generalLimiter, async (req, res, next) => {
     const result = await guardianService.verifyClaimCode(claimCode);
 
     if (result.success) {
-  sendResponse(res, { data: { athlete: result.data }, message: result.message });
-    } else {
-  sendResponse(res, { success: false, status: 400, message: result.message });
+      return res.json({ success: true, data: { athlete: result.data }, message: result.message });
     }
+    return res.status(400).json({ success: false, message: result.message });
 
   } catch (error) {
     next(error);
@@ -73,16 +73,17 @@ router.post('/claim-by-details', generalLimiter, async (req, res, next) => {
     console.log('Service result:', JSON.stringify(result, null, 2));
 
     if (result.success) {
-      console.log('Sending success response');
-      sendResponse(res, { data: {
-        athlete: result.data,
-        claimCode: result.claimCode,
-        requiresApproval: result.requiresApproval || false
-      }, message: result.message });
-    } else {
-      console.log('Sending error response:', result.message);
-  sendResponse(res, { success: false, status: 400, message: result.message });
+      return res.json({
+        success: true,
+        data: {
+          athlete: result.data,
+          claimCode: result.claimCode,
+          requiresApproval: result.requiresApproval || false
+        },
+        message: result.message
+      });
     }
+    return res.status(400).json({ success: false, message: result.message });
 
   } catch (error) {
     console.error('Guardian claim-by-details error:', error);
@@ -116,14 +117,14 @@ router.post('/google-auth', generalLimiter, async (req, res, next) => {
     const name = payload.name;
 
     // Check if guardian already exists
-    const existingGuardian = await pool.query(
+  const existingGuardian = await pool.query(
       'SELECT * FROM guardian_profiles WHERE email = $1',
       [email]
     );
 
     if (existingGuardian.rowCount > 0) {
-      // Return existing guardian info
-  sendResponse(res, { data: { guardian: existingGuardian.rows[0] }, message: 'Guardian authenticated successfully' });
+      // Return existing guardian info (flattened shape for FE)
+      return res.json({ success: true, guardian: existingGuardian.rows[0], message: 'Guardian authenticated successfully' });
     } else {
       // Create new guardian entry
       const newGuardian = await pool.query(
@@ -132,7 +133,7 @@ router.post('/google-auth', generalLimiter, async (req, res, next) => {
         [email, name, payload.sub]
       );
 
-      res.status(201).json({
+  return res.status(201).json({
         success: true,
         guardian: newGuardian.rows[0],
         isNewUser: true,
@@ -154,13 +155,9 @@ router.get('/schools', generalLimiter, async (req, res, next) => {
     const result = await guardianService.getSchoolsList(search);
 
     if (result.success) {
-  sendResponse(res, { status: 201, data: { guardian: newGuardian.rows[0] }, message: 'Guardian profile created successfully' });
-    } else {
-      res.status(400).json({
-        success: false,
-        message: result.message
-      });
+      return res.json({ success: true, data: result.data || result.schools || [] });
     }
+    return res.status(400).json({ success: false, message: result.message });
 
   } catch (error) {
     next(error);
@@ -173,7 +170,7 @@ router.get('/schools', generalLimiter, async (req, res, next) => {
  */
 router.post('/complete-profile', generalLimiter, async (req, res, next) => {
   try {
-    const { 
+  const { 
       claimCode, 
       guardian_name, 
       guardian_phone, 
@@ -192,7 +189,7 @@ router.post('/complete-profile', generalLimiter, async (req, res, next) => {
     }
 
     // Verify claim code first
-    const verifyResult = await guardianService.verifyClaimCode(claimCode);
+  const verifyResult = await guardianService.verifyClaimCode(claimCode);
     if (!verifyResult.success) {
       return res.status(400).json({
         success: false,
@@ -210,21 +207,50 @@ router.post('/complete-profile', generalLimiter, async (req, res, next) => {
       relationship
     };
 
-    const result = await guardianService.completeClaim(claimCode, guardianData);
+  const result = await guardianService.completeClaim(claimCode, guardianData);
 
     if (result.success) {
-      res.status(200).json({
+      return res.json({
         success: true,
         message: 'Guardian profile completed successfully',
         athlete: verifyResult.data
       });
-    } else {
-      res.status(500).json({
-        success: false,
-        message: result.message
-      });
+    }
+    return res.status(500).json({ success: false, message: result.message });
+
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Alias route supporting path param for compatibility
+router.post('/complete-profile/:claimCode', generalLimiter, async (req, res, next) => {
+  try {
+    const claimCode = req.params.claimCode;
+    const {
+      guardian_name,
+      guardian_phone,
+      guardian_email,
+      guardian_address,
+      emergency_contact,
+      relationship
+    } = req.body;
+
+    if (!claimCode || !guardian_name || !guardian_phone) {
+      return res.status(400).json({ success: false, message: 'Claim code, guardian name, and phone number are required' });
     }
 
+    const verifyResult = await guardianService.verifyClaimCode(claimCode);
+    if (!verifyResult.success) {
+      return res.status(400).json({ success: false, message: 'Invalid or expired claim code' });
+    }
+
+    const guardianData = { guardian_name, guardian_phone, guardian_email, guardian_address, emergency_contact, relationship };
+    const result = await guardianService.completeClaim(claimCode, guardianData);
+    if (result.success) {
+      return res.json({ success: true, message: 'Guardian profile completed successfully', athlete: verifyResult.data });
+    }
+    return res.status(500).json({ success: false, message: result.message });
   } catch (error) {
     next(error);
   }
@@ -236,17 +262,45 @@ router.post('/complete-profile', generalLimiter, async (req, res, next) => {
  */
 router.post('/resend-claim', generalLimiter, async (req, res, next) => {
   try {
-    const { athleteId, guardianPhone } = req.body;
+    const { athleteId, guardianPhone, claim_code } = req.body;
+
+    // If claim_code is provided, use that to find the claim
+    if (claim_code) {
+      const result = await pool.query(
+        `SELECT gc.*, p.full_name, p.athlete_id, s.name as school_name
+         FROM guardian_claims gc
+         JOIN players p ON gc.athlete_id = p.athlete_id
+         LEFT JOIN schools s ON p.school_id = s.id
+         WHERE gc.claim_code = $1 AND gc.status = 'pending'
+         ORDER BY gc.created_at DESC
+         LIMIT 1`,
+        [claim_code]
+      );
+
+      if (result.rowCount === 0) {
+        return res.status(404).json({ success: false, message: 'No pending claim found for this code' });
+      }
+
+      const claimData = result.rows[0];
+      const newClaimCode = guardianService.generateClaimCode();
+      const newExpiresAt = new Date();
+      newExpiresAt.setHours(newExpiresAt.getHours() + 24);
+
+      await pool.query(
+        'UPDATE guardian_claims SET claim_code = $1, expires_at = $2, reminder_sent = false WHERE id = $3',
+        [newClaimCode, newExpiresAt, claimData.id]
+      );
+
+      const notificationResult = await guardianService.sendRegistrationNotification({ ...claimData, claim_code: newClaimCode });
+      return res.json({ success: true, message: 'New claim code sent successfully', notification: notificationResult });
+    }
 
     if (!athleteId || !guardianPhone) {
-      return res.status(400).json({
-        success: false,
-        message: 'Athlete ID and guardian phone number are required'
-      });
+      return res.status(400).json({ success: false, message: 'Athlete ID and guardian phone number are required' });
     }
 
     // Find existing claim
-    const pool = require('../config/db');
+  // pool is imported from ../../config/db
     const query = `
       SELECT gc.*, p.full_name, p.athlete_id, s.name as school_name
       FROM guardian_claims gc
@@ -285,13 +339,8 @@ router.post('/resend-claim', generalLimiter, async (req, res, next) => {
       claim_code: newClaimCode
     };
 
-    const notificationResult = await guardianService.sendRegistrationNotification(athleteData);
-
-    res.status(200).json({
-      success: true,
-      message: 'New claim code sent successfully',
-      notification: notificationResult
-    });
+  const notificationResult = await guardianService.sendRegistrationNotification(athleteData);
+  return res.json({ success: true, message: 'New claim code sent successfully', notification: notificationResult });
 
   } catch (error) {
     next(error);
@@ -306,7 +355,7 @@ router.get('/claim-status/:claimCode', generalLimiter, async (req, res, next) =>
   try {
     const { claimCode } = req.params;
 
-    const pool = require('../config/db');
+  // pool is imported from ../../config/db
     const query = `
       SELECT 
         gc.status,
@@ -334,7 +383,7 @@ router.get('/claim-status/:claimCode', generalLimiter, async (req, res, next) =>
     const now = new Date();
     const isExpired = new Date(claimInfo.expires_at) < now;
 
-    res.status(200).json({
+    return res.json({
       success: true,
       claim: {
         ...claimInfo,

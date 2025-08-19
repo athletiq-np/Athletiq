@@ -109,9 +109,10 @@ const EnhancedAthleteForm = ({
 
   const loadSchools = async () => {
     try {
-      const response = await apiClient.get('/api/guardian/schools');
-      setSchools(response.data.schools || []);
-      setFilteredSchools(response.data.schools || []);
+      const response = await apiClient.get('/guardian/schools');
+      const list = response?.data?.data || response?.data?.schools || response?.data || [];
+      setSchools(list);
+      setFilteredSchools(list);
     } catch (error) {
       console.error('Error loading schools:', error);
       toast.error('Failed to load schools');
@@ -179,7 +180,7 @@ const EnhancedAthleteForm = ({
       const formData = new FormData();
       formData.append('birth_certificate', file);
 
-      const response = await apiClient.post('/api/guardian/ocr/birth-certificate', formData, {
+  const response = await apiClient.post('/ocr/birth-certificate', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
         },
@@ -272,14 +273,11 @@ const EnhancedAthleteForm = ({
   // Check if school exists in database
   const checkExistingSchool = async (place) => {
     try {
-      const response = await apiClient.post('/api/guardian/schools/search', {
-        name: place.name,
-        address: place.formatted_address,
-        place_id: place.place_id
-      });
-
-      if (response.data.school) {
-        setValue('school_id', response.data.school.id);
+      const response = await apiClient.get(`/guardian/schools`, { params: { search: place.name } });
+      const schools = response?.data?.data || response?.data?.schools || [];
+      const match = schools.find(s => s.name?.toLowerCase() === place.name?.toLowerCase());
+      if (match) {
+        setValue('school_id', match.id);
         toast.success('School found in database!');
       } else {
         // Suggest adding new school

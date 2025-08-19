@@ -13,6 +13,7 @@ import SinglePageAthleteForm from './SinglePageAthleteForm';
 import AthleteDetailModal from './AthleteDetailModal';
 import VerificationStatusBadge from '../../../components/common/VerificationStatusBadge';
 import ProfileCompletionCircle from '../../../components/common/ProfileCompletionCircle';
+import DocumentsModal from './DocumentsModal';
 
 const EnhancedGuardianDashboard = () => {
   // State management
@@ -22,6 +23,7 @@ const EnhancedGuardianDashboard = () => {
   const [selectedAthlete, setSelectedAthlete] = useState(null);
   const [showDetailModal, setShowDetailModal] = useState(false);
   const [editingAthlete, setEditingAthlete] = useState(null);
+  const [showDocsFor, setShowDocsFor] = useState(null);
   
   // Filter and search state
   const [searchTerm, setSearchTerm] = useState('');
@@ -73,16 +75,28 @@ const EnhancedGuardianDashboard = () => {
     }
   });
 
+  const normalizeAthlete = (a) => ({
+    id: a.id ?? a.athleteId ?? a.athlete_id,
+    full_name: a.full_name ?? a.athleteName ?? a.name ?? 'Unnamed',
+    athlete_id: a.athlete_id ?? a.athleteId ?? String(a.id ?? ''),
+    school_name: a.school_name ?? a.schoolName ?? '',
+    grade: a.grade ?? '',
+    section: a.section ?? '',
+    gender: a.gender ?? '',
+    profile_completion: a.profile_completion ?? a.completion ?? 0,
+    verification_status: a.verification_status ?? a.verificationStatus ?? 'pending',
+    profile_photo_url: a.profile_photo_url ?? a.profilePhotoUrl ?? null,
+    created_at: a.created_at ?? a.createdAt ?? null,
+  });
+
   const loadAthletes = async () => {
     try {
       setLoading(true);
       const response = await apiClient.get('/guardian/athletes');
-      
-      if (response.data.success) {
-        setAthletes(response.data.athletes || []);
-      } else {
-        toast.error('Failed to load athletes');
-      }
+      const payload = response?.data;
+      const list = (payload?.data?.athletes) || payload?.athletes || payload || [];
+      const normalized = Array.isArray(list) ? list.map(normalizeAthlete) : [];
+      setAthletes(normalized);
     } catch (error) {
       console.error('Error loading athletes:', error);
       toast.error('Failed to load athletes');
@@ -91,25 +105,18 @@ const EnhancedGuardianDashboard = () => {
     }
   };
 
-  const loadDashboardStats = async () => {
+  const loadDashboardStats = () => {
     try {
-      // Calculate stats from loaded athletes instead of separate API call
-      if (athletes && athletes.length > 0) {
-        const stats = {
-          totalAthletes: athletes.length,
-          totalSchools: [...new Set(athletes.map(a => a.school_name).filter(Boolean))].length,
-          completedProfiles: athletes.filter(a => a.profile_completion >= 80).length,
-          pendingReview: athletes.filter(a => a.status === 'pending_review').length
-        };
-        setDashboardStats(stats);
-      } else {
-        setDashboardStats({
-          totalAthletes: 0,
-          totalSchools: 0,
-          completedProfiles: 0,
-          pendingReview: 0
-        });
+      if (!athletes || athletes.length === 0) {
+        setDashboardStats({ total: 0, verified: 0, pending: 0, incomplete: 0, averageCompletion: 0 });
+        return;
       }
+      const total = athletes.length;
+      const verified = athletes.filter(a => (a.verification_status || '').toLowerCase().includes('verified')).length;
+      const pending = athletes.filter(a => (a.verification_status || '').toLowerCase().includes('pending')).length;
+      const incomplete = athletes.filter(a => (Number(a.profile_completion) || 0) < 80).length;
+      const avg = Math.round(athletes.reduce((sum, a) => sum + (Number(a.profile_completion) || 0), 0) / total);
+      setDashboardStats({ total, verified, pending, incomplete, averageCompletion: avg });
     } catch (error) {
       console.error('Error calculating dashboard stats:', error);
     }
@@ -171,14 +178,9 @@ const EnhancedGuardianDashboard = () => {
     }
 
     try {
-      const response = await apiClient.delete(`/guardian/athletes/${athleteId}`);
-      
-      if (response.data.success) {
-        toast.success('Athlete deleted successfully');
-        await loadAthletes();
-      } else {
-        toast.error(response.data.message || 'Failed to delete athlete');
-      }
+      await apiClient.delete(`/guardian/athletes/${athleteId}`);
+      toast.success('Athlete deleted successfully');
+      await loadAthletes();
     } catch (error) {
       console.error('Error deleting athlete:', error);
       toast.error('Failed to delete athlete');
@@ -444,6 +446,13 @@ const EnhancedGuardianDashboard = () => {
                     <span>Edit</span>
                   </button>
                   <button
+                    onClick={() => setShowDocsFor(athlete)}
+                    className="flex-1 bg-indigo-50 text-indigo-600 px-3 py-2 rounded-lg hover:bg-indigo-100 transition-colors flex items-center justify-center space-x-1"
+                  >
+                    <FaCertificate />
+                    <span>Docs</span>
+                  </button>
+                  <button
                     onClick={() => handleDeleteAthlete(athlete.id)}
                     className="bg-red-50 text-red-600 px-3 py-2 rounded-lg hover:bg-red-100 transition-colors"
                   >
@@ -522,6 +531,13 @@ const EnhancedGuardianDashboard = () => {
               setEditingAthlete(athlete);
             }}
           />
+        )}
+      </AnimatePresence>
+
+      {/* Documents Modal */}
+      <AnimatePresence>
+        {showDocsFor && (
+          <DocumentsModal athlete={showDocsFor} onClose={() => setShowDocsFor(null)} />
         )}
       </AnimatePresence>
     </div>
