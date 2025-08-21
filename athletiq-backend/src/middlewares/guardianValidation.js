@@ -6,7 +6,7 @@ const logger = createLogger('guardian-validation-middleware');
 // Guardian registration validation
 const guardianRegistrationSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().min(8).pattern(new RegExp('^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#\$%\^&\*])')).required()
+  password: Joi.string().min(8).pattern(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*])/).required()
     .messages({
       'string.pattern.base': 'Password must contain at least one lowercase letter, one uppercase letter, one number and one special character'
     }),
@@ -62,7 +62,7 @@ const schoolCreationSchema = Joi.object({
   municipality: Joi.string().optional(),
   municipalityNepali: Joi.string().optional(),
   wardNumber: Joi.number().integer().min(1).max(35).optional(),
-  phone: Joi.string().pattern(/^[0-9\-\+\s\(\)]+$/).optional(),
+  phone: Joi.string().pattern(/^[0-9\-+\s()]+$/).optional(),
   email: Joi.string().email().optional(),
   level: Joi.string().valid('primary', 'secondary', 'higher_secondary').required(),
   type: Joi.string().valid('public', 'private', 'community').required(),

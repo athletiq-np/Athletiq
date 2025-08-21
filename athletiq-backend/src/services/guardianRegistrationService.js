@@ -25,9 +25,9 @@ class GuardianRegistrationService {
    */
   async registerGuardian({ 
     fullName, 
-    email, 
-    phone, 
-    password, 
+    email,
+    phone,
+    password,
     address,
     relationship = 'Parent'
   }) {
@@ -94,13 +94,6 @@ class GuardianRegistrationService {
 
   /**
    * Add a child to guardian's account using the players table
-   */
-  async addChildToAccount({
-    guardianId,
-    childFullName,
-    dateOfBirth,
-    gender,
-    grade,
     schoolName,
     schoolId = null,
     additionalInfo = {}
@@ -778,13 +771,7 @@ class GuardianRegistrationService {
     // Similar to activation notification but for existing students
   }
 
-  /**
-   * Notify school of pending registration
-   */
-  async notifySchoolOfPendingRegistration(registration) {
-    // Implementation to notify school administrators
-    // Can be email, dashboard notification, etc.
-  }
+  // notifySchoolOfPendingRegistration is implemented earlier in this file; duplicate removed.
 }
 
 module.exports = GuardianRegistrationService;

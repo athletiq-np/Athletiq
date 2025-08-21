@@ -1,7 +1,7 @@
 // src/controllers/certificateController.js
 // Comprehensive Certificate Management System for Tournament Awards
 
-const { pool } = require('../config/db');
+const { pool, query: dbQuery, logger } = require('../config/db');
 const { sendResponse } = require('../utils/response');
 
 /**
@@ -266,7 +266,7 @@ const getCertificate = async (req, res) => {
       WHERE tc.id = $1 AND tc.is_verified = true
     `;
 
-    const result = await db.query(query, [certificateId]);
+  const result = await dbQuery(query, [certificateId]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -333,7 +333,7 @@ const downloadCertificate = async (req, res) => {
       WHERE id = $1
     `;
 
-    const result = await db.query(query, [certificateId]);
+  const result = await dbQuery(query, [certificateId]);
 
     if (result.rows.length === 0) {
       return res.status(404).json({
@@ -404,7 +404,7 @@ const getCertificateTemplates = async (req, res) => {
       ORDER BY created_at DESC
     `;
 
-    const result = await db.query(query, [tournamentId]);
+  const result = await dbQuery(query, [tournamentId]);
 
     res.status(200).json({
       success: true,
@@ -476,7 +476,7 @@ const generateCertificate = async (req, res) => {
       SELECT id FROM tournament_certificates 
       WHERE tournament_id = $1 AND participant_id = $2 AND participant_type = $3 AND certificate_type = $4
     `;
-    const existingResult = await db.query(existingQuery, [tournamentId, participant_id, participant_type, certificate_type]);
+  const existingResult = await dbQuery(existingQuery, [tournamentId, participant_id, participant_type, certificate_type]);
 
     if (existingResult.rows.length > 0) {
       return res.status(409).json({
@@ -509,7 +509,7 @@ const generateCertificate = async (req, res) => {
       RETURNING id, verification_code, issued_at
     `;
 
-    const insertResult = await db.query(insertQuery, [
+  const insertResult = await dbQuery(insertQuery, [
       tournamentId, participant_id, participant_type, 
       certificate_type, template_id, JSON.stringify(certificateData),
       verificationCode
@@ -590,7 +590,7 @@ const bulkGenerateCertificates = async (req, res) => {
           SELECT id FROM tournament_certificates 
           WHERE tournament_id = $1 AND participant_id = $2 AND participant_type = $3 AND certificate_type = $4
         `;
-        const existingResult = await db.query(existingQuery, [
+  const existingResult = await dbQuery(existingQuery, [
           tournamentId, request.participant_id, request.participant_type, request.certificate_type
         ]);
 
@@ -627,7 +627,7 @@ const bulkGenerateCertificates = async (req, res) => {
           RETURNING id, verification_code, issued_at
         `;
 
-        const insertResult = await db.query(insertQuery, [
+  const insertResult = await dbQuery(insertQuery, [
           tournamentId, request.participant_id, request.participant_type, 
           request.certificate_type, request.template_id, JSON.stringify(certificateData),
           verificationCode

@@ -1,0 +1,10 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    { "label": "AI: Review (GPT-5, Opus-like)", "type": "shell", "command": "node scripts/gpt5_opus_mode.mjs review", "problemMatcher": [] },
+    { "label": "AI: Security (GPT-5, Opus-like)", "type": "shell", "command": "node scripts/gpt5_opus_mode.mjs security", "problemMatcher": [] },
+    { "label": "AI: Performance (GPT-5, Opus-like)", "type": "shell", "command": "node scripts/gpt5_opus_mode.mjs performance", "problemMatcher": [] },
+    { "label": "AI: UI Fidelity (GPT-5)", "type": "shell", "command": "node scripts/gpt5_opus_mode.mjs fidelity \"src/**/*.{tsx,jsx,css}\" \"(tailwind tokens, spacing 4, sm/md/lg breakpoints)\"", "problemMatcher": [] },
+    { "label": "AI: Docs (GPT-5)", "type": "shell", "command": "node scripts/gpt5_opus_mode.mjs docs README.md \"Generate/update runbook\"", "problemMatcher": [] }
+  ]
+}

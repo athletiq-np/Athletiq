@@ -669,12 +669,13 @@ class FootballTemplateService {
    * @returns {Promise<string>} HTML scoresheet
    */
   async generateWithRealData(options = {}) {
+    // Ensure format is defined in outer scope for fallback paths
+    const format = (options && options.format) || 'blank';
     try {
       const { 
         schoolLimit = 8, 
         useAdminFilter = false, 
         adminEmail = 'admin@test.com',
-        format = 'blank',
         matchInfo = null
       } = options;
 
@@ -688,7 +689,10 @@ class FootballTemplateService {
 
       if (schools.length < 2) {
         // Use sample data if insufficient real data
-        console.warn('Insufficient real data, using sample data');
+        // Use logger if available; fallback to console
+        if (global && global.logger && typeof global.logger.warn === 'function') {
+          global.logger.warn('Insufficient real data, using sample data');
+        }
         return this.generateWithSampleData(format);
       }
 
@@ -703,7 +707,9 @@ class FootballTemplateService {
       return this.renderFootballScoresheet(data, { format });
 
     } catch (error) {
-      console.error('Error generating scoresheet with real data:', error);
+      if (global && global.logger && typeof global.logger.error === 'function') {
+        global.logger.error('Error generating scoresheet with real data:', error);
+      }
       // Fallback to sample data
       return this.generateWithSampleData(format);
     }

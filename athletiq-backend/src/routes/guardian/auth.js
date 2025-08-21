@@ -148,13 +148,11 @@ router.post('/signup', authLimiter, validateInput(signupSchema), async (req, res
       token
     });
     
-  } catch (error) {
+    } catch (error) {
     await client.query('ROLLBACK');
     logger.error('Signup error', { error: error.message, email: req.body.email });
-    res.status(500).json({
-      success: false,
-      message: 'Account creation failed'
-    });
+    const { sendError } = require('../../utils/errorResponse');
+    return sendError(res, 500, 'ACCOUNT_CREATION_FAILED', 'Account creation failed');
   } finally {
     client.release();
   }
@@ -232,10 +230,8 @@ router.post('/login', authLimiter, validateInput(loginSchema), async (req, res) 
     
   } catch (error) {
     logger.error('Login error', { error: error.message, email: req.body.email });
-    res.status(500).json({
-      success: false,
-      message: 'Login failed'
-    });
+    const { sendError } = require('../../utils/errorResponse');
+    return sendError(res, 500, 'LOGIN_FAILED', 'Login failed');
   }
 });
 
@@ -249,13 +245,13 @@ router.post('/send-otp', otpLimiter, validateInput(phoneOtpSchema), async (req, 
     const otp = generateOTP();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
     
-    // Store OTP in database
+    // Store OTP in database (uses otp_verifications table)
     await pool.query(
-      `INSERT INTO guardian_otps (phone, otp_code, method, expires_at, created_at)
-       VALUES ($1, $2, $3, $4, NOW())
-       ON CONFLICT (phone) DO UPDATE SET
-       otp_code = $2, method = $3, expires_at = $4, created_at = NOW()`,
-      [formattedPhone, otp, method, expiresAt]
+      `INSERT INTO otp_verifications (contact, contact_type, otp_code, purpose, expires_at, created_at)
+       VALUES ($1, $2, $3, $4, $5, NOW())
+       ON CONFLICT (contact) DO UPDATE SET
+       otp_code = $3, contact_type = $2, purpose = $4, expires_at = $5, created_at = NOW()`,
+      [formattedPhone, 'phone', otp, 'login', expiresAt]
     );
     
     // Send OTP
@@ -297,7 +293,7 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
     
     // Verify OTP
     const otpResult = await client.query(
-      'SELECT * FROM guardian_otps WHERE phone = $1 AND otp_code = $2 AND expires_at > NOW()',
+      'SELECT * FROM otp_verifications WHERE contact = $1 AND otp_code = $2 AND expires_at > NOW()',
       [formattedPhone, otp]
     );
     
@@ -345,7 +341,7 @@ router.post('/verify-otp', authLimiter, async (req, res) => {
     }
     
     // Delete used OTP
-    await client.query('DELETE FROM guardian_otps WHERE phone = $1', [formattedPhone]);
+  await client.query('DELETE FROM otp_verifications WHERE contact = $1', [formattedPhone]);
     
     // Generate JWT token
     const token = generateToken(user.id);

@@ -1,5 +1,22 @@
 {
     "recommendations": [
-        "openai.chatgpt"
+        "openai.chatgpt",
+        "GitHub.copilot",
+        "Continue.continue",
+        "Codeium.codeium",
+        "Aider.aider",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "usernamehw.errorlens",
+        "eamodio.gitlens",
+        "wayou.vscode-todo-highlight",
+        "aaron-bond.better-comments",
+        "bradlc.vscode-tailwindcss",
+        "prisma.prisma",
+        "ms-azuretools.vscode-docker",
+        "humao.rest-client",
+        "rangav.vscode-thunder-client",
+        "christian-kohler.path-intellisense",
+        "wix.vscode-import-cost"
     ]
 }

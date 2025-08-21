@@ -58,7 +58,7 @@ exports.register = async (req, res, next) => {
 
   let activePool = pool;
   if (process.env.NODE_ENV === 'test') {
-    try { const { testPool } = require('../../tests/testDb'); if (testPool) activePool = testPool; } catch(_) {}
+    try { const { testPool } = require('../../tests/testDb'); if (testPool) activePool = testPool; } catch (e) { void e; }
   }
 
   const client = await activePool.connect();
@@ -104,7 +104,7 @@ exports.register = async (req, res, next) => {
     await client.query('COMMIT');
     return sendTokenResponse(newUser, 201, res);
   } catch(err) {
-    try { await client.query('ROLLBACK'); } catch(_) {}
+    try { await client.query('ROLLBACK'); } catch (e) { void e; }
     if (!err.statusCode) err.statusCode = 500;
     return next(err);
   } finally {
@@ -138,9 +138,9 @@ exports.login = async (req, res, next) => {
     let dbPool = pool;
     if (process.env.NODE_ENV === 'test') {
       try {
-        const { testPool } = require('../../tests/testDb');
-        if (testPool) dbPool = testPool;
-      } catch (_) { /* ignore if not present */ }
+          const { testPool } = require('../../tests/testDb');
+          if (testPool) dbPool = testPool;
+        } catch (e) { void e; }
     }
     const userResult = await dbPool.query('SELECT * FROM users WHERE email = $1', [email]);
     const user = userResult.rows[0];
@@ -187,7 +187,7 @@ exports.loginUnified = async (req, res, next) => {
     console.log('🔐 Unified login attempt:', email);
     let dbPool = pool;
     if (process.env.NODE_ENV === 'test') {
-      try { const { testPool } = require('../../tests/testDb'); if (testPool) dbPool = testPool; } catch(_) {}
+      try { const { testPool } = require('../../tests/testDb'); if (testPool) dbPool = testPool; } catch (e) { void e; }
     }
 
     // 1. Try primary users table

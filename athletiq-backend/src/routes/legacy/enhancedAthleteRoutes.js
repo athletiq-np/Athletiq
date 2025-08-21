@@ -483,11 +483,12 @@ router.post(
   checkRole(['SchoolAdmin']),
   validateBulkAthleteUpload,
   async (req, res, next) => {
+    let client;
     try {
       const { athletes, school_id, auto_generate_codes } = req.body;
       const created_by = req.user.id;
       
-      const client = await pool.connect();
+      client = await pool.connect();
       await client.query('BEGIN');
 
       const results = [];
@@ -564,8 +565,8 @@ router.post(
       });
 
     } catch (err) {
-      await client.query('ROLLBACK');
-      client.release();
+      await client?.query('ROLLBACK');
+      client?.release();
       next(err);
     }
   }

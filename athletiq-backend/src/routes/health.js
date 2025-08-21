@@ -90,12 +90,12 @@ router.get('/live', (req, res) => {
  * Readiness probe - checks if app is ready to serve traffic
  */
 router.get('/ready', async (req, res) => {
+  const checks = {
+    database: 'checking',
+    memory: 'checking',
+    disk: 'checking'
+  };
   try {
-    const checks = {
-      database: 'checking',
-      memory: 'checking',
-      disk: 'checking'
-    };
 
     // Check database connection
     try {

@@ -1,0 +1,7 @@
+[
+  { "key": "ctrl+alt+r", "command": "workbench.action.tasks.runTask", "args": "AI: Review (GPT-5, Opus-like)" },
+  { "key": "ctrl+alt+s", "command": "workbench.action.tasks.runTask", "args": "AI: Security (GPT-5, Opus-like)" },
+  { "key": "ctrl+alt+p", "command": "workbench.action.tasks.runTask", "args": "AI: Performance (GPT-5, Opus-like)" },
+  { "key": "ctrl+alt+u", "command": "workbench.action.tasks.runTask", "args": "AI: UI Fidelity (GPT-5)" },
+  { "key": "ctrl+alt+d", "command": "workbench.action.tasks.runTask", "args": "AI: Docs (GPT-5)" }
+]

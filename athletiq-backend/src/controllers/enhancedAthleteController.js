@@ -241,13 +241,14 @@ exports.getAthleteAnalytics = async (req, res) => {
  * @access  Private (Coach/Official)
  */
 exports.recordAthleteStats = async (req, res) => {
+  let client;
   try {
     const { athleteId } = req.params;
     const { match_id, tournament_id, sport_id, stats } = req.body;
     const recorded_by = req.user.id;
 
-    const client = await pool.connect();
-    await client.query('BEGIN');
+  client = await pool.connect();
+  await client.query('BEGIN');
 
     const insertedStats = [];
 
@@ -270,10 +271,10 @@ exports.recordAthleteStats = async (req, res) => {
   return sendResponse(res, { status: 201, data: insertedStats, message: 'Athlete statistics recorded successfully' });
 
   } catch (err) {
-  await client?.query('ROLLBACK');
-  client?.release();
-  console.error('Record athlete stats error:', err);
-  return sendResponse(res, { success: false, status: 500, message: 'Server error while recording statistics' });
+    await client?.query('ROLLBACK');
+    client?.release();
+    console.error('Record athlete stats error:', err);
+    return sendResponse(res, { success: false, status: 500, message: 'Server error while recording statistics' });
   }
 };
 
@@ -367,13 +368,14 @@ exports.getAthleteCertificates = async (req, res) => {
  * @access  Private (SchoolAdmin)
  */
 exports.approveAthleteTransfer = async (req, res) => {
+  let client;
   try {
     const { transferId } = req.params;
     const { approved, comments } = req.body;
     const approved_by = req.user.id;
 
-    const client = await pool.connect();
-    await client.query('BEGIN');
+  client = await pool.connect();
+  await client.query('BEGIN');
 
     // Update transfer status
     const updateTransferQuery = `
@@ -427,10 +429,10 @@ exports.approveAthleteTransfer = async (req, res) => {
   return sendResponse(res, { data: transfer, message });
 
   } catch (err) {
-  await client?.query('ROLLBACK');
-  client?.release();
-  console.error('Approve athlete transfer error:', err);
-  return sendResponse(res, { success: false, status: 500, message: 'Server error while processing transfer' });
+    await client?.query('ROLLBACK');
+    client?.release();
+    console.error('Approve athlete transfer error:', err);
+    return sendResponse(res, { success: false, status: 500, message: 'Server error while processing transfer' });
   }
 };
 

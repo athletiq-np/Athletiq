@@ -4,31 +4,22 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js",
-    "start:stable": "node production-server.js",
     "dev": "nodemon server.js",
+    "start": "node server.js",
+    "build": "echo 'No build step for backend'",
+    "lint": "eslint .",
+    "fmt": "prettier --write .",
     "test": "jest",
     "test:watch": "jest --watch",
-    "test:coverage": "jest --coverage",
-    "test:unit": "jest tests/unit",
-    "test:integration": "jest tests/integration",
-    "test:api": "node scripts/test-api.js",
-    "test:load": "node scripts/load-test.js",
-    "test:db": "node tests/setupTestDb.js",
-    "migrate": "node src/database/migrate.js run",
-    "migrate:status": "node src/database/migrate.js status",
-    "migrate:verify": "node src/database/migrate.js verify",
-    "lint": "eslint src/ --ext .js",
-    "lint:fix": "eslint src/ --ext .js --fix",
-    "monitor": "node -e \"const monitoring = require('./src/config/monitoring'); console.log(JSON.stringify(monitoring.getPerformanceMetrics(), null, 2));\"",
-    "health": "node -e \"const monitoring = require('./src/config/monitoring'); console.log(JSON.stringify(monitoring.healthCheck(), null, 2));\""
+    "typecheck": "tsc --noEmit || echo 'No TypeScript in backend'",
+    "ci": "npm run lint && npm run test"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@faker-js/faker": "^9.8.0",
-    "@google-cloud/translate": "^9.1.0",
+  "@google-cloud/translate": "^9.2.0",
     "@google-cloud/vision": "^5.3.3",
     "axios": "^1.10.0",
     "axios-cookiejar-support": "^6.0.3",
@@ -44,6 +35,7 @@
     "express": "^4.21.2",
     "express-rate-limit": "^7.5.1",
     "express-validator": "^7.2.1",
+    "form-data": "4.0.4",
     "google-auth-library": "^10.1.0",
     "googleapis": "^153.0.0",
     "helmet": "^8.1.0",
@@ -72,10 +64,33 @@
   },
   "devDependencies": {
     "@types/jest": "^30.0.0",
+    "eslint": "^8.50.0",
+    "eslint-config-prettier": "^8.8.0",
+    "eslint-plugin-import": "^2.29.1",
     "jest": "^30.0.4",
     "nodemon": "^3.1.10",
+    "prettier": "^2.8.8",
     "supertest": "^7.1.1",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.1"
+  },
+  "overrides": {
+    "@types/request": "2.48.13"
+  },
+  
+  "lint-staged": {
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{md,json,css,scss}": [
+      "prettier --write"
+    ]
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged",
+      "pre-push": "npm test"
+    }
   }
 }

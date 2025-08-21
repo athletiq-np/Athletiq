@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const multer = require('multer');
+const path = require('path');
 const { pool } = require('../../config/database');
 const { createLogger } = require('../../utils/logger');
 const { authenticateGuardian } = require('../../middlewares/guardianAuth');

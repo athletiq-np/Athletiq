@@ -113,8 +113,10 @@ class OCRService {
         boundingBox: detection.boundingPoly.vertices
       }));
       
-      // Calculate average confidence
-      const avgConfidence = textBlocks.reduce((sum, block) => sum + block.confidence, 0) / textBlocks.length;
+      // Calculate average confidence (guard against zero-length arrays)
+      const avgConfidence = textBlocks.length > 0
+        ? (textBlocks.reduce((sum, block) => sum + block.confidence, 0) / textBlocks.length)
+        : 0;
       
       logger.info('Google Vision OCR completed', { 
         imagePath,
@@ -471,7 +473,7 @@ Return only the document type name.
     try {
       const names = Object.entries(data)
         .filter(([key, value]) => key.includes('name') && value)
-        .map(([key, value]) => value);
+        .map(([, value]) => value);
       
       if (names.length === 0) {
         return { valid: false, score: 0, reason: 'No names found' };
@@ -519,24 +521,14 @@ Return only the document type name.
   /**
    * Detect suspicious patterns that might indicate fraud
    */
-  async detectSuspiciousPatterns(imagePath) {
-    try {
-      // This is a placeholder for advanced fraud detection
-      // In a real implementation, you might use image analysis for:
-      // - Duplicate/cloned images
-      // - Digital manipulation detection
-      // - Unusual file metadata
-      // - Inconsistent lighting/shadows
-      
-      return {
-        valid: true,
-        score: 85,
-        reason: 'No suspicious patterns detected'
-      };
-      
-    } catch (error) {
-      return { valid: true, score: 50, reason: 'Could not analyze for suspicious patterns' };
-    }
+  async detectSuspiciousPatterns(_imagePath) {
+    // Placeholder: return a default non-suspicious result.
+    // Advanced analysis (image forensics) can be added later.
+    return {
+      valid: true,
+      score: 85,
+      reason: 'No suspicious patterns detected'
+    };
   }
 }
 

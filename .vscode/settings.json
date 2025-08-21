@@ -24,7 +24,7 @@
   },
   
   // 🧠 Memory Management - 6GB Allocation
-  "typescript.tsserver.maxTsServerMemory": 8144,
+  "typescript.tsserver.maxTsServerMemory": 4096,
   "extensions.autoUpdate": false,
   "extensions.autoCheckUpdates": false,
   "workbench.settings.enableNaturalLanguageSearch": false,
@@ -58,13 +58,18 @@
     "comments": false,
     "strings": false
   },
-  
-  // 🔧 Language Server Performance
-  "eslint.enable": false,
-  "emmet.showExpandedAbbreviation": "never",
-  "html.suggest.html5": false,
-  "css.validate": false,
-  "scss.validate": false,
-  "less.validate": false,
-  "github.copilot.nextEditSuggestions.enabled": true
+  "editor.formatOnSave": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "always",
+    "source.organizeImports": "always"
+  },
+  "files.eol": "\n",
+  "files.insertFinalNewline": true,
+  "eslint.useFlatConfig": true,
+  "prettier.singleQuote": true,
+  "prettier.trailingComma": "es5",
+  "terminal.integrated.defaultProfile.linux": "bash",
+  "terminal.integrated.enableMultiLinePasteWarning": false,
+  "git.confirmSync": false,
+  "git.enableSmartCommit": true
 }

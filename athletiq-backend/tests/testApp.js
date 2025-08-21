@@ -45,12 +45,12 @@ const createTestApp = () => {
     app.use('/api/auth', require('../src/routes/schoolAuth'));
   }
   app.use('/api/schools', require('../src/routes/schoolRoutes'));
-  try { app.use('/api/players', require('../src/routes/playerRoutes')); } catch (_) {}
+  try { app.use('/api/players', require('../src/routes/playerRoutes')); } catch (e) { void e; }
   app.use('/api/tournaments', require('../src/routes/tournamentRoutes'));
-  try { app.use('/api/admin', require('../src/routes/adminRoutes')); } catch (_) {}
-  try { app.use('/api/teams', require('../src/routes/teamRoutes')); } catch (_) {}
-  try { app.use('/api/registrations', require('../src/routes/registrationRoutes')); } catch (_) {}
-  try { app.use('/api/documents', require('../src/routes/documentRoutes')); } catch (_) {}
+  try { app.use('/api/admin', require('../src/routes/adminRoutes')); } catch (e) { void e; }
+  try { app.use('/api/teams', require('../src/routes/teamRoutes')); } catch (e) { void e; }
+  try { app.use('/api/registrations', require('../src/routes/registrationRoutes')); } catch (e) { void e; }
+  try { app.use('/api/documents', require('../src/routes/documentRoutes')); } catch (e) { void e; }
   
   // Only load AI routes if OpenAI key is available (skip in tests)
   if (process.env.OPENAI_API_KEY) {
@@ -58,8 +58,8 @@ const createTestApp = () => {
     app.use('/api/ocr', require('../src/routes/ocr'));
   }
   
-  try { app.use('/api/health', require('../src/routes/health')); } catch (_) {}
-  try { app.use('/api/upload', require('../src/routes/uploadRoutes')); } catch (_) {}
+  try { app.use('/api/health', require('../src/routes/health')); } catch (e) { void e; }
+  try { app.use('/api/upload', require('../src/routes/uploadRoutes')); } catch (e) { void e; }
 
   // Error sanitization before error handler
   app.use(sanitizeError);

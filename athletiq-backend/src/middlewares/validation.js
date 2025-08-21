@@ -36,7 +36,7 @@ const validateUserRegistration = [
   body('password')
     .isLength({ min: 8 })
     .withMessage('Password must be at least 8 characters long')
-    .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
+  .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]/)
     .withMessage('Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character'),
   
   body('schoolName')
@@ -138,7 +138,7 @@ const validateSchoolRegistration = [
   
   body('phone')
     .optional()
-    .matches(/^[\d\s\-\+\(\)]+$/)
+    .matches(/^[-+\d\s()]+$/)
     .withMessage('Phone number can only contain digits, spaces, hyphens, plus signs, and parentheses'),
   
   body('email')
@@ -368,7 +368,7 @@ const validateSchoolAthleteRegistration = [
 
   body('guardian_phone')
     .optional()
-    .matches(/^[\d\s\-\+\(\)]+$/)
+  .matches(/^[\d\s\-+()]+$/)
     .withMessage('Guardian phone must be a valid phone number'),
 
   body('guardian_email')
@@ -415,7 +415,7 @@ const validateGuardianAthleteRegistration = [
   body('guardian_phone')
     .notEmpty()
     .withMessage('Guardian phone is required')
-    .matches(/^[\d\s\-\+\(\)]+$/)
+  .matches(/^[\d\s\-+()]+$/)
     .withMessage('Guardian phone must be a valid phone number'),
 
   body('guardian_email')
@@ -470,7 +470,7 @@ const validateDirectAthleteRegistration = [
 
   body('phone')
     .optional()
-    .matches(/^[\d\s\-\+\(\)]+$/)
+  .matches(/^[\d\s\-+()]+$/)
     .withMessage('Phone must be a valid phone number'),
 
   body('school_id')
@@ -621,6 +621,98 @@ const validateAthleteStats = [
 ];
 
 /**
+ * Lightweight compatibility middleware for simple schema objects used in
+ * guardian routes. The project already has a rich express-validator based
+ * validation library; some new guardian route files import `validateInput`
+ * expecting a simple runtime validator. This function provides a small,
+ * predictable shim that validates common rules (required, type, minLength,
+ * maxLength, pattern, enum, min, max) and returns 400 on first failures.
+ */
+const validateInput = (schema = {}) => {
+  return (req, res, next) => {
+    const body = req.body || {};
+    const errors = [];
+
+    for (const [field, rules] of Object.entries(schema)) {
+      const value = body[field];
+
+      if (rules.required && (value === undefined || value === null || value === '')) {
+        errors.push({ field, message: 'Field is required' });
+        continue;
+      }
+
+      // If value is missing and not required, skip other checks
+      if (value === undefined || value === null) continue;
+
+      if (rules.type) {
+        switch (rules.type) {
+          case 'email':
+            if (typeof value !== 'string' || !/^\S+@\S+\.\S+$/.test(value)) {
+              errors.push({ field, message: 'Invalid email' });
+            }
+            break;
+          case 'date':
+            if (isNaN(Date.parse(value))) {
+              errors.push({ field, message: 'Invalid date' });
+            }
+            break;
+          case 'number':
+            if (typeof value !== 'number') {
+              // allow numeric strings
+              if (typeof value === 'string' && !isNaN(Number(value))) {
+                body[field] = Number(value);
+              } else {
+                errors.push({ field, message: 'Invalid number' });
+              }
+            }
+            break;
+          case 'object':
+            if (typeof value !== 'object') errors.push({ field, message: 'Invalid object' });
+            break;
+          default:
+            break;
+        }
+      }
+
+      if (rules.minLength && typeof value === 'string' && value.length < rules.minLength) {
+        errors.push({ field, message: `Minimum length is ${rules.minLength}` });
+      }
+
+      if (rules.maxLength && typeof value === 'string' && value.length > rules.maxLength) {
+        errors.push({ field, message: `Maximum length is ${rules.maxLength}` });
+      }
+
+      if (rules.pattern) {
+        const re = rules.pattern instanceof RegExp ? rules.pattern : new RegExp(rules.pattern);
+        if (typeof value === 'string' && !re.test(value)) {
+          errors.push({ field, message: 'Invalid format' });
+        }
+      }
+
+      if (rules.enum && !rules.enum.includes(value)) {
+        errors.push({ field, message: `Must be one of: ${rules.enum.join(', ')}` });
+      }
+
+      if (rules.min !== undefined && Number(value) < rules.min) {
+        errors.push({ field, message: `Minimum value is ${rules.min}` });
+      }
+
+      if (rules.max !== undefined && Number(value) > rules.max) {
+        errors.push({ field, message: `Maximum value is ${rules.max}` });
+      }
+    }
+
+    if (errors.length) {
+      return res.status(400).json({ success: false, message: 'Validation failed', errors });
+    }
+
+    // assign possibly coerced values back to req.body
+    req.body = body;
+    return next();
+  };
+};
+
+/**
  * Validation rules for athlete transfer request
  */
 const validateAthleteTransfer = [
@@ -714,6 +806,7 @@ const validatePlayerRegistration = [
 
 module.exports = {
   validateRequest,
+  validateInput,
   validateUserRegistration,
   validateUserLogin,
   validateAthleteRegistration,
