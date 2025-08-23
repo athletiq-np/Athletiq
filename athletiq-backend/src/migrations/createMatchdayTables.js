@@ -12,7 +12,7 @@ const pool = new Pool({
   port: process.env.DB_PORT || 5432,
   database: process.env.DB_NAME || 'athletiq',
   user: process.env.DB_USER || 'postgres',
-  password: process.env.DB_PASSWORD || 'Ardnepu8',
+  password: process.env.DB_PASSWORD || '1234',
 });
 
 const createMatchdayTables = async () => {

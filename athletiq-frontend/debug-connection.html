@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Frontend Connection</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test { margin: 10px 0; padding: 10px; border: 1px solid #ccc; }
+        .success { background-color: #d4edda; border-color: #c3e6cb; }
+        .error { background-color: #f8d7da; border-color: #f5c6cb; }
+        .loading { background-color: #fff3cd; border-color: #ffeaa7; }
+        button { padding: 10px 20px; margin: 5px; }
+        pre { background: #f8f9fa; padding: 10px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    <h1>🔍 Frontend Connection Debug Tool</h1>
+    <p>This tool helps debug connection issues between the React frontend and Django backend.</p>
+    
+    <button onclick="runAllTests()">Run All Tests</button>
+    <button onclick="clearResults()">Clear Results</button>
+    
+    <div id="results"></div>
+
+    <script>
+        const results = document.getElementById('results');
+        
+        function addResult(title, status, message, details = null) {
+            const div = document.createElement('div');
+            div.className = `test ${status}`;
+            div.innerHTML = `
+                <h3>${title}</h3>
+                <p>${message}</p>
+                ${details ? `<pre>${JSON.stringify(details, null, 2)}</pre>` : ''}
+            `;
+            results.appendChild(div);
+        }
+        
+        function clearResults() {
+            results.innerHTML = '';
+        }
+        
+        async function testDirectConnection() {
+            addResult('Test 1: Direct Django Connection', 'loading', 'Testing connection to Django backend...');
+            
+            try {
+                const response = await fetch('http://localhost:8000/api/auth/csrf', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Test 1: Direct Django Connection', 'success', 
+                        `✅ Connected successfully (${response.status})`, data);
+                } else {
+                    addResult('Test 1: Direct Django Connection', 'error', 
+                        `❌ HTTP Error: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                addResult('Test 1: Direct Django Connection', 'error', 
+                    `❌ Network Error: ${error.message}`, error);
+            }
+        }
+        
+        async function testProxyConnection() {
+            addResult('Test 2: Proxy Connection', 'loading', 'Testing connection through React dev server proxy...');
+            
+            try {
+                const response = await fetch('/api/auth/csrf', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    addResult('Test 2: Proxy Connection', 'success', 
+                        `✅ Proxy working correctly (${response.status})`, data);
+                } else {
+                    addResult('Test 2: Proxy Connection', 'error', 
+                        `❌ HTTP Error: ${response.status} ${response.statusText}`);
+                }
+            } catch (error) {
+                addResult('Test 2: Proxy Connection', 'error', 
+                    `❌ Network Error: ${error.message}`, error);
+            }
+        }
+        
+        async function testLoginEndpoint() {
+            addResult('Test 3: Login Endpoint', 'loading', 'Testing login endpoint availability...');
+            
+            try {
+                // First get CSRF token
+                const csrfResponse = await fetch('/api/auth/csrf', {
+                    method: 'GET',
+                    credentials: 'include'
+                });
+                
+                if (!csrfResponse.ok) {
+                    throw new Error('Failed to get CSRF token');
+                }
+                
+                const csrfData = await csrfResponse.json();
+                const csrfToken = csrfData.csrfToken;
+                
+                // Now test login endpoint
+                const response = await fetch('/api/auth/unified/login', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({
+                        email: 'test@test.com',
+                        password: 'wrongpassword'
+                    })
+                });
+                
+                // We expect a 401 for wrong credentials
+                if (response.status === 401) {
+                    const data = await response.json();
+                    addResult('Test 3: Login Endpoint', 'success', 
+                        `✅ Login endpoint accessible (401 expected for wrong credentials)`, data);
+                } else {
+                    const data = await response.json();
+                    addResult('Test 3: Login Endpoint', 'error', 
+                        `❌ Unexpected response: ${response.status}`, data);
+                }
+            } catch (error) {
+                addResult('Test 3: Login Endpoint', 'error', 
+                    `❌ Error: ${error.message}`, error);
+            }
+        }
+        
+        async function testBrowserInfo() {
+            addResult('Browser Information', 'success', 'Browser and environment details', {
+                userAgent: navigator.userAgent,
+                cookiesEnabled: navigator.cookieEnabled,
+                location: window.location.href,
+                localStorage: typeof(Storage) !== "undefined",
+                fetch: typeof(fetch) !== "undefined"
+            });
+        }
+        
+        async function runAllTests() {
+            clearResults();
+            
+            await testBrowserInfo();
+            await testDirectConnection();
+            await testProxyConnection();
+            await testLoginEndpoint();
+            
+            addResult('Summary', 'success', 
+                '🎉 All tests completed! Check results above for any issues.');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,173 @@
+{
+  "passed": 27,
+  "failed": 5,
+  "errors": [
+    "Endpoint /api/auth/register exists: Not found or unreachable: 404",
+    "Endpoint /api/athletes exists: Not found or unreachable: 404",
+    "Endpoint /api/schools exists: Not found or unreachable: 404",
+    "Endpoint /api/tournaments exists: Not found or unreachable: 404",
+    "Registration endpoint accepts requests: Unexpected status: 404"
+  ],
+  "details": [
+    {
+      "test": "Django backend is running and accessible",
+      "passed": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "CSRF token endpoint works",
+      "passed": "O3vlbhwS1zmsp3dKsoml8jgXcf6j3DVFt73RangezJ578hC2IhWxSPdiM2UZs6Vw",
+      "details": "CSRF token available"
+    },
+    {
+      "test": "Endpoint /api/auth/login exists",
+      "passed": true,
+      "details": "Status: 405"
+    },
+    {
+      "test": "Endpoint /api/auth/register exists",
+      "passed": false,
+      "details": "Not found or unreachable: 404"
+    },
+    {
+      "test": "Endpoint /api/athletes exists",
+      "passed": false,
+      "details": "Not found or unreachable: 404"
+    },
+    {
+      "test": "Endpoint /api/schools exists",
+      "passed": false,
+      "details": "Not found or unreachable: 404"
+    },
+    {
+      "test": "Endpoint /api/tournaments exists",
+      "passed": false,
+      "details": "Not found or unreachable: 404"
+    },
+    {
+      "test": "Endpoint /api/guardian/profile exists",
+      "passed": true,
+      "details": "Status: 401"
+    },
+    {
+      "test": "Login endpoint accepts requests",
+      "passed": true,
+      "details": "Status: 401"
+    },
+    {
+      "test": "Registration endpoint accepts requests",
+      "passed": false,
+      "details": "Unexpected status: 404"
+    },
+    {
+      "test": "CORS is configured for frontend",
+      "passed": true,
+      "details": "CORS origin: http://localhost:3000"
+    },
+    {
+      "test": "Frontend .env file exists",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "test": "Environment points to Django backend",
+      "passed": true,
+      "details": "Correct Django URL configured"
+    },
+    {
+      "test": "Proxy configuration exists",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "test": "Proxy targets Django backend",
+      "passed": true,
+      "details": "Proxy correctly configured for Django"
+    },
+    {
+      "test": "CRACO configuration exists",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "test": "CRACO proxy targets Django",
+      "passed": true,
+      "details": "CRACO proxy correctly configured"
+    },
+    {
+      "test": "API client file exists",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "test": "API client has CSRF configuration",
+      "passed": true,
+      "details": "CSRF token handling configured"
+    },
+    {
+      "test": "API client sends credentials",
+      "passed": true,
+      "details": "Credentials configured for Django"
+    },
+    {
+      "test": "API client sets X-Requested-With header",
+      "passed": true,
+      "details": "Django-required header configured"
+    },
+    {
+      "test": "API configuration file exists",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "test": "API endpoints are defined",
+      "passed": true,
+      "details": "API endpoints configuration found"
+    },
+    {
+      "test": "Package.json exists",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "test": "Axios dependency exists",
+      "passed": true,
+      "details": "Version: ^1.10.0"
+    },
+    {
+      "test": "Proxy middleware dependency exists",
+      "passed": true,
+      "details": "Version: ^3.0.5"
+    },
+    {
+      "test": "Puppeteer dependency removed",
+      "passed": true,
+      "details": "Puppeteer correctly removed"
+    },
+    {
+      "test": "Development server configuration exists",
+      "passed": true,
+      "details": "Dev server config found in CRACO"
+    },
+    {
+      "test": "Start script uses CRACO",
+      "passed": true,
+      "details": "CRACO start script configured"
+    },
+    {
+      "test": "Production environment file exists",
+      "passed": true,
+      "details": ""
+    },
+    {
+      "test": "Production API URL configured",
+      "passed": true,
+      "details": "Production API URL found"
+    },
+    {
+      "test": "Build script uses CRACO",
+      "passed": true,
+      "details": "CRACO build script configured"
+    }
+  ]
+}

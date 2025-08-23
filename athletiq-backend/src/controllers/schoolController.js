@@ -1,4 +1,4 @@
-const { pool } = require('../config/db');
+const pool = require('../config/db');
 const bcrypt = require('bcryptjs');
 const { generateSchoolCode } = require('../utils/codeGenerator'); // Assuming you have this utility
 const { sendResponse } = require('../utils/response');
@@ -18,7 +18,7 @@ exports.registerSchool = async (req, res) => {
 
   // Basic validation
   if (!name || !address || !admin_name || !admin_email || !password) {
-  return sendResponse(res, { success: false, status: 400, message: 'Missing required fields for school and admin.' });
+    return sendResponse(res, { success: false, status: 400, message: 'Missing required fields for school and admin.' });
   }
 
   const client = await pool.connect();
@@ -60,7 +60,7 @@ exports.registerSchool = async (req, res) => {
       [school_code, name, address, country, province, district, city, ward, phone, schoolEmail, website, principal_name, adminUserId]
     );
     const { school_id, school_code: new_school_code } = schoolRes.rows[0];
-    
+
     // --- Commit Transaction ---
     await client.query('COMMIT');
 
@@ -76,7 +76,7 @@ exports.registerSchool = async (req, res) => {
   } catch (err) {
     await client.query('ROLLBACK');
     console.error("Register school error:", err);
-  sendResponse(res, { success: false, status: 500, message: err.message || 'Server error during registration.' });
+    sendResponse(res, { success: false, status: 500, message: err.message || 'Server error during registration.' });
   } finally {
     client.release();
   }
@@ -95,10 +95,10 @@ exports.getAllSchools = async (req, res) => {
   }
   try {
     const result = await pool.query('SELECT * FROM schools ORDER BY created_at DESC');
-  sendResponse(res, { data: result.rows, message: 'Schools retrieved successfully' });
+    sendResponse(res, { data: result.rows, message: 'Schools retrieved successfully' });
   } catch (error) {
     console.error('Error fetching all schools:', error);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching schools.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while fetching schools.' });
   }
 };
 
@@ -112,31 +112,31 @@ exports.getMySchoolProfile = async (req, res) => {
   try {
     console.log('🏫 getMySchoolProfile - START');
     console.log('User:', req.user);
-    
+
     // The school_id is securely taken from the user's token, not a URL parameter
     const schoolId = req.user.school_id;
     console.log('School ID:', schoolId);
-    
+
     if (!schoolId) {
-        console.log('❌ No school_id found');
-  return sendResponse(res, { success: false, status: 404, message: 'No school associated with this user.' });
+      console.log('❌ No school_id found');
+      return sendResponse(res, { success: false, status: 404, message: 'No school associated with this user.' });
     }
-    
+
     console.log('🔍 Querying database for school ID:', schoolId);
     const { rows } = await pool.query("SELECT * FROM schools WHERE id=$1", [schoolId]);
     console.log('📊 Query completed. Rows found:', rows.length);
-    
+
     if (!rows.length) {
       console.log('❌ No school found');
-  return sendResponse(res, { success: false, status: 404, message: 'Associated school not found.' });
+      return sendResponse(res, { success: false, status: 404, message: 'Associated school not found.' });
     }
-    
+
     console.log('✅ School found:', rows[0].name);
     console.log('📤 Sending response');
-  sendResponse(res, { data: rows[0], message: 'School profile retrieved successfully' });
+    sendResponse(res, { data: rows[0], message: 'School profile retrieved successfully' });
   } catch (err) {
     console.error("Get my school error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school profile.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school profile.' });
   }
 };
 
@@ -150,7 +150,7 @@ exports.updateMySchoolProfile = async (req, res) => {
   try {
     const schoolId = req.user.school_id;
     if (!schoolId) {
-  return sendResponse(res, { success: false, status: 404, message: 'No school associated with this user.' });
+      return sendResponse(res, { success: false, status: 404, message: 'No school associated with this user.' });
     }
 
     const {
@@ -213,12 +213,12 @@ exports.updateMySchoolProfile = async (req, res) => {
     }
 
     if (updateFields.length === 0) {
-  return sendResponse(res, { success: false, status: 400, message: 'No fields to update.' });
+      return sendResponse(res, { success: false, status: 400, message: 'No fields to update.' });
     }
 
     // Add updated_at timestamp
     updateFields.push(`updated_at = CURRENT_TIMESTAMP`);
-    
+
     // Add school_id for WHERE clause
     values.push(schoolId);
 
@@ -230,7 +230,7 @@ exports.updateMySchoolProfile = async (req, res) => {
     `;
 
     const { rows } = await pool.query(query, values);
-    
+
     if (!rows.length) {
       return sendResponse(res, { success: false, status: 404, message: 'School not found.' });
     }
@@ -251,16 +251,16 @@ exports.updateMySchoolProfile = async (req, res) => {
 exports.getMySchoolTournaments = async (req, res) => {
   try {
     console.log('🏫 getMySchoolTournaments - req.user:', req.user);
-    
+
     // Ensure user is authenticated
     if (!req.user || !req.user.school_id) {
       console.log('❌ No authenticated user or school_id found');
-  return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
+      return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
     }
-    
+
     const schoolId = req.user.school_id;
     console.log('🏫 Fetching tournaments for school_id:', schoolId);
-    
+
     // Get tournaments where school's teams are registered OR tournaments organized by school users
     const { rows } = await pool.query(`
       SELECT DISTINCT
@@ -290,9 +290,9 @@ exports.getMySchoolTournaments = async (req, res) => {
       WHERE (s.id = $1) OR (organizer_users.school_id = $1)
       ORDER BY t.start_date DESC
     `, [schoolId]);
-    
+
     console.log('✅ Successfully fetched tournaments:', rows.length);
-    
+
     // Also get available tournaments (not registered yet)
     const { rows: availableTournaments } = await pool.query(`
       SELECT 
@@ -320,17 +320,19 @@ exports.getMySchoolTournaments = async (req, res) => {
       GROUP BY t.id, t.name, t.tournament_code, t.tournament_type, t.format, t.start_date, t.end_date, t.location, t.status, t.max_teams, t.sport
       ORDER BY t.start_date ASC
     `, [schoolId]);
-    
-    sendResponse(res, { data: {
-      registered_tournaments: rows,
-      available_tournaments: availableTournaments
-    }, message: 'School tournaments retrieved successfully' });
-    
+
+    sendResponse(res, {
+      data: {
+        registered_tournaments: rows,
+        available_tournaments: availableTournaments
+      }, message: 'School tournaments retrieved successfully'
+    });
+
   } catch (err) {
     console.error("Get school tournaments error:", err);
     console.error("Error details:", err.message);
     console.error("Error stack:", err.stack);
-  sendResponse(res, { success: false, status: 500, message: `Server error while fetching school tournaments: ${err.message}` });
+    sendResponse(res, { success: false, status: 500, message: `Server error while fetching school tournaments: ${err.message}` });
   }
 };
 
@@ -343,11 +345,11 @@ exports.getMySchoolTeams = async (req, res) => {
   try {
     // Ensure user is authenticated
     if (!req.user || !req.user.school_id) {
-  return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
+      return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
     }
-    
+
     const schoolId = req.user.school_id;
-    
+
     const { rows } = await pool.query(`
       SELECT 
         t.id,
@@ -371,12 +373,12 @@ exports.getMySchoolTeams = async (req, res) => {
       GROUP BY t.id, t.team_name, s.name, t.season
       ORDER BY t.team_name, t.season DESC
     `, [schoolId]);
-    
-  sendResponse(res, { data: rows, message: 'School teams retrieved successfully' });
-    
+
+    sendResponse(res, { data: rows, message: 'School teams retrieved successfully' });
+
   } catch (err) {
     console.error("Get school teams error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school teams.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school teams.' });
   }
 };
 
@@ -389,9 +391,9 @@ exports.getMySchoolAthletes = async (req, res) => {
   try {
     // Ensure user is authenticated
     if (!req.user || !req.user.school_id) {
-  return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
+      return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
     }
-    
+
     const schoolId = req.user.school_id;
     // Debug: basic presence log (avoid logging PII beyond IDs)
     console.log('[getMySchoolAthletes] schoolId:', schoolId);
@@ -433,11 +435,11 @@ exports.getMySchoolAthletes = async (req, res) => {
       GROUP BY p.id, p.athlete_id, p.full_name, p.date_of_birth, p.gender, p.grade, p.section, p.guardian_phone, p.guardian_email, p.enrollment_status, p.active_status, p.created_at
       ORDER BY p.full_name
     `, [schoolId]);
-    
+
     // Ensure rows is an array even if nullish
     const safeRows = Array.isArray(rows) ? rows : [];
-  sendResponse(res, { data: safeRows, message: 'School athletes retrieved successfully' });
-    
+    sendResponse(res, { data: safeRows, message: 'School athletes retrieved successfully' });
+
   } catch (err) {
     // Enhanced structured logging
     console.error('[getMySchoolAthletes] error:', {
@@ -461,11 +463,11 @@ exports.getMySchoolTournamentStats = async (req, res) => {
   try {
     // Ensure user is authenticated
     if (!req.user || !req.user.school_id) {
-  return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
+      return sendResponse(res, { success: false, status: 401, message: 'Authentication required. Please log in.' });
     }
-    
+
     const schoolId = req.user.school_id;
-    
+
     // Get tournament statistics
     const { rows } = await pool.query(`
       SELECT 
@@ -487,7 +489,7 @@ exports.getMySchoolTournamentStats = async (req, res) => {
       LEFT JOIN players ON s.id = players.school_id
       WHERE s.id = $1
     `, [schoolId]);
-    
+
     const stats = rows[0] || {
       total_tournaments: 0,
       active_tournaments: 0,
@@ -497,205 +499,292 @@ exports.getMySchoolTournamentStats = async (req, res) => {
       matches_won: 0,
       total_athletes: 0
     };
-    
+
     // Calculate win rate
-    const winRate = stats.total_matches_played > 0 
+    const winRate = stats.total_matches_played > 0
       ? ((stats.matches_won / stats.total_matches_played) * 100).toFixed(2)
       : 0;
-    
-    sendResponse(res, { data: {
-      ...stats,
-      win_rate: winRate
-    }, message: 'School tournament statistics retrieved successfully' });
-    
+
+    sendResponse(res, {
+      data: {
+        ...stats,
+        win_rate: winRate
+      }, message: 'School tournament statistics retrieved successfully'
+    });
+
   } catch (err) {
     console.error("Get school tournament stats error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school tournament statistics.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school tournament statistics.' });
   }
 };
 
 /**
- * @desc    Get school houses (mock data for now)
+ * @desc    Get school houses from database
  * @route   GET /api/schools/houses
  * @access  Private (SchoolAdmin)
  */
 exports.getSchoolHouses = async (req, res) => {
   try {
-    // Mock data for houses
-    const houses = [
-      {
-        id: 1,
-        name: 'Red House',
-        color: '#EF4444',
-        captain: 'John Doe',
-        members: 25,
-        points: 150
-      },
-      {
-        id: 2,
-        name: 'Blue House',
-        color: '#3B82F6',
-        captain: 'Jane Smith',
-        members: 23,
-        points: 142
-      },
-      {
-        id: 3,
-        name: 'Green House',
-        color: '#10B981',
-        captain: 'Mike Johnson',
-        members: 27,
-        points: 138
-      },
-      {
-        id: 4,
-        name: 'Yellow House',
-        color: '#F59E0B',
-        captain: 'Sarah Wilson',
-        members: 24,
-        points: 145
-      }
-    ];
+    const schoolId = req.user.school_id;
 
-  sendResponse(res, { data: houses, message: 'School houses retrieved successfully' });
+    if (!schoolId) {
+      return sendResponse(res, { success: false, status: 400, message: 'School ID not found for user.' });
+    }
+
+    // Get houses from database
+    const housesQuery = `
+      SELECT 
+        h.id,
+        h.name,
+        h.color,
+        h.points,
+        COUNT(a.athlete_id) as members,
+        c.full_name as captain_name
+      FROM school_houses h
+      LEFT JOIN athletes a ON h.id = a.house_id AND a.school_id = $1
+      LEFT JOIN athletes c ON h.captain_id = c.athlete_id
+      WHERE h.school_id = $1
+      GROUP BY h.id, h.name, h.color, h.points, c.full_name
+      ORDER BY h.points DESC, h.name
+    `;
+
+    const result = await pool.query(housesQuery, [schoolId]);
+
+    if (result.rows.length === 0) {
+      // If no houses exist, return empty array with message
+      return sendResponse(res, {
+        data: [],
+        message: 'No houses configured for this school. Please contact administration to set up house system.'
+      });
+    }
+
+    const houses = result.rows.map(house => ({
+      id: house.id,
+      name: house.name,
+      color: house.color || '#6B7280', // Default gray if no color set
+      captain: house.captain_name || 'Not assigned',
+      members: parseInt(house.members) || 0,
+      points: parseInt(house.points) || 0
+    }));
+
+    sendResponse(res, { data: houses, message: 'School houses retrieved successfully' });
   } catch (err) {
     console.error("Get school houses error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school houses.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school houses.' });
   }
 };
 
 /**
- * @desc    Get school staff (mock data for now)
+ * @desc    Get school staff from database
  * @route   GET /api/schools/staff
  * @access  Private (SchoolAdmin)
  */
 exports.getSchoolStaff = async (req, res) => {
   try {
-    // Mock data for staff
-    const staff = [
-      {
-        id: 1,
-        name: 'Dr. Robert Smith',
-        position: 'Principal',
-        department: 'Administration',
-        email: 'principal@school.edu',
-        phone: '+977-1-1234567'
-      },
-      {
-        id: 2,
-        name: 'Ms. Emily Johnson',
-        position: 'Vice Principal',
-        department: 'Administration',
-        email: 'vp@school.edu',
-        phone: '+977-1-1234568'
-      },
-      {
-        id: 3,
-        name: 'Mr. David Wilson',
-        position: 'Sports Coordinator',
-        department: 'Sports',
-        email: 'sports@school.edu',
-        phone: '+977-1-1234569'
-      }
-    ];
+    const schoolId = req.user.school_id;
 
-  sendResponse(res, { data: staff, message: 'School staff retrieved successfully' });
+    if (!schoolId) {
+      return sendResponse(res, { success: false, status: 400, message: 'School ID not found for user.' });
+    }
+
+    // Get staff from database
+    const staffQuery = `
+      SELECT 
+        s.id,
+        s.full_name as name,
+        s.position,
+        s.department,
+        s.email,
+        s.phone,
+        s.hire_date,
+        s.status
+      FROM school_staff s
+      WHERE s.school_id = $1 AND s.status = 'active'
+      ORDER BY 
+        CASE s.position 
+          WHEN 'Principal' THEN 1
+          WHEN 'Vice Principal' THEN 2
+          WHEN 'Sports Coordinator' THEN 3
+          ELSE 4
+        END,
+        s.full_name
+    `;
+
+    const result = await pool.query(staffQuery, [schoolId]);
+
+    if (result.rows.length === 0) {
+      // If no staff records exist, return basic school admin info
+      const schoolAdminQuery = `
+        SELECT 
+          u.user_id as id,
+          u.full_name as name,
+          'School Administrator' as position,
+          'Administration' as department,
+          u.email,
+          s.phone
+        FROM users u
+        JOIN schools s ON u.user_id = s.admin_user_id
+        WHERE s.school_id = $1
+      `;
+
+      const adminResult = await pool.query(schoolAdminQuery, [schoolId]);
+
+      return sendResponse(res, {
+        data: adminResult.rows,
+        message: 'Staff information retrieved. Only admin user found - please add more staff members.'
+      });
+    }
+
+    sendResponse(res, { data: result.rows, message: 'School staff retrieved successfully' });
   } catch (err) {
     console.error("Get school staff error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school staff.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school staff.' });
   }
 };
 
 /**
- * @desc    Get school notifications (mock data for now)
+ * @desc    Get school notifications from database
  * @route   GET /api/schools/notifications
  * @access  Private (SchoolAdmin)
  */
 exports.getSchoolNotifications = async (req, res) => {
   try {
-    // Mock data for notifications
-    const notifications = [
-      {
-        id: 1,
-        title: 'Tournament Registration Open',
-        message: 'Registration for the Inter-House Football Tournament is now open.',
-        type: 'tournament',
-        priority: 'high',
-        read: false,
-        created_at: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString() // 2 hours ago
-      },
-      {
-        id: 2,
-        title: 'New Athlete Registration',
-        message: '5 new athletes have registered for cricket team.',
-        type: 'registration',
-        priority: 'medium',
-        read: false,
-        created_at: new Date(Date.now() - 4 * 60 * 60 * 1000).toISOString() // 4 hours ago
-      },
-      {
-        id: 3,
-        title: 'Schedule Update',
-        message: 'Basketball practice has been rescheduled to 4 PM.',
-        type: 'schedule',
-        priority: 'low',
-        read: true,
-        created_at: new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString() // 1 day ago
-      }
-    ];
+    const schoolId = req.user.school_id;
 
-  sendResponse(res, { data: notifications, message: 'School notifications retrieved successfully' });
+    if (!schoolId) {
+      return sendResponse(res, { success: false, status: 400, message: 'School ID not found for user.' });
+    }
+
+    // Get notifications from database
+    const notificationsQuery = `
+      SELECT 
+        n.id,
+        n.title,
+        n.message,
+        n.type,
+        n.priority,
+        n.read_status as read,
+        n.created_at
+      FROM school_notifications n
+      WHERE n.school_id = $1
+      ORDER BY n.created_at DESC
+      LIMIT 50
+    `;
+
+    const result = await pool.query(notificationsQuery, [schoolId]);
+
+    if (result.rows.length === 0) {
+      // If no notifications exist, return empty array
+      return sendResponse(res, {
+        data: [],
+        message: 'No notifications found. You will receive notifications here when there are updates.'
+      });
+    }
+
+    const notifications = result.rows.map(notification => ({
+      id: notification.id,
+      title: notification.title,
+      message: notification.message,
+      type: notification.type,
+      priority: notification.priority || 'medium',
+      read: notification.read || false,
+      created_at: notification.created_at
+    }));
+
+    sendResponse(res, { data: notifications, message: 'School notifications retrieved successfully' });
   } catch (err) {
     console.error("Get school notifications error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school notifications.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school notifications.' });
   }
 };
 
 /**
- * @desc    Get school activities (mock data for now)
+ * @desc    Get school activities from database
  * @route   GET /api/schools/activities
  * @access  Private (SchoolAdmin)
  */
 exports.getSchoolActivities = async (req, res) => {
   try {
-    // Mock data for activities
-    const activities = [
-      {
-        id: 1,
-        title: 'Football Practice',
-        type: 'practice',
-        sport: 'Football',
-        date: new Date(Date.now() + 2 * 60 * 60 * 1000).toISOString(), // 2 hours from now
-        location: 'Main Ground',
-        participants: 22,
-        status: 'scheduled'
-      },
-      {
-        id: 2,
-        title: 'Basketball Match vs. ABC School',
-        type: 'match',
-        sport: 'Basketball',
-        date: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // 1 day from now
-        location: 'School Gym',
-        participants: 10,
-        status: 'confirmed'
-      },
-      {
-        id: 3,
-        title: 'Swimming Training',
-        type: 'training',
-        sport: 'Swimming',
-        date: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000).toISOString(), // 3 days from now
-        location: 'Pool Complex',
-        participants: 15,
-        status: 'scheduled'
-      }
-    ];
+    const schoolId = req.user.school_id;
 
-  sendResponse(res, { data: activities, message: 'School activities retrieved successfully' });
+    if (!schoolId) {
+      return sendResponse(res, { success: false, status: 400, message: 'School ID not found for user.' });
+    }
+
+    // Get activities from database (matches, practices, tournaments)
+    const activitiesQuery = `
+      SELECT 
+        'match' as type,
+        m.id,
+        CONCAT(s.name, ' Match vs ', 
+          CASE 
+            WHEN ht.school_id = $1 THEN aws.name 
+            ELSE hs.name 
+          END
+        ) as title,
+        s.name as sport,
+        m.scheduled_at as date,
+        m.venue as location,
+        COUNT(tp.athlete_id) as participants,
+        m.status
+      FROM matches m
+      JOIN sports s ON m.sport_id = s.id
+      JOIN teams ht ON m.home_team_id = ht.id
+      JOIN teams at ON m.away_team_id = at.id
+      JOIN schools hs ON ht.school_id = hs.school_id
+      JOIN schools aws ON at.school_id = aws.school_id
+      LEFT JOIN team_players tp ON (ht.id = tp.team_id OR at.id = tp.team_id)
+      WHERE (ht.school_id = $1 OR at.school_id = $1)
+        AND m.scheduled_at >= NOW()
+      GROUP BY m.id, s.name, ht.school_id, hs.name, aws.name, m.scheduled_at, m.venue, m.status
+      
+      UNION ALL
+      
+      SELECT 
+        'tournament' as type,
+        t.tournament_id as id,
+        t.name as title,
+        s.name as sport,
+        t.start_date as date,
+        t.venue as location,
+        COUNT(tr.team_id) as participants,
+        t.status
+      FROM tournaments t
+      JOIN sports s ON t.sport_id = s.id
+      LEFT JOIN tournament_registrations tr ON t.tournament_id = tr.tournament_id
+      JOIN teams tm ON tr.team_id = tm.id
+      WHERE tm.school_id = $1
+        AND t.start_date >= NOW()
+      GROUP BY t.tournament_id, t.name, s.name, t.start_date, t.venue, t.status
+      
+      ORDER BY date ASC
+      LIMIT 20
+    `;
+
+    const result = await pool.query(activitiesQuery, [schoolId]);
+
+    if (result.rows.length === 0) {
+      return sendResponse(res, {
+        data: [],
+        message: 'No upcoming activities found. Activities will appear here when matches or tournaments are scheduled.'
+      });
+    }
+
+    const activities = result.rows.map(activity => ({
+      id: activity.id,
+      title: activity.title,
+      type: activity.type,
+      sport: activity.sport,
+      date: activity.date,
+      location: activity.location || 'TBD',
+      participants: parseInt(activity.participants) || 0,
+      status: activity.status || 'scheduled'
+    }));
+
+    sendResponse(res, { data: activities, message: 'School activities retrieved successfully' });
   } catch (err) {
     console.error("Get school activities error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school activities.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while fetching school activities.' });
   }
 };
 
@@ -713,7 +802,7 @@ exports.createSchoolTeam = async (req, res) => {
     const { name, sport, coach, gender, age_group, description, status = "active" } = req.body;
 
     if (!name || !sport || !gender || !age_group) {
-  return sendResponse(res, { success: false, status: 400, message: 'Team name, sport, gender, and age group are required.' });
+      return sendResponse(res, { success: false, status: 400, message: 'Team name, sport, gender, and age group are required.' });
     }
 
     // Mock response for now - will be replaced with actual database implementation
@@ -732,10 +821,10 @@ exports.createSchoolTeam = async (req, res) => {
       athletes: []
     };
 
-  sendResponse(res, { status: 201, data: mockTeam, message: 'Team created successfully' });
+    sendResponse(res, { status: 201, data: mockTeam, message: 'Team created successfully' });
   } catch (err) {
     console.error("Create school team error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while creating team.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while creating team.' });
   }
 };
 
@@ -756,10 +845,10 @@ exports.updateSchoolTeam = async (req, res) => {
       updated_at: new Date().toISOString()
     };
 
-  sendResponse(res, { data: mockUpdatedTeam, message: 'Team updated successfully' });
+    sendResponse(res, { data: mockUpdatedTeam, message: 'Team updated successfully' });
   } catch (err) {
     console.error("Update school team error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while updating team.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while updating team.' });
   }
 };
 
@@ -772,10 +861,10 @@ exports.deleteSchoolTeam = async (req, res) => {
   try {
     const { id } = req.params;
     // Mock deletion
-  sendResponse(res, { data: null, message: 'Team deleted successfully' });
+    sendResponse(res, { data: null, message: 'Team deleted successfully' });
   } catch (err) {
     console.error("Delete school team error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while deleting team.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while deleting team.' });
   }
 };
 
@@ -787,7 +876,7 @@ exports.deleteSchoolTeam = async (req, res) => {
 exports.getSchoolTeam = async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Mock team data
     const mockTeam = {
       id: parseInt(id),
@@ -801,10 +890,10 @@ exports.getSchoolTeam = async (req, res) => {
       athletes: []
     };
 
-  sendResponse(res, { data: mockTeam, message: 'Team retrieved successfully' });
+    sendResponse(res, { data: mockTeam, message: 'Team retrieved successfully' });
   } catch (err) {
     console.error("Get school team error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching team.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while fetching team.' });
   }
 };
 
@@ -819,7 +908,7 @@ exports.addAthleteToTeam = async (req, res) => {
     const { athlete_id, position } = req.body;
 
     if (!athlete_id) {
-  return sendResponse(res, { success: false, status: 400, message: 'Athlete ID is required.' });
+      return sendResponse(res, { success: false, status: 400, message: 'Athlete ID is required.' });
     }
 
     // Mock response
@@ -830,10 +919,10 @@ exports.addAthleteToTeam = async (req, res) => {
       created_at: new Date().toISOString()
     };
 
-  sendResponse(res, { status: 201, data: mockResult, message: 'Athlete added to team successfully' });
+    sendResponse(res, { status: 201, data: mockResult, message: 'Athlete added to team successfully' });
   } catch (err) {
     console.error("Add athlete to team error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while adding athlete to team.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while adding athlete to team.' });
   }
 };
 
@@ -846,10 +935,10 @@ exports.removeAthleteFromTeam = async (req, res) => {
   try {
     const { id: teamId, athleteId } = req.params;
     // Mock removal
-  sendResponse(res, { data: null, message: 'Athlete removed from team successfully' });
+    sendResponse(res, { data: null, message: 'Athlete removed from team successfully' });
   } catch (err) {
     console.error("Remove athlete from team error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while removing athlete from team.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while removing athlete from team.' });
   }
 };
 
@@ -864,10 +953,10 @@ exports.updateAthletePosition = async (req, res) => {
     const { position } = req.body;
 
     // Mock response
-  sendResponse(res, { data: null, message: 'Athlete position updated successfully' });
+    sendResponse(res, { data: null, message: 'Athlete position updated successfully' });
   } catch (err) {
     console.error("Update athlete position error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while updating athlete position.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while updating athlete position.' });
   }
 };
 
@@ -919,10 +1008,10 @@ exports.getSchoolTeams = async (req, res) => {
     `;
 
     const result = await pool.query(query, [schoolId]);
-  sendResponse(res, { data: result.rows, message: 'Teams retrieved successfully' });
+    sendResponse(res, { data: result.rows, message: 'Teams retrieved successfully' });
   } catch (err) {
     console.error("Get teams error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching teams.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while fetching teams.' });
   }
 };
 
@@ -942,10 +1031,10 @@ exports.getSportsConfig = async (req, res) => {
     `;
 
     const result = await pool.query(query);
-  sendResponse(res, { data: result.rows, message: 'Sports configuration retrieved successfully' });
+    sendResponse(res, { data: result.rows, message: 'Sports configuration retrieved successfully' });
   } catch (err) {
     console.error("Get sports config error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while fetching sports configuration.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while fetching sports configuration.' });
   }
 };
 
@@ -961,7 +1050,7 @@ exports.createSchoolTeam = async (req, res) => {
     const { name, sport, maxPlayers, minPlayers } = req.body;
 
     if (!name || !sport) {
-  return sendResponse(res, { success: false, status: 400, message: 'Team name and sport are required.' });
+      return sendResponse(res, { success: false, status: 400, message: 'Team name and sport are required.' });
     }
 
     // Check for duplicate team name within school and sport
@@ -971,7 +1060,7 @@ exports.createSchoolTeam = async (req, res) => {
     );
 
     if (existingTeam.rows.length > 0) {
-  return sendResponse(res, { success: false, status: 409, message: 'A team with this name already exists for this sport.' });
+      return sendResponse(res, { success: false, status: 409, message: 'A team with this name already exists for this sport.' });
     }
 
     const query = `
@@ -981,10 +1070,10 @@ exports.createSchoolTeam = async (req, res) => {
     `;
 
     const result = await pool.query(query, [schoolId, name, sport, maxPlayers || 11, minPlayers || 7, createdBy]);
-  sendResponse(res, { status: 201, data: result.rows[0], message: 'Team created successfully' });
+    sendResponse(res, { status: 201, data: result.rows[0], message: 'Team created successfully' });
   } catch (err) {
     console.error("Create team error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while creating team.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while creating team.' });
   }
 };
 
@@ -1000,7 +1089,7 @@ exports.updateSchoolTeam = async (req, res) => {
     const { name, sport, maxPlayers, minPlayers } = req.body;
 
     if (!name || !sport) {
-  return sendResponse(res, { success: false, status: 400, message: 'Team name and sport are required.' });
+      return sendResponse(res, { success: false, status: 400, message: 'Team name and sport are required.' });
     }
 
     // Check if team belongs to school
@@ -1010,7 +1099,7 @@ exports.updateSchoolTeam = async (req, res) => {
     );
 
     if (teamCheck.rows.length === 0) {
-  return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
+      return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
     }
 
     const query = `
@@ -1021,10 +1110,10 @@ exports.updateSchoolTeam = async (req, res) => {
     `;
 
     const result = await pool.query(query, [name, sport, maxPlayers, minPlayers, teamId, schoolId]);
-  sendResponse(res, { data: result.rows[0], message: 'Team updated successfully' });
+    sendResponse(res, { data: result.rows[0], message: 'Team updated successfully' });
   } catch (err) {
     console.error("Update team error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while updating team.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while updating team.' });
   }
 };
 
@@ -1045,7 +1134,7 @@ exports.deleteSchoolTeam = async (req, res) => {
     );
 
     if (teamCheck.rows.length === 0) {
-  return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
+      return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
     }
 
     // Soft delete - update status to inactive
@@ -1060,10 +1149,10 @@ exports.deleteSchoolTeam = async (req, res) => {
       ['inactive', teamId]
     );
 
-  sendResponse(res, { data: { id: teamId }, message: 'Team deleted successfully' });
+    sendResponse(res, { data: { id: teamId }, message: 'Team deleted successfully' });
   } catch (err) {
     console.error("Delete team error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while deleting team.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while deleting team.' });
   }
 };
 
@@ -1079,7 +1168,7 @@ exports.addPlayerToTeam = async (req, res) => {
     const { name, studentId, grade, position } = req.body;
 
     if (!name || !studentId) {
-  return sendResponse(res, { success: false, status: 400, message: 'Player name and student ID are required.' });
+      return sendResponse(res, { success: false, status: 400, message: 'Player name and student ID are required.' });
     }
 
     // Check if team belongs to school
@@ -1089,7 +1178,7 @@ exports.addPlayerToTeam = async (req, res) => {
     );
 
     if (teamCheck.rows.length === 0) {
-  return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
+      return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
     }
 
     const maxPlayers = teamCheck.rows[0].max_players;
@@ -1101,7 +1190,7 @@ exports.addPlayerToTeam = async (req, res) => {
     );
 
     if (parseInt(playerCount.rows[0].count) >= maxPlayers) {
-  return sendResponse(res, { success: false, status: 409, message: `Team is full. Maximum ${maxPlayers} players allowed.` });
+      return sendResponse(res, { success: false, status: 409, message: `Team is full. Maximum ${maxPlayers} players allowed.` });
     }
 
     // Check if player already exists in school
@@ -1113,7 +1202,7 @@ exports.addPlayerToTeam = async (req, res) => {
 
     if (existingPlayer.rows.length > 0) {
       playerId = existingPlayer.rows[0].id;
-      
+
       // Check if player is already in this team
       const playerInTeam = await pool.query(
         'SELECT id FROM team_players WHERE team_id = $1 AND player_id = $2 AND status = $3',
@@ -1121,7 +1210,7 @@ exports.addPlayerToTeam = async (req, res) => {
       );
 
       if (playerInTeam.rows.length > 0) {
-  return sendResponse(res, { success: false, status: 409, message: 'Player is already in this team.' });
+        return sendResponse(res, { success: false, status: 409, message: 'Player is already in this team.' });
       }
     } else {
       // Create new player record
@@ -1142,10 +1231,10 @@ exports.addPlayerToTeam = async (req, res) => {
     `;
 
     const result = await pool.query(addPlayerQuery, [teamId, playerId, position, name, grade]);
-  sendResponse(res, { status: 201, data: result.rows[0], message: 'Player added to team successfully' });
+    sendResponse(res, { status: 201, data: result.rows[0], message: 'Player added to team successfully' });
   } catch (err) {
     console.error("Add player error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while adding player to team.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while adding player to team.' });
   }
 };
 
@@ -1166,7 +1255,7 @@ exports.removePlayerFromTeam = async (req, res) => {
     );
 
     if (teamCheck.rows.length === 0) {
-  return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
+      return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
     }
 
     // Remove player from team
@@ -1198,7 +1287,7 @@ exports.updatePlayerPositions = async (req, res) => {
     const { updates } = req.body;
 
     if (!Array.isArray(updates)) {
-  return sendResponse(res, { success: false, status: 400, message: 'Updates must be an array.' });
+      return sendResponse(res, { success: false, status: 400, message: 'Updates must be an array.' });
     }
 
     // Check if team belongs to school
@@ -1208,7 +1297,7 @@ exports.updatePlayerPositions = async (req, res) => {
     );
 
     if (teamCheck.rows.length === 0) {
-  return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
+      return sendResponse(res, { success: false, status: 404, message: 'Team not found or access denied.' });
     }
 
     // Update positions for each player
@@ -1246,61 +1335,110 @@ exports.updatePlayerPositions = async (req, res) => {
 exports.exportSchoolData = async (req, res) => {
   try {
     let schoolId = req.user?.school_id;
-    
+
     if (!schoolId) {
       if (process.env.NODE_ENV === 'development') {
         schoolId = 1;
       } else {
-  return sendResponse(res, { success: false, status: 404, message: 'No school associated with this user.' });
+        return sendResponse(res, { success: false, status: 404, message: 'No school associated with this user.' });
       }
     }
 
-    // For now, return a mock Excel export response
-    // In the future, this would generate an actual Excel file using a library like xlsx or exceljs
+    // Get real school data from database for export
+    const [schoolInfo, students, teams, tournaments] = await Promise.all([
+      // School basic info
+      pool.query('SELECT * FROM schools WHERE school_id = $1', [schoolId]),
+
+      // Students/Athletes
+      pool.query(`
+        SELECT 
+          athlete_id as id,
+          full_name as name,
+          grade as class,
+          section,
+          ARRAY_AGG(DISTINCT s.name) as sports
+        FROM athletes a
+        LEFT JOIN team_players tp ON a.athlete_id = tp.athlete_id
+        LEFT JOIN teams t ON tp.team_id = t.id
+        LEFT JOIN sports s ON t.sport_id = s.id
+        WHERE a.school_id = $1
+        GROUP BY a.athlete_id, a.full_name, a.grade, a.section
+        ORDER BY a.grade, a.section, a.full_name
+      `, [schoolId]),
+
+      // Teams
+      pool.query(`
+        SELECT 
+          t.id,
+          t.name,
+          s.name as sport,
+          COUNT(tp.athlete_id) as players
+        FROM teams t
+        LEFT JOIN sports s ON t.sport_id = s.id
+        LEFT JOIN team_players tp ON t.id = tp.team_id
+        WHERE t.school_id = $1
+        GROUP BY t.id, t.name, s.name
+        ORDER BY s.name, t.name
+      `, [schoolId]),
+
+      // Tournaments
+      pool.query(`
+        SELECT 
+          t.tournament_id as id,
+          t.name,
+          t.status,
+          COUNT(tr.team_id) as teams
+        FROM tournaments t
+        LEFT JOIN tournament_registrations tr ON t.tournament_id = tr.tournament_id
+        LEFT JOIN teams tm ON tr.team_id = tm.id
+        WHERE tm.school_id = $1
+        GROUP BY t.tournament_id, t.name, t.status
+        ORDER BY t.start_date DESC
+      `, [schoolId])
+    ]);
+
+    const school = schoolInfo.rows[0];
+    if (!school) {
+      return sendResponse(res, { success: false, status: 404, message: 'School not found.' });
+    }
+
     const exportData = {
       school_info: {
-        name: "Mock School",
-        code: "MSC001",
-        address: "123 School Street",
-        phone: "+977-1-1234567",
-        email: "info@mockschool.edu.np"
+        name: school.name,
+        code: school.school_code,
+        address: school.address,
+        phone: school.phone,
+        email: school.email
       },
       summary: {
-        total_students: 150,
-        total_teams: 8,
-        total_staff: 25,
-        active_tournaments: 3
+        total_students: students.rows.length,
+        total_teams: teams.rows.length,
+        total_tournaments: tournaments.rows.length,
+        export_date: new Date().toISOString()
       },
-      students: [
-        { id: 1, name: "John Doe", class: "10", section: "A", sports: ["Football", "Cricket"] },
-        { id: 2, name: "Jane Smith", class: "9", section: "B", sports: ["Basketball"] }
-      ],
-      teams: [
-        { id: 1, name: "School Eagles", sport: "Football", players: 11 },
-        { id: 2, name: "Cricket Warriors", sport: "Cricket", players: 15 }
-      ],
-      tournaments: [
-        { id: 1, name: "Inter-House Football", status: "active", teams: 4 },
-        { id: 2, name: "District Basketball", status: "completed", teams: 8 }
-      ]
+      students: students.rows.map(student => ({
+        id: student.id,
+        name: student.name,
+        class: student.class,
+        section: student.section,
+        sports: student.sports ? student.sports.filter(s => s !== null) : []
+      })),
+      teams: teams.rows,
+      tournaments: tournaments.rows
     };
 
-    // Set headers for Excel download
-    res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
-    res.setHeader('Content-Disposition', `attachment; filename="school_data_export_${Date.now()}.xlsx"`);
-    
-    // For mock implementation, return JSON data
-    // In production, this would be an actual Excel file buffer
-    res.json({
-      success: true,
-      message: "Export data prepared successfully",
+    // Set headers for JSON export (can be enhanced to Excel later)
+    res.setHeader('Content-Type', 'application/json');
+    res.setHeader('Content-Disposition', `attachment; filename="school_data_export_${school.school_code}_${Date.now()}.json"`);
+
+    sendResponse(res, {
       data: exportData,
-      note: "This is a mock implementation. In production, this would download an Excel file."
+      message: "School data exported successfully"
     });
-    
+
   } catch (err) {
     console.error("Export school data error:", err);
-  sendResponse(res, { success: false, status: 500, message: 'Server error while exporting school data.' });
+    sendResponse(res, { success: false, status: 500, message: 'Server error while exporting school data.' });
   }
 };
 

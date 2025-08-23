@@ -151,64 +151,69 @@ router.post('/round', async (req, res) => {
 });
 
 /**
- * GET /api/pdf/sample/:sport
- * Generate a sample scoresheet with test data (GET method for easier testing)
+ * GET /api/pdf/preview/:sport
+ * Generate a preview scoresheet with database data (GET method for easier testing)
  */
-router.get('/sample/:sport', async (req, res) => {
+router.get('/preview/:sport', async (req, res) => {
   try {
     const { sport } = req.params;
-    const { format = 'blank' } = req.query;
+    const { format = 'blank', matchId } = req.query;
 
-    // Get sample data for the sport
-    const sampleData = ScoresheetGeneratorService.templateService.getSampleData(sport);
+    // Get template data from database
+    const templateData = await ScoresheetGeneratorService.templateService.getTemplateData(sport, matchId);
     
-    const pdfBuffer = await ScoresheetGeneratorService.generateSingleScoresheet(sport, sampleData, {
+    const pdfBuffer = await ScoresheetGeneratorService.generateSingleScoresheet(sport, templateData, {
       format
     });
     
     // Set headers for PDF download
-    const filename = `${sport}_sample_scoresheet_${Date.now()}.pdf`;
+    const filename = `${sport}_preview_scoresheet_${Date.now()}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Length', pdfBuffer.length);
     
     res.send(pdfBuffer);
   } catch (error) {
-    console.error('Error generating sample PDF:', error);
-  sendResponse(res, { success: false, status: 500, message: 'Failed to generate sample PDF', errors: [{ msg: error.message }] });
+    console.error('Error generating preview PDF:', error);
+  sendResponse(res, { success: false, status: 500, message: 'Failed to generate preview PDF', errors: [{ msg: error.message }] });
   }
 });
 
 /**
- * POST /api/pdf/sample
- * Generate a sample scoresheet with test data
+ * POST /api/pdf/generate
+ * Generate a scoresheet with real match data
  */
-router.post('/sample', async (req, res) => {
+router.post('/generate', async (req, res) => {
   try {
-    const { sport, format, options } = req.body;
+    const { sport, matchId, format, options } = req.body;
 
     if (!sport) {
   return sendResponse(res, { success: false, status: 400, message: 'Sport is required' });
     }
 
-    // Get sample data for the sport
-    const sampleData = ScoresheetGeneratorService.templateService.getSampleData(sport);
+    if (!matchId) {
+  return sendResponse(res, { success: false, status: 400, message: 'Match ID is required for scoresheet generation' });
+    }
+
+    // Get real match data from database
+    const ScoreSheetDataService = require('../services/pdfGeneration/ScoreSheetDataService');
+    const matchData = await ScoreSheetDataService.getRealMatchData(matchId);
     
-    const pdfBuffer = await ScoresheetGeneratorService.generateSingleScoresheet(sport, sampleData, {
+    const pdfBuffer = await ScoresheetGeneratorService.generateSingleScoresheet(sport, matchData, {
       ...options,
       format: format || 'blank'
     });
     
     // Set headers for PDF download
-    const filename = `${sport}_sample_scoresheet_${Date.now()}.pdf`;
+    const filename = `${sport}_scoresheet_match_${matchId}_${Date.now()}.pdf`;
     res.setHeader('Content-Type', 'application/pdf');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
     res.setHeader('Content-Length', pdfBuffer.length);
     
     res.send(pdfBuffer);
   } catch (error) {
-    console.error('Error generating sample PDF:', error);
-  sendResponse(res, { success: false, status: 500, message: 'Failed to generate sample PDF', errors: [{ msg: error.message }] });
+    console.error('Error generating scoresheet PDF:', error);
+  sendResponse(res, { success: false, status: 500, message: 'Failed to generate scoresheet PDF', errors: [{ msg: error.message }] });
   }
 });
 

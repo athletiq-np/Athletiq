@@ -91,63 +91,70 @@ class TemplateService {
   }
 
   /**
-   * Get sample data for testing templates
+   * Get template data from database for preview generation
    * @param {string} sport - Sport name
-   * @returns {Object} Sample data for the sport
+   * @param {number} matchId - Optional match ID for real data
+   * @returns {Promise<Object>} Template data from database
    */
-  getSampleData(sport) {
-    const baseData = {
-      match: {
-        id: 'MATCH_001',
-        date: '2024-12-20',
-        time: '15:00',
-        venue: 'Athletiq Sports Complex',
-        court: 'Court 1',
-        weather: 'Clear',
-        temperature: '22°C'
-      },
-      tournament: {
-        name: 'Athletiq Championship 2024',
-        stage: 'Final',
-        season: '2024'
-      },
-      teams: [
-        {
-          name: 'Team Alpha',
-          code: 'ALP',
-          score: 0
+  async getTemplateData(sport, matchId = null) {
+    try {
+      if (matchId) {
+        // Use real match data if match ID provided
+        const ScoreSheetDataService = require('./ScoreSheetDataService');
+        return await ScoreSheetDataService.getRealMatchData(matchId);
+      }
+      
+      // Get the most recent match for the sport for preview
+      const pool = require('../../config/db');
+      const recentMatchQuery = `
+        SELECT 
+          m.id,
+          m.scheduled_at,
+          m.venue,
+          s.name as sport_name,
+          t.name as tournament_name
+        FROM matches m
+        JOIN sports s ON m.sport_id = s.id
+        JOIN tournaments t ON m.tournament_id = t.id
+        WHERE LOWER(s.name) = LOWER($1)
+        ORDER BY m.created_at DESC
+        LIMIT 1
+      `;
+      
+      const result = await pool.query(recentMatchQuery, [sport]);
+      
+      if (result.rows.length > 0) {
+        const ScoreSheetDataService = require('./ScoreSheetDataService');
+        return await ScoreSheetDataService.getRealMatchData(result.rows[0].id);
+      }
+      
+      // If no matches found, return minimal structure for template preview
+      return {
+        match: {
+          id: 'PREVIEW',
+          date: new Date().toISOString().split('T')[0],
+          venue: 'Preview Mode - No Data Available',
+          sport: sport,
+          tournament: 'No Tournament Data',
+          homeTeam: {
+            team_name: 'Team A',
+            school_name: 'School A',
+            school_code: 'SCH001',
+            players: []
+          },
+          awayTeam: {
+            team_name: 'Team B', 
+            school_name: 'School B',
+            school_code: 'SCH002',
+            players: []
+          }
         },
-        {
-          name: 'Team Beta', 
-          code: 'BET',
-          score: 0
-        }
-      ],
-      branding: this.defaultBranding
-    };
-
-    // Sport-specific additions
-    switch (sport.toLowerCase()) {
-      case 'football':
-        baseData.teams = baseData.teams.map(team => ({
-          ...team,
-          formation: '4-4-2',
-          coach: 'John Smith',
-          assistantCoach: 'Mike Johnson'
-        }));
-        break;
-      
-      case 'basketball':
-        baseData.teams = baseData.teams.map(team => ({
-          ...team,
-          coach: 'Coach Johnson'
-        }));
-        break;
-      
-      case 'tennis':
-      case 'badminton':
-        baseData.teams = baseData.teams.map((team, index) => ({
-          ...team,
+        branding: this.defaultBranding
+      };
+    } catch (error) {
+      console.error('Error getting template data:', error);
+      throw error;
+    }
           name: `Player ${index === 0 ? 'A' : 'B'}`,
           ranking: index === 0 ? '15' : '22',
           country: index === 0 ? 'USA' : 'CAN'

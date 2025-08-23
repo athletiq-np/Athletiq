@@ -42,34 +42,16 @@ class BulkRegistrationService {
       'address'
     ];
 
-    const sampleData = [
-      [
-        'Ram Bahadur Thapa',
-        '2010-05-15',
-        'male',
-        '8',
-        'A',
-        'Krishna Thapa',
-        '9841234567',
-        'krishna.thapa@email.com',
-        'Kathmandu, Nepal'
-      ],
-      [
-        'Sita Kumari Poudel',
-        '2011-03-20',
-        'female',
-        '7',
-        'B',
-        'Maya Poudel',
-        '9851234567',
-        'maya.poudel@email.com',
-        'Lalitpur, Nepal'
-      ]
+    // Generate template with empty rows for user to fill
+    const templateRows = [
+      ['[Full Name]', '[YYYY-MM-DD]', '[male/female]', '[Grade]', '[Section]', '[Guardian Name]', '[Phone]', '[Email]', '[Address]'],
+      ['', '', '', '', '', '', '', '', ''],
+      ['', '', '', '', '', '', '', '', '']
     ];
 
     const csvContent = [
       headers.join(','),
-      ...sampleData.map(row => row.join(','))
+      ...templateRows.map(row => row.join(','))
     ].join('\n');
 
     return {

@@ -1,0 +1,50 @@
+{
+  "passed": 6,
+  "failed": 2,
+  "errors": [
+    "Request without CSRF token is rejected: Unexpected status: 401 (should be 403)",
+    "Request with invalid CSRF token is rejected: Unexpected status: 401 (should be 403)"
+  ],
+  "details": [
+    {
+      "test": "CSRF endpoint is accessible",
+      "passed": true,
+      "details": "Status: 200"
+    },
+    {
+      "test": "CSRF token is provided",
+      "passed": true,
+      "details": "Token found in response body: kPVy3e20o7..."
+    },
+    {
+      "test": "Request without CSRF token is rejected",
+      "passed": false,
+      "details": "Unexpected status: 401 (should be 403)"
+    },
+    {
+      "test": "Request with invalid CSRF token is rejected",
+      "passed": false,
+      "details": "Unexpected status: 401 (should be 403)"
+    },
+    {
+      "test": "Request with valid CSRF token is not rejected for CSRF",
+      "passed": true,
+      "details": "Status: 401 (not CSRF error)"
+    },
+    {
+      "test": "FormData with CSRF token is not rejected for CSRF",
+      "passed": true,
+      "details": "Status: 401 (not CSRF error)"
+    },
+    {
+      "test": "CSRF cookie has HttpOnly",
+      "passed": true,
+      "details": "Correctly accessible to JavaScript"
+    },
+    {
+      "test": "CSRF cookie SameSite configuration",
+      "passed": true,
+      "details": "SameSite attribute configured"
+    }
+  ]
+}

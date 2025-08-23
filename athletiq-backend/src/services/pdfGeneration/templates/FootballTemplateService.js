@@ -687,9 +687,7 @@ class FootballTemplateService {
       }
 
       if (schools.length < 2) {
-        // Use sample data if insufficient real data
-        console.warn('Insufficient real data, using sample data');
-        return this.generateWithSampleData(format);
+        throw new Error('Insufficient team data - at least 2 teams required for scoresheet generation');
       }
 
       // If specific match info provided, use it
@@ -703,20 +701,25 @@ class FootballTemplateService {
       return this.renderFootballScoresheet(data, { format });
 
     } catch (error) {
-      console.error('Error generating scoresheet with real data:', error);
-      // Fallback to sample data
-      return this.generateWithSampleData(format);
+      console.error('Error generating scoresheet with database data:', error);
+      throw error;
     }
   }
 
   /**
-   * Generate scoresheet with sample data
+   * Generate scoresheet with database data for specific match
+   * @param {number} matchId - Match ID to generate scoresheet for
    * @param {string} format - Template format
-   * @returns {string} HTML scoresheet
+   * @returns {Promise<string>} HTML scoresheet
    */
-  generateWithSampleData(format = 'blank') {
-    const sampleData = ScoreSheetDataService.createSampleMatchData();
-    return this.renderFootballScoresheet(sampleData, { format });
+  async generateWithMatchData(matchId, format = 'blank') {
+    try {
+      const matchData = await ScoreSheetDataService.getRealMatchData(matchId);
+      return this.renderFootballScoresheet(matchData, { format });
+    } catch (error) {
+      console.error('Error generating scoresheet for match:', matchId, error);
+      throw error;
+    }
   }
 
   /**

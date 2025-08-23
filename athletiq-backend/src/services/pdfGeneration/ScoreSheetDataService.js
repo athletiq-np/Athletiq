@@ -278,54 +278,76 @@ class ScoreSheetDataService {
   }
 
   /**
-   * Create sample data for testing scoresheet generation
-   * @returns {Object} Sample match data
+   * Get real match data from database for scoresheet generation
+   * @param {number} matchId - Match ID to fetch data for
+   * @returns {Promise<Object>} Real match data from database
    */
-  static createSampleMatchData() {
-    return {
-      match: {
-        date: new Date().toISOString().split('T')[0],
-        venue: 'Athletiq Sports Complex',
-        homeTeam: {
-          team_id: 1,
-          team_name: 'Eagles FC',
-          school_name: 'Kathmandu Model School',
-          school_code: 'KMS001',
-          players: [
-            { player_id: 1, full_name: 'Ram Bahadur Thapa', position: 'Goalkeeper' },
-            { player_id: 2, full_name: 'Sita Kumari Sharma', position: 'Defender' },
-            { player_id: 3, full_name: 'Arjun Singh Khadka', position: 'Midfielder' },
-            { player_id: 4, full_name: 'Maya Gurung', position: 'Forward' },
-            { player_id: 5, full_name: 'Bikash Tamang', position: 'Defender' },
-            { player_id: 6, full_name: 'Anita Rai', position: 'Midfielder' },
-            { player_id: 7, full_name: 'Suresh Malla', position: 'Forward' },
-            { player_id: 8, full_name: 'Kamala Shrestha', position: 'Defender' },
-            { player_id: 9, full_name: 'Ravi Karki', position: 'Midfielder' },
-            { player_id: 10, full_name: 'Sunita Poudel', position: 'Forward' },
-            { player_id: 11, full_name: 'Deepak Oli', position: 'Defender' }
-          ]
-        },
-        awayTeam: {
-          team_id: 2,
-          team_name: 'Lions United',
-          school_name: 'Lalitpur Academy',
-          school_code: 'LA002',
-          players: [
-            { player_id: 12, full_name: 'Hari Bahadur Lama', position: 'Goalkeeper' },
-            { player_id: 13, full_name: 'Gita Adhikari', position: 'Defender' },
-            { player_id: 14, full_name: 'Prakash Neupane', position: 'Midfielder' },
-            { player_id: 15, full_name: 'Laxmi Bhandari', position: 'Forward' },
-            { player_id: 16, full_name: 'Nabin Shrestha', position: 'Defender' },
-            { player_id: 17, full_name: 'Sabita Pun', position: 'Midfielder' },
-            { player_id: 18, full_name: 'Ganesh Thapa', position: 'Forward' },
-            { player_id: 19, full_name: 'Nirmala Gautam', position: 'Defender' },
-            { player_id: 20, full_name: 'Rajesh Yadav', position: 'Midfielder' },
-            { player_id: 21, full_name: 'Sarita Maharjan', position: 'Forward' },
-            { player_id: 22, full_name: 'Amit Basnet', position: 'Defender' }
-          ]
-        }
+  static async getRealMatchData(matchId) {
+    try {
+      const matchQuery = `
+        SELECT 
+          m.*,
+          s.name as sport_name,
+          t.name as tournament_name,
+          ht.name as home_team_name,
+          ht.school_id as home_school_id,
+          at.name as away_team_name,
+          at.school_id as away_school_id,
+          hs.name as home_school_name,
+          hs.school_code as home_school_code,
+          aws.name as away_school_name,
+          aws.school_code as away_school_code
+        FROM matches m
+        JOIN sports s ON m.sport_id = s.id
+        JOIN tournaments t ON m.tournament_id = t.id
+        JOIN teams ht ON m.home_team_id = ht.id
+        JOIN teams at ON m.away_team_id = at.id
+        JOIN schools hs ON ht.school_id = hs.school_id
+        JOIN schools aws ON at.school_id = aws.school_id
+        WHERE m.id = $1
+      `;
+      
+      const matchResult = await pool.query(matchQuery, [matchId]);
+      
+      if (matchResult.rows.length === 0) {
+        throw new Error(`Match with ID ${matchId} not found`);
       }
-    };
+      
+      const match = matchResult.rows[0];
+      
+      // Get players for both teams
+      const [homePlayers, awayPlayers] = await Promise.all([
+        this.getPlayersForTeam(match.home_team_id),
+        this.getPlayersForTeam(match.away_team_id)
+      ]);
+      
+      return {
+        match: {
+          id: match.id,
+          date: match.scheduled_at ? match.scheduled_at.toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+          venue: match.venue || 'TBD',
+          sport: match.sport_name,
+          tournament: match.tournament_name,
+          homeTeam: {
+            team_id: match.home_team_id,
+            team_name: match.home_team_name,
+            school_name: match.home_school_name,
+            school_code: match.home_school_code,
+            players: homePlayers
+          },
+          awayTeam: {
+            team_id: match.away_team_id,
+            team_name: match.away_team_name,
+            school_name: match.away_school_name,
+            school_code: match.away_school_code,
+            players: awayPlayers
+          }
+        }
+      };
+    } catch (error) {
+      console.error('Error fetching real match data:', error);
+      throw error;
+    }
   }
 }
 

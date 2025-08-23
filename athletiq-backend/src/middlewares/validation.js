@@ -246,10 +246,24 @@ const validateTournament = [
     .isLength({ max: 1000 })
     .withMessage('Description must be less than 1000 characters')
     .escape(),
-  body('level')
+  body('sport')
+    .optional()
+    .trim()
+    .isLength({ min: 1, max: 50 })
+    .withMessage('Sport must be between 1 and 50 characters'),
+  body('tournament_type')
     .optional()
     .isIn(['school', 'district', 'provincial', 'national', 'international'])
-    .withMessage('Invalid tournament level'),
+    .withMessage('Invalid tournament type'),
+  body('format')
+    .optional()
+    .isIn(['knockout', 'round_robin', 'league', 'swiss'])
+    .withMessage('Invalid tournament format'),
+  body('location')
+    .optional()
+    .trim()
+    .isLength({ max: 200 })
+    .withMessage('Location must be less than 200 characters'),
   body('start_date')
     .optional()
     .isISO8601()
@@ -258,14 +272,23 @@ const validateTournament = [
     .optional()
     .isISO8601()
     .withMessage('End date must be in ISO 8601 format'),
-  body('logo_url')
+  body('registration_deadline')
     .optional()
-    .isURL()
-    .withMessage('Logo URL must be a valid URL'),
-  body('sports_config')
+    .isISO8601()
+    .withMessage('Registration deadline must be in ISO 8601 format'),
+  body('max_teams')
     .optional()
-    .isArray()
-    .withMessage('Sports config must be an array'),
+    .isInt({ min: 2, max: 1000 })
+    .withMessage('Max teams must be between 2 and 1000'),
+  body('organizer_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Organizer ID must be a positive integer'),
+  body('organizer_name')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('Organizer name must be less than 100 characters'),
   validateRequest
 ];
 

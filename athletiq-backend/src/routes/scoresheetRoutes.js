@@ -197,7 +197,7 @@ router.get('/football/template-info', generalLimiter, ScoresheetController.getTe
  * @swagger
  * /api/scoresheets/football/preview:
  *   get:
- *     summary: Preview scoresheet with sample data
+ *     summary: Preview scoresheet with database data
  *     tags: [Scoresheets]
  *     parameters:
  *       - in: query
@@ -207,6 +207,11 @@ router.get('/football/template-info', generalLimiter, ScoresheetController.getTe
  *           enum: [blank, pre-filled]
  *           default: blank
  *         description: Template format
+ *       - in: query
+ *         name: matchId
+ *         schema:
+ *           type: integer
+ *         description: Optional match ID for specific match data
  *     responses:
  *       200:
  *         description: Preview scoresheet generated successfully

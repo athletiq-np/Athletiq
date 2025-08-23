@@ -15,7 +15,7 @@ class ScoresheetController {
   static async generateFootballScoresheet(req, res) {
     try {
       const {
-        useRealData = true,
+        matchId,
         format = 'blank',
         schoolLimit = 8,
         useAdminFilter = false,
@@ -23,10 +23,20 @@ class ScoresheetController {
         matchInfo = null
       } = req.body;
 
+      if (!matchId && !matchInfo) {
+        return sendResponse(res, { 
+          success: false, 
+          status: 400, 
+          message: 'Match ID or match info is required for scoresheet generation' 
+        });
+      }
+
       const templateService = new FootballTemplateService();
       let htmlContent;
 
-      if (useRealData) {
+      if (matchId) {
+        htmlContent = await templateService.generateWithMatchData(matchId, format);
+      } else {
         htmlContent = await templateService.generateWithRealData({
           schoolLimit,
           useAdminFilter,
@@ -34,15 +44,13 @@ class ScoresheetController {
           format,
           matchInfo
         });
-      } else {
-        htmlContent = templateService.generateWithSampleData(format);
       }
 
   return sendResponse(res, { data: {
         html: htmlContent,
         format,
         generated_at: new Date().toISOString(),
-        data_source: useRealData ? 'database' : 'sample'
+        data_source: 'database'
   }, message: 'Football scoresheet generated successfully' });
 
     } catch (error) {
@@ -235,26 +243,37 @@ class ScoresheetController {
   }
 
   /**
-   * Preview scoresheet with sample data
+   * Preview scoresheet with database data
    * @route GET /api/scoresheets/football/preview
    */
   static async previewScoresheet(req, res) {
     try {
-      const { format = 'blank' } = req.query;
+      const { format = 'blank', matchId } = req.query;
 
       const templateService = new FootballTemplateService();
-      const htmlContent = templateService.generateWithSampleData(format);
+      let htmlContent;
+
+      if (matchId) {
+        // Use specific match data
+        htmlContent = await templateService.generateWithMatchData(parseInt(matchId), format);
+      } else {
+        // Use most recent match data for preview
+        htmlContent = await templateService.generateWithRealData({
+          schoolLimit: 2,
+          format
+        });
+      }
 
   return sendResponse(res, { data: {
         html: htmlContent,
         format,
-        data_source: 'sample',
+        data_source: 'database',
         generated_at: new Date().toISOString()
   }, message: 'Preview scoresheet generated successfully' });
 
     } catch (error) {
       console.error('Error generating preview:', error);
-  return sendResponse(res, { success: false, status: 500, message: 'Failed to generate preview' });
+  return sendResponse(res, { success: false, status: 500, message: 'Failed to generate preview - ensure there is match data in the database' });
     }
   }
 }

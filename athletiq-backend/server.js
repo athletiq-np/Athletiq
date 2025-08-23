@@ -72,6 +72,7 @@ app.use('/api/pdf', require('./src/routes/pdfRoutes'));
 app.use('/api/scoresheets', require('./src/routes/scoresheetRoutes'));
 app.use('/api/admin', require('./src/routes/adminRoutes'));
 app.use('/api/meta', require('./src/routes/metaRoutes'));
+app.use('/api/data', require('./src/routes/dataRoutes'));
 // Matches (basic scheduling & fixtures)
 try {
   app.use('/api/matches', require('./src/routes/matchRoutes'));

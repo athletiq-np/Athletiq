@@ -66,5 +66,26 @@
   "css.validate": false,
   "scss.validate": false,
   "less.validate": false,
-  "github.copilot.nextEditSuggestions.enabled": true
+  "github.copilot.nextEditSuggestions.enabled": true,
+  "sqltools.connections": [
+    {
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "name": "Athletiq Local DB",
+      "database": "athletiq",
+      "username": "postgres"
+    },
+    {
+      "previewLimit": 50,
+      "server": "localhost",
+      "port": 5432,
+      "driver": "PostgreSQL",
+      "name": "athletiq",
+      "database": "athletiq",
+      "username": "postgres",
+      "password": "1234"
+    }
+  ]
 }

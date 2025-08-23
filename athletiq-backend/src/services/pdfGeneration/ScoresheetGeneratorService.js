@@ -142,8 +142,8 @@ class ScoresheetGeneratorService {
     try {
       console.log(`Generating preview for ${sport}`);
       
-      // Use sample data if no data provided
-      const templateData = data || this.templateService.getSampleData(sport);
+      // Use provided data or get from database
+      const templateData = data || await this.templateService.getTemplateData(sport);
       
       // Generate HTML template
       const html = this.templateService.generateTemplate(sport, templateData, options);
