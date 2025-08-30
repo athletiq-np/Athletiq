@@ -1,0 +1,27 @@
+[build]
+# Use a Python buildpack for the Django backend
+builder = "nixpacks"
+
+# Set the Python version
+[build.environment]
+PYTHON_VERSION = "3.10"
+NODE_VERSION = "18.x"
+
+# Install dependencies and build the application
+[build.install]
+cmd = "chmod +x railway-build.sh && ./railway-build.sh"
+
+# Start command for the application
+[deploy]
+startCommand = "cd athletiq_django && gunicorn athletiq.wsgi:application --log-file -"
+
+# Port to expose
+[deploy.ports]
+port = 8000
+
+# Health check
+[deploy.healthcheckPath]
+path = "/admin/"
+timeoutSeconds = 30
+intervalSeconds = 60
+maxRetries = 3
