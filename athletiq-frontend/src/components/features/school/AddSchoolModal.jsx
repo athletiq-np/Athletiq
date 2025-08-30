@@ -572,7 +572,7 @@ export default function AddSchoolModal({ open, onClose, onAdded, viewMode: initi
                           min="1"
                           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-athletiq-blue focus:ring-athletiq-blue/50"
                           placeholder="Ward number"
-                          disabled={viewMode}
+                          disabled={isViewMode}
                         />
                       </div>
                     </div>
@@ -594,7 +594,7 @@ export default function AddSchoolModal({ open, onClose, onAdded, viewMode: initi
                             className="flex-1 min-w-0 block w-full rounded-r-md border-gray-300 focus:border-athletiq-blue focus:ring-athletiq-blue/50"
                             placeholder="98XXXXXXXX"
                             required
-                            disabled={viewMode}
+                            disabled={isViewMode}
                           />
                         </div>
                       </div>
