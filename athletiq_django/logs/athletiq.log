@@ -17478,3 +17478,120 @@ Failed to collect API metrics: no such table: monitoring_system_metrics
 GET /api/tournaments/ - 200 - 0.108s (request_id: 0617fbad-f355-4f1e-bd0e-fcddb13341ab)
 {"level": "info", "message": "GET /api/tournaments/", "timestamp": "2025-08-30T04:45:09.000Z", "request": {"method": "GET", "url": "/api/tournaments/", "path": "/api/tournaments/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "0617fbad-f355-4f1e-bd0e-fcddb13341ab", "userId": 2}, "response": {"statusCode": 200, "contentLength": 2170, "duration": "109.40ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
 "GET /api/tournaments/ HTTP/1.1" 200 2170
+Failed to collect API metrics: no such table: monitoring_system_metrics
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/athletes/ - 200 - 0.069s (request_id: c2fad83d-33fe-41cf-8a1b-c9292fec9f25)
+GET /api/athletes/ - 200 - 0.065s (request_id: 599d195d-64c9-46fb-b5da-4ef257d3c2cd)
+Failed to collect API metrics: no such table: monitoring_system_metrics
+{"level": "info", "message": "GET /api/athletes/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/athletes/?select_related=school&exclude=guardian", "path": "/api/athletes/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "c2fad83d-33fe-41cf-8a1b-c9292fec9f25", "userId": 2}, "response": {"statusCode": 200, "contentLength": 173, "duration": "72.46ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+{"level": "info", "message": "GET /api/athletes/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/athletes/?select_related=school&exclude=guardian", "path": "/api/athletes/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "599d195d-64c9-46fb-b5da-4ef257d3c2cd", "userId": 2}, "response": {"statusCode": 200, "contentLength": 173, "duration": "72.34ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+GET /api/schools/ - 200 - 0.084s (request_id: 413fff26-efc8-4f68-9bd5-50448704ec87)
+"GET /api/athletes/?select_related=school&exclude=guardian HTTP/1.1" 200 173
+{"level": "info", "message": "GET /api/schools/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/schools/", "path": "/api/schools/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "413fff26-efc8-4f68-9bd5-50448704ec87", "userId": 2}, "response": {"statusCode": 200, "contentLength": 987, "duration": "98.47ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/athletes/?select_related=school&exclude=guardian HTTP/1.1" 200 173
+Failed to collect API metrics: no such table: monitoring_system_metrics
+Failed to collect API metrics: no such table: monitoring_system_metrics
+"GET /api/schools/ HTTP/1.1" 200 987
+GET /api/health/stats/ - 200 - 0.137s (request_id: 0382bd43-88bd-4cad-a084-3bee105c930c)
+GET /api/schools/ - 200 - 0.106s (request_id: 654b021e-e064-4f63-a638-3b30cd71a10d)
+{"level": "info", "message": "GET /api/health/stats/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/health/stats/", "path": "/api/health/stats/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "0382bd43-88bd-4cad-a084-3bee105c930c", "userId": 2}, "response": {"statusCode": 200, "contentLength": 217, "duration": "146.19ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+{"level": "info", "message": "GET /api/schools/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/schools/", "path": "/api/schools/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "654b021e-e064-4f63-a638-3b30cd71a10d", "userId": 2}, "response": {"statusCode": 200, "contentLength": 987, "duration": "112.33ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+Failed to collect API metrics: no such table: monitoring_system_metrics
+"GET /api/health/stats/ HTTP/1.1" 200 217
+GET /api/health/stats/ - 200 - 0.143s (request_id: cab475b4-18a1-40bc-b7f4-82059fe96724)
+"GET /api/schools/ HTTP/1.1" 200 987
+{"level": "info", "message": "GET /api/health/stats/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/health/stats/", "path": "/api/health/stats/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "cab475b4-18a1-40bc-b7f4-82059fe96724", "userId": 2}, "response": {"statusCode": 200, "contentLength": 217, "duration": "163.76ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/health/stats/ HTTP/1.1" 200 217
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/athletes/ - 200 - 0.052s (request_id: de3c338e-7caa-44dc-9611-79d122911ddb)
+{"level": "info", "message": "GET /api/athletes/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/athletes/?select_related=school&exclude=guardian", "path": "/api/athletes/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "de3c338e-7caa-44dc-9611-79d122911ddb", "userId": 2}, "response": {"statusCode": 200, "contentLength": 173, "duration": "55.57ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+Failed to collect API metrics: no such table: monitoring_system_metrics
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/schools/ - 200 - 0.066s (request_id: 551811dd-aecb-437a-89a3-9928c050c9cf)
+"GET /api/athletes/?select_related=school&exclude=guardian HTTP/1.1" 200 173
+GET /api/health/stats/ - 200 - 0.114s (request_id: 54835e96-37df-4f33-849b-d0201f463b1e)
+Failed to collect API metrics: no such table: monitoring_system_metrics
+{"level": "info", "message": "GET /api/schools/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/schools/", "path": "/api/schools/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "551811dd-aecb-437a-89a3-9928c050c9cf", "userId": 2}, "response": {"statusCode": 200, "contentLength": 987, "duration": "72.16ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+{"level": "info", "message": "GET /api/health/stats/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/health/stats/", "path": "/api/health/stats/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "54835e96-37df-4f33-849b-d0201f463b1e", "userId": 2}, "response": {"statusCode": 200, "contentLength": 217, "duration": "118.52ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+GET /api/tournaments/ - 200 - 0.286s (request_id: 0ed5bfc9-e43e-4aa2-99c4-bb23456143d2)
+{"level": "info", "message": "GET /api/tournaments/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/tournaments/", "path": "/api/tournaments/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "0ed5bfc9-e43e-4aa2-99c4-bb23456143d2", "userId": 2}, "response": {"statusCode": 200, "contentLength": 2170, "duration": "291.10ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/schools/ HTTP/1.1" 200 987
+"GET /api/health/stats/ HTTP/1.1" 200 217
+"GET /api/tournaments/ HTTP/1.1" 200 2170
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/tournaments/ - 200 - 0.287s (request_id: 4771ab22-fa55-478f-90ec-abb491ca271c)
+{"level": "info", "message": "GET /api/tournaments/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/tournaments/", "path": "/api/tournaments/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "4771ab22-fa55-478f-90ec-abb491ca271c", "userId": 2}, "response": {"statusCode": 200, "contentLength": 2170, "duration": "292.77ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/tournaments/ HTTP/1.1" 200 2170
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/tournaments/ - 200 - 0.107s (request_id: 3d60ff36-97a2-476a-b634-64f572800729)
+{"level": "info", "message": "GET /api/tournaments/", "timestamp": "2025-08-30T04:46:09.000Z", "request": {"method": "GET", "url": "/api/tournaments/", "path": "/api/tournaments/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=schools", "requestId": "3d60ff36-97a2-476a-b634-64f572800729", "userId": 2}, "response": {"statusCode": 200, "contentLength": 2170, "duration": "107.39ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/tournaments/ HTTP/1.1" 200 2170
+Session creation error: UNIQUE constraint failed: user_sessions.session_token
+Failed to collect API metrics: no such table: monitoring_system_metrics
+POST /api/auth/unified/login - 200 - 0.805s (request_id: 8e3d5a0e-bd8b-48c7-919e-9ae800db5be4)
+{"level": "info", "message": "POST /api/auth/unified/login", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "POST", "url": "/api/auth/unified/login", "path": "/api/auth/unified/login", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/login", "requestId": "8e3d5a0e-bd8b-48c7-919e-9ae800db5be4", "userId": null}, "response": {"statusCode": 200, "contentLength": 804, "duration": "811.89ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"POST /api/auth/unified/login HTTP/1.1" 200 804
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/health/stats/ - 200 - 0.045s (request_id: 455cb985-aebc-4a1b-aeaf-322f82f2ddf4)
+{"level": "info", "message": "GET /api/health/stats/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/health/stats/", "path": "/api/health/stats/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "455cb985-aebc-4a1b-aeaf-322f82f2ddf4", "userId": 2}, "response": {"statusCode": 200, "contentLength": 217, "duration": "56.73ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/health/stats/ HTTP/1.1" 200 217
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/athletes/ - 200 - 0.053s (request_id: e602d671-6cd2-4b26-8868-80665cef003c)
+{"level": "info", "message": "GET /api/athletes/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/athletes/?select_related=school&exclude=guardian", "path": "/api/athletes/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "e602d671-6cd2-4b26-8868-80665cef003c", "userId": 2}, "response": {"statusCode": 200, "contentLength": 173, "duration": "61.11ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/athletes/?select_related=school&exclude=guardian HTTP/1.1" 200 173
+Failed to collect API metrics: no such table: monitoring_system_metrics
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/athletes/ - 200 - 0.066s (request_id: de5ae38a-96e2-4eb0-91a0-8a41de7f2453)
+{"level": "info", "message": "GET /api/athletes/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/athletes/?select_related=school&exclude=guardian", "path": "/api/athletes/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "de5ae38a-96e2-4eb0-91a0-8a41de7f2453", "userId": 2}, "response": {"statusCode": 200, "contentLength": 173, "duration": "97.94ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+GET /api/schools/ - 200 - 0.122s (request_id: 905035de-ced9-461a-9822-7db1b39626ec)
+"GET /api/athletes/?select_related=school&exclude=guardian HTTP/1.1" 200 173
+{"level": "info", "message": "GET /api/schools/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/schools/", "path": "/api/schools/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "905035de-ced9-461a-9822-7db1b39626ec", "userId": 2}, "response": {"statusCode": 200, "contentLength": 987, "duration": "149.18ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/schools/ HTTP/1.1" 200 987
+Failed to collect API metrics: no such table: monitoring_system_metrics
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/schools/ - 200 - 0.171s (request_id: acc6a261-42b7-46bb-8382-52d95aa08411)
+{"level": "info", "message": "GET /api/schools/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/schools/", "path": "/api/schools/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "acc6a261-42b7-46bb-8382-52d95aa08411", "userId": 2}, "response": {"statusCode": 200, "contentLength": 987, "duration": "184.74ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+GET /api/health/stats/ - 200 - 0.197s (request_id: f19fd926-6707-496a-9924-26fc7ee049c7)
+"GET /api/schools/ HTTP/1.1" 200 987
+{"level": "info", "message": "GET /api/health/stats/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/health/stats/", "path": "/api/health/stats/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "f19fd926-6707-496a-9924-26fc7ee049c7", "userId": 2}, "response": {"statusCode": 200, "contentLength": 217, "duration": "205.37ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/health/stats/ HTTP/1.1" 200 217
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/athletes/ - 200 - 0.075s (request_id: 4acfa9ac-d0c7-4e95-b938-2634eb9eb062)
+{"level": "info", "message": "GET /api/athletes/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/athletes/?select_related=school&exclude=guardian", "path": "/api/athletes/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "4acfa9ac-d0c7-4e95-b938-2634eb9eb062", "userId": 2}, "response": {"statusCode": 200, "contentLength": 173, "duration": "87.31ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/athletes/?select_related=school&exclude=guardian HTTP/1.1" 200 173
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/health/stats/ - 200 - 0.130s (request_id: 37a2b618-607b-4e44-8a20-039f28327e34)
+{"level": "info", "message": "GET /api/health/stats/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/health/stats/", "path": "/api/health/stats/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "37a2b618-607b-4e44-8a20-039f28327e34", "userId": 2}, "response": {"statusCode": 200, "contentLength": 217, "duration": "147.23ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+Failed to collect API metrics: no such table: monitoring_system_metrics
+"GET /api/health/stats/ HTTP/1.1" 200 217
+GET /api/schools/ - 200 - 0.087s (request_id: 304a43e4-1a14-4d14-832c-1aa63054d822)
+{"level": "info", "message": "GET /api/schools/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/schools/", "path": "/api/schools/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "304a43e4-1a14-4d14-832c-1aa63054d822", "userId": 2}, "response": {"statusCode": 200, "contentLength": 987, "duration": "97.01ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/schools/ HTTP/1.1" 200 987
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/tournaments/ - 200 - 0.432s (request_id: 69e6677b-cb82-464c-8752-e5d2d213bb14)
+{"level": "info", "message": "GET /api/tournaments/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/tournaments/", "path": "/api/tournaments/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "69e6677b-cb82-464c-8752-e5d2d213bb14", "userId": 2}, "response": {"statusCode": 200, "contentLength": 2170, "duration": "438.15ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+Failed to collect API metrics: no such table: monitoring_system_metrics
+"GET /api/tournaments/ HTTP/1.1" 200 2170
+GET /api/tournaments/ - 200 - 0.320s (request_id: 144cb5cd-1d05-4c23-aa38-21015cb488db)
+{"level": "info", "message": "GET /api/tournaments/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/tournaments/", "path": "/api/tournaments/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "144cb5cd-1d05-4c23-aa38-21015cb488db", "userId": 2}, "response": {"statusCode": 200, "contentLength": 2170, "duration": "325.80ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/tournaments/ HTTP/1.1" 200 2170
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/tournaments/ - 200 - 0.158s (request_id: d0bf85ad-f0d8-4751-b38d-cec4b4e3504e)
+{"level": "info", "message": "GET /api/tournaments/", "timestamp": "2025-08-30T04:46:39.000Z", "request": {"method": "GET", "url": "/api/tournaments/", "path": "/api/tournaments/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin", "requestId": "d0bf85ad-f0d8-4751-b38d-cec4b4e3504e", "userId": 2}, "response": {"statusCode": 200, "contentLength": 2170, "duration": "158.84ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/tournaments/ HTTP/1.1" 200 2170
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/schools/ - 200 - 0.041s (request_id: 8b4618ab-bf4d-43dd-a91f-70b45ac97651)
+Failed to collect API metrics: no such table: monitoring_system_metrics
+{"level": "info", "message": "GET /api/schools/", "timestamp": "2025-08-30T04:51:39.000Z", "request": {"method": "GET", "url": "/api/schools/", "path": "/api/schools/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=tournaments", "requestId": "8b4618ab-bf4d-43dd-a91f-70b45ac97651", "userId": 2}, "response": {"statusCode": 200, "contentLength": 987, "duration": "43.22ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+GET /api/athletes/ - 200 - 0.041s (request_id: 0698c150-ec73-43a7-8b45-e81548b57a22)
+{"level": "info", "message": "GET /api/athletes/", "timestamp": "2025-08-30T04:51:39.000Z", "request": {"method": "GET", "url": "/api/athletes/?select_related=school&exclude=guardian", "path": "/api/athletes/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=tournaments", "requestId": "0698c150-ec73-43a7-8b45-e81548b57a22", "userId": 2}, "response": {"statusCode": 200, "contentLength": 173, "duration": "44.29ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/health/stats/ - 200 - 0.040s (request_id: 66e5a0af-e8b8-4815-a8cf-85e76ced1773)
+"GET /api/schools/ HTTP/1.1" 200 987
+"GET /api/athletes/?select_related=school&exclude=guardian HTTP/1.1" 200 173
+{"level": "info", "message": "GET /api/health/stats/", "timestamp": "2025-08-30T04:51:39.000Z", "request": {"method": "GET", "url": "/api/health/stats/", "path": "/api/health/stats/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=tournaments", "requestId": "66e5a0af-e8b8-4815-a8cf-85e76ced1773", "userId": 2}, "response": {"statusCode": 200, "contentLength": 217, "duration": "43.02ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/health/stats/ HTTP/1.1" 200 217
+Failed to collect API metrics: no such table: monitoring_system_metrics
+GET /api/tournaments/ - 200 - 0.083s (request_id: ac2a2ca8-b845-483c-88ad-02f49496eb79)
+{"level": "info", "message": "GET /api/tournaments/", "timestamp": "2025-08-30T04:51:39.000Z", "request": {"method": "GET", "url": "/api/tournaments/", "path": "/api/tournaments/", "ip": "127.0.0.1", "userAgent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:142.0) Gecko/20100101 Firefox/142.0", "referer": "http://localhost:3000/admin?tab=tournaments", "requestId": "ac2a2ca8-b845-483c-88ad-02f49496eb79", "userId": 2}, "response": {"statusCode": 200, "contentLength": 2170, "duration": "84.45ms"}, "meta": {"service": "athletiq-django", "environment": "development"}}
+"GET /api/tournaments/ HTTP/1.1" 200 2170
