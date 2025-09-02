@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import API from "@api/axios";
+import apiClient from "../../utils/apiClient";
 import { useNavigate, useParams } from "react-router-dom";
 
 const AthleteProfile = () => {
@@ -14,7 +14,7 @@ const AthleteProfile = () => {
       try {
         // If no ID, try to get current athlete's profile
         const endpoint = id ? `/athletes/${id}` : "/athletes/me";
-        const res = await API.get(endpoint);
+        const res = await apiClient.get(endpoint);
         setAthlete(res.data.athlete);
       } catch (err) {
         setError("Failed to load profile: " + (err.response?.data?.message || err.message));
@@ -154,25 +154,25 @@ const AthleteProfile = () => {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Personal Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Date of Birth</label>
+                  <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Date of Birth</div>
                   <p className="text-gray-900 dark:text-white">
                     {athlete.date_of_birth ? new Date(athlete.date_of_birth).toLocaleDateString() : 'Not specified'}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Gender</label>
+                  <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Gender</div>
                   <p className="text-gray-900 dark:text-white capitalize">
                     {athlete.gender || 'Not specified'}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Nationality</label>
+                  <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Nationality</div>
                   <p className="text-gray-900 dark:text-white">
                     {athlete.nationality || 'Not specified'}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">District</label>
+                  <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">District</div>
                   <p className="text-gray-900 dark:text-white">
                     {athlete.district || 'Not specified'}
                   </p>
@@ -187,13 +187,13 @@ const AthleteProfile = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {athlete.height_cm && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Height</label>
+                      <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Height</div>
                       <p className="text-gray-900 dark:text-white">{athlete.height_cm} cm</p>
                     </div>
                   )}
                   {athlete.weight_kg && (
                     <div>
-                      <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Weight</label>
+                      <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Weight</div>
                       <p className="text-gray-900 dark:text-white">{athlete.weight_kg} kg</p>
                     </div>
                   )}
@@ -206,13 +206,13 @@ const AthleteProfile = () => {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Sports Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Main Sport</label>
+                  <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Main Sport</div>
                   <p className="text-gray-900 dark:text-white">
                     {athlete.main_sport || 'Not specified'}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">School</label>
+                  <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">School</div>
                   <p className="text-gray-900 dark:text-white">
                     {athlete.school_name || 'Not assigned'}
                   </p>
@@ -225,13 +225,13 @@ const AthleteProfile = () => {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">Guardian Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Guardian Name</label>
+                  <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Guardian Name</div>
                   <p className="text-gray-900 dark:text-white">
                     {athlete.guardian_name || 'Not specified'}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Guardian Phone</label>
+                  <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Guardian Phone</div>
                   <p className="text-gray-900 dark:text-white">
                     {athlete.guardian_phone || 'Not specified'}
                   </p>
@@ -244,13 +244,13 @@ const AthleteProfile = () => {
               <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">System Information</h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Registration Date</label>
+                  <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Registration Date</div>
                   <p className="text-gray-900 dark:text-white">
                     {athlete.created_at ? new Date(athlete.created_at).toLocaleDateString() : 'Unknown'}
                   </p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Last Updated</label>
+                  <div className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">Last Updated</div>
                   <p className="text-gray-900 dark:text-white">
                     {athlete.updated_at ? new Date(athlete.updated_at).toLocaleDateString() : 'Unknown'}
                   </p>

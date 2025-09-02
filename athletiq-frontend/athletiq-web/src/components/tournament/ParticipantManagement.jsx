@@ -252,28 +252,28 @@ const ParticipantManagement = ({ tournamentId, tournament }) => {
         <div className="bg-gray-50 rounded-lg p-3 mb-4">
           <h4 className="text-sm font-medium text-gray-900 mb-2">Season Stats</h4>
           <div className="grid grid-cols-3 gap-2 text-sm">
-            {player.stats.goals !== undefined && (
+            {athlete.stats.goals !== undefined && (
               <div>
                 <span className="text-gray-600">Goals:</span>
-                <span className="ml-1 font-medium">{player.stats.goals}</span>
+                <span className="ml-1 font-medium">{athlete.stats.goals}</span>
               </div>
             )}
-            {player.stats.assists !== undefined && (
+            {athlete.stats.assists !== undefined && (
               <div>
                 <span className="text-gray-600">Assists:</span>
-                <span className="ml-1 font-medium">{player.stats.assists}</span>
+                <span className="ml-1 font-medium">{athlete.stats.assists}</span>
               </div>
             )}
-            {player.stats.saves !== undefined && (
+            {athlete.stats.saves !== undefined && (
               <div>
                 <span className="text-gray-600">Saves:</span>
-                <span className="ml-1 font-medium">{player.stats.saves}</span>
+                <span className="ml-1 font-medium">{athlete.stats.saves}</span>
               </div>
             )}
-            {player.stats.cleanSheets !== undefined && (
+            {athlete.stats.cleanSheets !== undefined && (
               <div>
                 <span className="text-gray-600">Clean Sheets:</span>
-                <span className="ml-1 font-medium">{player.stats.cleanSheets}</span>
+                <span className="ml-1 font-medium">{athlete.stats.cleanSheets}</span>
               </div>
             )}
           </div>

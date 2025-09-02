@@ -110,8 +110,9 @@ export default function AddTournamentModal({ open, onClose, user, onAdded }) {
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           {/* Tournament Name */}
           <div>
-            <label className="block font-semibold mb-1">Tournament Name<span className="text-red-500">*</span></label>
+            <label htmlFor="tournament-name" className="block font-semibold mb-1">Tournament Name<span className="text-red-500">*</span></label>
             <input
+              id="tournament-name"
               className="border p-2 rounded w-full"
               type="text"
               value={name}
@@ -123,8 +124,9 @@ export default function AddTournamentModal({ open, onClose, user, onAdded }) {
           </div>
           {/* Logo Upload */}
           <div>
-            <label className="block font-semibold mb-1">Logo (optional)</label>
+            <label htmlFor="tournament-logo" className="block font-semibold mb-1">Logo (optional)</label>
             <input
+              id="tournament-logo"
               type="file"
               accept="image/*"
               onChange={handleLogoChange}
@@ -141,8 +143,9 @@ export default function AddTournamentModal({ open, onClose, user, onAdded }) {
           {/* Organizer (super_admin only, can assign another user/org) */}
           {user?.role === "super_admin" && (
             <div>
-              <label className="block font-semibold mb-1">Organizer (User/Org ID)</label>
+              <label htmlFor="tournament-organizer" className="block font-semibold mb-1">Organizer (User/Org ID)</label>
               <input
+                id="tournament-organizer"
                 className="border p-2 rounded w-full"
                 type="text"
                 value={organizerId}

@@ -88,8 +88,9 @@ export default function Register() {
       <div className="flex flex-col items-center justify-center min-h-screen">
         <form className="bg-white p-8 rounded shadow w-full max-w-md" onSubmit={handleRegister}>
           <h2 className="text-xl font-bold mb-4">Register School Admin</h2>
-          <label className="block mb-1">Search School Name & Address (Google Maps):</label>
+          <label htmlFor="school-search" className="block mb-1">Search School Name & Address (Google Maps):</label>
           <input
+            id="school-search"
             value={value}
             onChange={e => setValue(e.target.value)}
             // disabled={!ready}   // <-- disabled removed so you can always type
@@ -100,12 +101,14 @@ export default function Register() {
           {status === "OK" && (
             <ul className="bg-white border rounded shadow max-h-48 overflow-auto mb-2">
               {data.map((suggestion) => (
-                <li
-                  key={suggestion.place_id}
-                  className="p-2 hover:bg-blue-100 cursor-pointer"
-                  onClick={() => handleSelect(suggestion)}
-                >
-                  {suggestion.description}
+                <li key={suggestion.place_id}>
+                  <button
+                    type="button"
+                    className="w-full text-left p-2 hover:bg-blue-100 cursor-pointer"
+                    onClick={() => handleSelect(suggestion)}
+                  >
+                    {suggestion.description}
+                  </button>
                 </li>
               ))}
             </ul>
@@ -146,7 +149,18 @@ export default function Register() {
           </button>
           <div className="mt-4 text-sm">
             Already have an account?{" "}
-            <span className="text-blue-600 underline cursor-pointer" onClick={() => navigate("/login")}>
+            <span 
+              className="text-blue-600 underline cursor-pointer" 
+              onClick={() => navigate("/login")}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  navigate("/login");
+                }
+              }}
+              tabIndex={0}
+              role="button"
+            >
               Login here
             </span>
           </div>

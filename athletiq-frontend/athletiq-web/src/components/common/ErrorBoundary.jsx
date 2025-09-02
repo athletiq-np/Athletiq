@@ -1,6 +1,8 @@
 // src/components/common/ErrorBoundary.jsx
 import React from 'react';
-import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { FaExclamationTriangle as AlertTriangle, FaHome as Home, FaSync as RefreshCw, FaBug } from 'react-icons/fa';
+import logger from '../../utils/logger';
 
 class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -19,17 +21,23 @@ class ErrorBoundary extends React.Component {
   }
 
   componentDidCatch(error, errorInfo) {
-    // Log error to console and external service
-    console.error('Error caught by boundary:', error, errorInfo);
-    
+    // Log the error using our enhanced logger
+    const errorId = logger.componentError(
+      this.props.componentName || 'Unknown Component',
+      error,
+      errorInfo
+    );
+
     this.setState({
       error,
       errorInfo,
-      eventId: this.generateEventId()
+      eventId: errorId?.timestamp || this.generateEventId()
     });
 
-    // Log to external error tracking service
-    this.logErrorToService(error, errorInfo);
+    // Report to error reporting service in production
+    if (process.env.NODE_ENV === 'production' && this.props.onError) {
+      this.props.onError(error, errorInfo, errorId);
+    }
   }
 
   generateEventId() {

@@ -1,4 +1,5 @@
 import apiClient from './apiClient';
+import { logger } from '../utils/logger';
 
 /**
  * Certificate API Service
@@ -20,7 +21,7 @@ export const createCertificateTemplate = async (tournamentId, templateData) => {
     );
     return response.data;
   } catch (error) {
-    console.error('Error creating certificate template:', error);
+    logger.error('Error creating certificate template:', error);
     throw handleApiError(error, 'Failed to create certificate template');
   }
 };
@@ -237,32 +238,26 @@ const handleApiError = (error, defaultMessage) => {
 /**
  * Create a download link for certificate download
  */
-export const createCertificateDownloadLink = (certificateId, filename) => {
-  return new Promise(async (resolve, reject) => {
-    try {
-      const response = await downloadCertificate(certificateId);
-      const blob = new Blob([response.data], { 
-        type: response.headers['content-type'] || 'application/pdf' 
-      });
-      
-      // Create download link
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = filename || `certificate_${certificateId}.pdf`;
-      
-      // Trigger download
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      
-      // Clean up
-      window.URL.revokeObjectURL(url);
-      resolve(true);
-    } catch (error) {
-      reject(error);
-    }
+export const createCertificateDownloadLink = async (certificateId, filename) => {
+  const response = await downloadCertificate(certificateId);
+  const blob = new Blob([response.data], { 
+    type: response.headers['content-type'] || 'application/pdf' 
   });
+  
+  // Create download link
+  const url = window.URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = filename || `certificate_${certificateId}.pdf`;
+  
+  // Trigger download
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Clean up
+  window.URL.revokeObjectURL(url);
+  return true;
 };
 
 /**

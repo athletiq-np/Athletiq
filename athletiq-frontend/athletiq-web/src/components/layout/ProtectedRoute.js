@@ -1,4 +1,5 @@
 import React from 'react';
+import PropTypes from 'prop-types';
 import { Navigate, useLocation } from 'react-router-dom';
 import useUserStore from '@/store/userStore';
 
@@ -26,3 +27,8 @@ export default function ProtectedRoute({ children, roles }) {
   // If all checks pass, render the child component.
   return children;
 }
+
+ProtectedRoute.propTypes = {
+  children: PropTypes.node.isRequired,
+  roles: PropTypes.arrayOf(PropTypes.string),
+};

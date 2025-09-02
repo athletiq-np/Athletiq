@@ -3,8 +3,10 @@
 // 🧠 ATHLETIQ - Enterprise Tournament Creation Page
 // Multi-step tournament creation wizard with robust validation and API integration
 
-import React from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
+import axios from "axios";
 import {
   ChevronLeft, ChevronRight, Check, Trophy, Users, Settings, 
   FileText, Calendar, MapPin, Save, AlertCircle, Info, Star,
@@ -13,6 +15,10 @@ import {
 
 // Import enterprise components and hooks
 import TournamentInfoStep from "../../../components/features/tournament/TournamentInfoStep";
+import TournamentTemplateSelector from "../../../components/features/tournament/TournamentTemplateSelector";
+import StepProgress from "../../../components/common/StepProgress";
+import { useToast } from "../../../hooks/useToast";
+import { useAutoSave } from "../../../hooks/useAutoSave";
 import TournamentSportsStep from "../../../components/features/tournament/TournamentSportsStep";
 import TournamentConfigStep from "../../../components/features/tournament/TournamentConfigStep";
 import TournamentReviewStep from "../../../components/features/tournament/TournamentReviewStep";

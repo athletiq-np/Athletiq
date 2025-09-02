@@ -25,6 +25,7 @@ import TeamsManagement from './TeamsManagement';
 import HouseManagement from './HouseManagement';
 import StaffManagement from './StaffManagement';
 import TournamentManagement from './TournamentManagement';
+import EnhancedTournamentDashboard from './EnhancedTournamentDashboard';
 import SchoolProfile from './SchoolProfile';
 import SchoolSettings from './SchoolSettings';
 
@@ -275,7 +276,7 @@ export default function GlobalSchoolDashboard() {
         );
       case 'tournaments':
         return (
-          <TournamentManagement
+          <EnhancedTournamentDashboard
             tournaments={tournaments}
             school={school}
             onRefresh={fetchSchoolData}

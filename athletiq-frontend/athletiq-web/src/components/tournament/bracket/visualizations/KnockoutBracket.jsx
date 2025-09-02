@@ -29,20 +29,9 @@ const KnockoutBracket = ({
     const size = tournament?.maxParticipants || 8;
     return generatePlaceholderBracket(size, 'knockout');
   }, [bracket?.matches?.length, tournament?.maxParticipants]); // More stable dependency
-  
-  if (!displayBracket) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="text-center text-gray-500">
-          <FaTrophy className="mx-auto mb-2 text-2xl" />
-          <p>Unable to generate bracket</p>
-        </div>
-      </div>
-    );
-  }
 
-  // Extract values from memoized bracket
-  const { matches, rounds, champion } = displayBracket;
+  // Extract values from memoized bracket (with fallbacks)
+  const { matches = [], rounds = [], champion } = displayBracket || {};
 
   // Memoize matches by round to prevent recalculation
   const matchesByRound = useMemo(() => {
@@ -58,14 +47,14 @@ const KnockoutBracket = ({
   const { totalRounds, currentSize, bracketSizes } = useMemo(() => {
     const total = rounds?.length || Object.keys(matchesByRound).length;
     const sizes = [4, 8, 16, 32, 64];
-    const current = displayBracket.size || 8;
+    const current = displayBracket?.size || 8;
     
     return {
       totalRounds: total,
       currentSize: current,
       bracketSizes: sizes
     };
-  }, [rounds, matchesByRound, displayBracket.size]);
+  }, [rounds, matchesByRound, displayBracket?.size]);
 
   // Memoize round name function
   const getRoundName = useMemo(() => {
@@ -86,6 +75,18 @@ const KnockoutBracket = ({
   const sortedRounds = useMemo(() => {
     return Object.entries(matchesByRound).sort(([a], [b]) => parseInt(a) - parseInt(b));
   }, [matchesByRound]);
+  
+  // Early return after all hooks are defined
+  if (!displayBracket) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center text-gray-500">
+          <FaTrophy className="mx-auto mb-2 text-2xl" />
+          <p>Unable to generate bracket</p>
+        </div>
+      </div>
+    );
+  }
 
   // Enhanced scoresheet download functions
   const downloadAllRoundScoresheets = async () => {

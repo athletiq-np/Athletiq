@@ -120,10 +120,11 @@ export default function AthleteRegister() {
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Personal Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="athlete-full-name-en" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Full Name (English) <span className="text-red-500">*</span>
               </label>
               <input 
+                id="athlete-full-name-en"
                 className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                 name="full_name" 
                 value={form.full_name} 
@@ -133,8 +134,9 @@ export default function AthleteRegister() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name (Nepali)</label>
+              <label htmlFor="athlete-full-name-nep" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Full Name (Nepali)</label>
               <input 
+                id="athlete-full-name-nep"
                 className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                 name="full_name_nep" 
                 value={form.full_name_nep} 
@@ -150,10 +152,11 @@ export default function AthleteRegister() {
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Basic Details</h3>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="athlete-gender" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Gender <span className="text-red-500">*</span>
               </label>
               <select 
+                id="athlete-gender"
                 className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                 name="gender" 
                 value={form.gender} 
@@ -166,10 +169,11 @@ export default function AthleteRegister() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="athlete-dob" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Date of Birth <span className="text-red-500">*</span>
               </label>
               <input 
+                id="athlete-dob"
                 className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                 type="date" 
                 name="date_of_birth" 
@@ -179,10 +183,11 @@ export default function AthleteRegister() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="athlete-main-sport" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Main Sport <span className="text-red-500">*</span>
               </label>
               <input 
+                id="athlete-main-sport"
                 className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                 name="main_sport" 
                 value={form.main_sport} 
@@ -199,10 +204,11 @@ export default function AthleteRegister() {
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Guardian Information</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="guardian-name" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Guardian Name <span className="text-red-500">*</span>
               </label>
               <input 
+                id="guardian-name"
                 className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                 name="guardian_name" 
                 value={form.guardian_name} 
@@ -212,10 +218,11 @@ export default function AthleteRegister() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="guardian-phone" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 Guardian Phone <span className="text-red-500">*</span>
               </label>
               <input 
+                id="guardian-phone"
                 className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                 name="guardian_phone" 
                 value={form.guardian_phone} 
@@ -232,10 +239,11 @@ export default function AthleteRegister() {
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">School & Location</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label htmlFor="athlete-school" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                 School <span className="text-red-500">*</span>
               </label>
               <select 
+                id="athlete-school"
                 className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                 name="school_id" 
                 value={form.school_id} 
@@ -249,8 +257,9 @@ export default function AthleteRegister() {
               </select>
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">District</label>
+              <label htmlFor="athlete-district" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">District</label>
               <input 
+                id="athlete-district"
                 className="w-full border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-white p-3 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" 
                 name="district" 
                 value={form.district} 
@@ -266,8 +275,9 @@ export default function AthleteRegister() {
           <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-4">Documents</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Photo</label>
+              <label htmlFor="athlete-profile-photo" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Profile Photo</label>
               <input 
+                id="athlete-profile-photo"
                 type="file" 
                 ref={filePhoto} 
                 onChange={handlePhoto} 
@@ -276,8 +286,9 @@ export default function AthleteRegister() {
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Birth Certificate</label>
+              <label htmlFor="athlete-birth-cert" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Birth Certificate</label>
               <input 
+                id="athlete-birth-cert"
                 type="file" 
                 ref={fileCert} 
                 onChange={handleCert} 

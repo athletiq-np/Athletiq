@@ -91,7 +91,7 @@ export default function ViewPlayerModal({ open, onClose, player }) {
 
         {/* Birth certificate */}
         <div className="mt-4">
-          <label className="block text-sm mb-1">Birth Certificate</label>
+          <div className="block text-sm mb-1 font-medium">Birth Certificate</div>
           {player.birth_cert_url ? (
             <a
               href={`http://localhost:5000/uploads/${player.birth_cert_url}`}

@@ -1,12 +1,14 @@
 import axios from 'axios';
 import { mockGuardianAPI, DEMO_MODE } from './demoData';
-import { AUTH_KEYS } from '@/utils/authKeys';
+import { TokenManager, ApiErrorHandler } from './tokenManager';
+import { API_CONFIG, API_ENDPOINTS } from './apiEndpoints';
+import logger from './logger';
 
 // Create axios instance with base configuration
 // Ensure baseURL includes '/api' to keep all endpoint paths consistent
 const apiClient = axios.create({
-  baseURL: process.env.REACT_APP_API_URL || 'http://localhost:5000/api',
-  timeout: 10000,
+  baseURL: API_CONFIG.BASE_URL,
+  timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -15,39 +17,60 @@ const apiClient = axios.create({
 // Request interceptor to add authentication token
 apiClient.interceptors.request.use(
   (config) => {
-  // Prefer unified token, fall back to legacy guardian token for backward compatibility
-  const token = localStorage.getItem(AUTH_KEYS.TOKEN) || localStorage.getItem('guardian-token');
+    // Use unified token manager
+    const token = TokenManager.getToken();
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // Add request ID for tracking
+    config.headers['X-Request-ID'] = `req_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    // Log API request
+    logger.apiRequest(config.method?.toUpperCase() || 'UNKNOWN', config.url, 
+      config.data ? { 
+        hasData: true, 
+        dataSize: JSON.stringify(config.data).length 
+      } : null
+    );
+    
     return config;
   },
   (error) => {
-    return Promise.reject(error);
+  logger.apiError('REQUEST', 'setup', error);
+  // Handle/log, but propagate the original axios error so callers can access error.response
+  ApiErrorHandler.handle(error, 'Request setup');
+  return Promise.reject(error);
   }
 );
 
 // Response interceptor to handle common errors
 apiClient.interceptors.response.use(
   (response) => {
+    // Log successful API response
+    logger.apiResponse(
+      response.config.method?.toUpperCase() || 'UNKNOWN',
+      response.config.url,
+      response.status,
+      response.data ? { 
+        hasData: true, 
+        dataSize: JSON.stringify(response.data).length 
+      } : null
+    );
     return response;
   },
   (error) => {
-    if (error.response?.status === 401) {
-      // Token expired or invalid
-  // Do not aggressively clear unified token here; allow auth hook to manage logout
-  localStorage.removeItem('guardian-token');
-  localStorage.removeItem('guardian-data');
-      // Redirect to login could be handled here
-    }
+    // Log API error
+    logger.apiError(
+      error.config?.method?.toUpperCase() || 'UNKNOWN',
+      error.config?.url || 'unknown',
+      error
+    );
     
-    // Return a more user-friendly error message
-    const errorMessage = error.response?.data?.message || 
-                        error.response?.data?.error || 
-                        error.message || 
-                        'Something went wrong';
-    
-    return Promise.reject(new Error(errorMessage));
+    // Use centralized error handling
+  ApiErrorHandler.handle(error, 'API response');
+  // Propagate original axios error to preserve response/status for callers
+  return Promise.reject(error);
   }
 );
 
@@ -399,3 +422,6 @@ export const tokenManager = {
 };
 
 export default apiClient;
+
+// Export API endpoints for easy access
+export { API_ENDPOINTS, API_CONFIG } from './apiEndpoints';

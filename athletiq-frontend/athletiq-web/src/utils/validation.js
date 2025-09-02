@@ -1,5 +1,7 @@
 // src/utils/validation.js
 
+import React from 'react';
+
 /**
  * Frontend validation utilities
  */
@@ -44,7 +46,7 @@ export const validatePassword = (password) => {
 
 // Phone number validation
 export const validatePhone = (phone) => {
-  const phoneRegex = /^[\d\s\-\+\(\)]+$/;
+  const phoneRegex = /^[\d\s\-+()]+$/;
   return phoneRegex.test(phone) && phone.replace(/\D/g, '').length >= 10;
 };
 

@@ -237,7 +237,7 @@ export default function StudentRoster({ students, houses, onRefresh, filters, se
       setLoading(true);
       
       switch (action) {
-        case 'assign-house':
+        case 'assign-house': {
           const houseToAssign = prompt('Enter house name to assign:');
           if (houseToAssign) {
             await apiClient.put('/schools/me/athletes/bulk-update', {
@@ -247,8 +247,9 @@ export default function StudentRoster({ students, houses, onRefresh, filters, se
             toast.success(`Assigned ${selectedStudents.length} students to ${houseToAssign}`);
           }
           break;
+        }
           
-        case 'export':
+        case 'export': {
           const response = await apiClient.post('/schools/me/athletes/export', {
             studentIds: selectedStudents
           }, { responseType: 'blob' });
@@ -263,8 +264,9 @@ export default function StudentRoster({ students, houses, onRefresh, filters, se
           window.URL.revokeObjectURL(url);
           toast.success('Student data exported successfully');
           break;
+        }
           
-        case 'delete':
+        case 'delete': {
           if (window.confirm(`Are you sure you want to delete ${selectedStudents.length} students?`)) {
             await apiClient.delete('/schools/me/athletes/bulk-delete', {
               data: { studentIds: selectedStudents }
@@ -274,6 +276,7 @@ export default function StudentRoster({ students, houses, onRefresh, filters, se
             if (onRefresh) onRefresh();
           }
           break;
+        }
           
         default:
           console.log(`Bulk action: ${action} for students:`, selectedStudents);

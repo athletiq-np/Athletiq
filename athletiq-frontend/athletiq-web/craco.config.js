@@ -96,7 +96,7 @@ module.exports = {
     }
   },
   eslint: {
-    enable: true,
+    enable: true, // Re-enabled ESLint for code quality
     mode: 'extends',
     configure: {
       settings: {

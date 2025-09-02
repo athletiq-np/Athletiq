@@ -84,14 +84,7 @@ const corsOptions = {
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-  allowedHeaders: [
-    'Content-Type', 
-    'Authorization', 
-    'X-Requested-With',
-    'X-API-Key',
-    'Cache-Control',
-    'Pragma'
-  ],
+  // Let CORS reflect requested headers (Access-Control-Request-Headers)
   exposedHeaders: [
     'X-Total-Count', 
     'X-Page-Count', 

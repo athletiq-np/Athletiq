@@ -3,11 +3,12 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
-  FaUser, FaLock, FaBell, FaPalette, FaGlobe, FaDatabase, FaShield,
-  FaDownload, FaUpload, FaTrash, FaEye, FaEyeSlash, FaSave, FaUndo
+  FaUser, FaPalette, FaDatabase,
+  FaDownload, FaSave, FaUndo
 } from 'react-icons/fa';
-import { MdSettings, MdSecurity, MdNotifications, MdLanguage } from 'react-icons/md';
+import { MdSettings, MdSecurity, MdNotifications } from 'react-icons/md';
 import { toast } from 'react-toastify';
+import { useTheme } from '../../../contexts/ThemeContext';
 
 /**
  * ⚙️ Dashboard Settings Component
@@ -26,8 +27,8 @@ export default function DashboardSettings({
   currentLanguage
 }) {
   const { t } = useTranslation();
+  const { darkMode } = useTheme();
   const [activeSection, setActiveSection] = useState('profile');
-  const [showPassword, setShowPassword] = useState(false);
   const [settings, setSettings] = useState({
     profile: {
       name: user?.name || '',

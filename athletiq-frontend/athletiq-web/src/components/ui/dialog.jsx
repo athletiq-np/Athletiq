@@ -7,8 +7,23 @@ export function Dialog({ open, onOpenChange, children }) {
     <div
       className="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50"
       onClick={() => onOpenChange && onOpenChange(false)}
+      onKeyDown={(e) => {
+        if (e.key === 'Escape') {
+          onOpenChange && onOpenChange(false);
+        }
+      }}
+      role="dialog"
+      tabIndex={0}
+      aria-label="Dialog backdrop"
     >
-      <div onClick={e => e.stopPropagation()}>{children}</div>
+      <div 
+        onClick={e => e.stopPropagation()}
+        onKeyDown={e => e.stopPropagation()}
+        role="dialog"
+        tabIndex={-1}
+      >
+        {children}
+      </div>
     </div>
   );
 }

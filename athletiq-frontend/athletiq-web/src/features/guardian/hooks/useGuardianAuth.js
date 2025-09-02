@@ -37,7 +37,9 @@ export const GuardianAuthProvider = ({ children }) => {
             setIsAuthenticated(true);
             return;
           }
-        } catch {}
+        } catch (error) {
+          // Ignore user validation errors, continue with legacy fallback
+        }
       }
       // Legacy fallback
       const { token, guardian } = readLegacyGuardian();

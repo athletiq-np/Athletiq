@@ -23,6 +23,9 @@ import ProtectedRoute from '@/components/layout/ProtectedRoute';
 import Home from '@/pages/public/Home';
 import Login from '@/pages/auth/Login';
 import Register from '@/pages/auth/Register';
+import PasswordReset from '@/pages/auth/PasswordReset';
+import PasswordResetConfirm from '@/pages/auth/PasswordResetConfirm';
+import EmailVerification from '@/pages/auth/EmailVerification';
 import NotFoundPage from '@/pages/public/NotFoundPage';
 
 // Import admin components directly (simple and clean)
@@ -85,12 +88,21 @@ function App() {
             title="Application Error"
             description="Something went wrong with the Athletiq application. We're working to fix this issue."
           >
-            <Router>
+            <Router
+              future={{
+                v7_startTransition: true,
+                v7_relativeSplatPath: true
+              }}
+            >
             <Routes>
             {/* --- Public Routes --- */}
             <Route path="/" element={<Home />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
+            <Route path="/auth/password-reset" element={<PasswordReset />} />
+            <Route path="/auth/password-reset/confirm/:token" element={<PasswordResetConfirm />} />
+            <Route path="/auth/verify-email/:token" element={<EmailVerification />} />
+            <Route path="/auth/verify-email" element={<EmailVerification />} />
             
             {/* --- Guardian Routes (Unified Portal) --- */}
             <Route path="/guardian" element={<UnifiedGuardianPortal />} />

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import API from "@api/axios";
+import apiClient from "../../utils/apiClient";
 import { useNavigate } from "react-router-dom";
 
 export default function AthleteList() {
@@ -20,7 +20,7 @@ export default function AthleteList() {
         ...(search && { search })
       });
       
-      const res = await API.get(`/athletes?${params}`);
+      const res = await apiClient.get(`/athletes?${params}`);
       setAthletes(res.data.athletes || []);
       setTotalPages(res.data.pagination?.totalPages || 1);
       setCurrentPage(page);
@@ -111,7 +111,7 @@ export default function AthleteList() {
         </div>
 
         {/* Athletes List */}
-        {players.length === 0 ? (
+        {athletes.length === 0 ? (
           <div className="bg-white dark:bg-gray-800 rounded-lg shadow-md p-12 text-center">
             <div className="mx-auto h-12 w-12 text-gray-400 mb-4">
               <svg fill="none" stroke="currentColor" viewBox="0 0 48 48">
@@ -136,6 +136,15 @@ export default function AthleteList() {
                 key={athlete.id}
                 className="bg-white dark:bg-gray-800 rounded-lg shadow-md hover:shadow-lg transition-shadow duration-200 cursor-pointer"
                 onClick={() => navigate(`/athlete/${athlete.id}`)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    navigate(`/athlete/${athlete.id}`);
+                  }
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`View details for athlete ${athlete.full_name}`}
               >
                 <div className="p-6">
                   <div className="flex items-center space-x-4">

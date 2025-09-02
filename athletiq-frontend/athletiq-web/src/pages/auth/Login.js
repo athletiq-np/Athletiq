@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { toast } from 'react-toastify';
 import { FaSpinner } from 'react-icons/fa';
@@ -76,10 +76,14 @@ export default function Login() {
       toast.error(t('login_failed'));
     } catch (error) {
       console.error('Unified login error:', error);
-      if (error?.response?.data?.message?.toLowerCase().includes('invalid')) {
+      const backendMsg = error?.response?.data?.message || error?.message || 'Login failed';
+      const isInvalid = backendMsg.toLowerCase().includes('invalid');
+      if (isInvalid) {
         toast.error('Invalid email or password');
+      } else if (error?.response?.status) {
+        toast.error(`Login failed (${error.response.status}): ${backendMsg}`);
       } else {
-        toast.error(t('login_failed'));
+        toast.error(`Login failed: ${backendMsg}`);
       }
     } finally {
       setLoading(false);
@@ -142,6 +146,15 @@ export default function Login() {
             )}
           </button>
         </form>
+
+        <div className="mt-4 text-center">
+          <Link
+            to="/auth/password-reset"
+            className="text-sm text-athletiq-blue hover:underline"
+          >
+            Forgot your password?
+          </Link>
+        </div>
 
         <div className="mt-6 text-center">
           <p className="text-sm text-gray-500">

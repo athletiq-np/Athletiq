@@ -18,6 +18,7 @@ import { MdPending, MdDashboard, MdAnalytics, MdSettings, MdNotifications } from
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '@/api/apiClient';
+import { TokenManager } from '../../../utils/tokenManager';
 import useUserStore from '@/store/userStore';
 import athletiqLogo from '@/assets/logos/athletiq-logo.png';
 import { useTheme } from '@/contexts/ThemeContext';
@@ -107,15 +108,13 @@ export default function GlobalAdminDashboard() {
       
       console.log('🔄 Fetching dashboard data...');
       console.log('👤 Current user:', user);
-      console.log('🔑 Auth token exists:', !!localStorage.getItem('token'));
+      console.log('🔑 Auth token exists:', TokenManager.hasValidToken());
       
-      // Ensure authorization header is set if token exists
-      const token = localStorage.getItem('token');
-      if (token) {
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-        console.log('✅ Authorization header set');
+      // TokenManager handles authorization header automatically through apiClient interceptors
+      if (!TokenManager.hasValidToken()) {
+        console.log('⚠️ No valid auth token found - API calls may fail');
       } else {
-        console.log('⚠️ No auth token found - API calls may fail');
+        console.log('✅ Valid authorization token confirmed');
       }
       
       // Always try to fetch basic data first
@@ -753,6 +752,14 @@ export default function GlobalAdminDashboard() {
         <div
           className="fixed inset-0 bg-black/50 lg:hidden z-20"
           onClick={() => setSidebarCollapsed(true)}
+          onKeyDown={(e) => {
+            if (e.key === 'Escape') {
+              setSidebarCollapsed(true);
+            }
+          }}
+          role="button"
+          tabIndex={0}
+          aria-label="Close sidebar"
         />
       )}
     </div>

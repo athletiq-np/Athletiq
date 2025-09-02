@@ -89,6 +89,15 @@ export const VirtualizedSportsList = React.memo(({
               style={{ height: itemHeight }}
               className="flex items-center p-3 border-b hover:bg-gray-50 cursor-pointer"
               onClick={() => onSportToggle(sport.id)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  onSportToggle(sport.id);
+                }
+              }}
+              role="button"
+              tabIndex={0}
+              aria-label={`Toggle ${sport.name} selection`}
             >
               <input
                 type="checkbox"
@@ -186,6 +195,15 @@ export const TournamentCard = React.memo(({ tournament, onSelect }) => {
       ref={cardRef}
       className="bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow cursor-pointer"
       onClick={() => onSelect(tournament)}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          onSelect(tournament);
+        }
+      }}
+      role="button"
+      tabIndex={0}
+      aria-label={`Select ${tournament.name} tournament`}
     >
       {isVisible ? (
         <>

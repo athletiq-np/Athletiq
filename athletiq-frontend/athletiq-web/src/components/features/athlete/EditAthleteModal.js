@@ -174,8 +174,9 @@ export default function EditPlayerModal({ open, onClose, player, schools, onUpda
           ))}
           {/* File upload fields */}
           <div>
-            <label className="block text-sm mb-1">Profile Photo</label>
+            <label htmlFor="edit-athlete-profile-photo" className="block text-sm mb-1">Profile Photo</label>
             <input
+              id="edit-athlete-profile-photo"
               type="file"
               ref={fileInputPhoto}
               onChange={handlePhoto}
@@ -190,8 +191,9 @@ export default function EditPlayerModal({ open, onClose, player, schools, onUpda
             )}
           </div>
           <div>
-            <label className="block text-sm mb-1">Birth Certificate</label>
+            <label htmlFor="edit-athlete-birth-cert" className="block text-sm mb-1">Birth Certificate</label>
             <input
+              id="edit-athlete-birth-cert"
               type="file"
               ref={fileInputCert}
               onChange={handleCert}

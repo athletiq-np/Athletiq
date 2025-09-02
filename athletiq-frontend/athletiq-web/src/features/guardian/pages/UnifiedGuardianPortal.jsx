@@ -17,6 +17,7 @@ import HybridChildManagement from '../components/HybridChildManagement';
 import EnhancedGuardianDashboard from '../components/EnhancedGuardianDashboard';
 import EnhancedAthletePanel from '../components/EnhancedAthletePanel';
 import apiClient from '@/api/apiClient';
+import { TokenManager } from '../../../utils/tokenManager';
 
 // Form defaults
 const defaultRegister = {
@@ -210,7 +211,7 @@ function UnifiedPortalContent() {
         schoolName: registerData.schoolName,
         schoolId: registerData.schoolId
       }, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('guardian-token')}` }
+        headers: { 'Authorization': `Bearer ${TokenManager.getToken()}` }
       });
 
       if (response.data.success) {
@@ -228,7 +229,7 @@ function UnifiedPortalContent() {
 
     try {
       const response = await apiClient.post('/guardian-simple/add-child', childData, {
-        headers: { 'Authorization': `Bearer ${localStorage.getItem('guardian-token')}` }
+        headers: { 'Authorization': `Bearer ${TokenManager.getToken()}` }
       });
 
       if (response.data.success) {
@@ -443,11 +444,12 @@ function UnifiedPortalContent() {
         <div className="p-6">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="profile-fullName" className="block text-sm font-medium text-gray-700 mb-2">
                 Full Name
               </label>
               {editing ? (
                 <input
+                  id="profile-fullName"
                   type="text"
                   name="fullName"
                   value={profileData.fullName || ''}
@@ -460,11 +462,12 @@ function UnifiedPortalContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="profile-email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
               {editing ? (
                 <input
+                  id="profile-email"
                   type="email"
                   name="email"
                   value={profileData.email || ''}
@@ -477,11 +480,12 @@ function UnifiedPortalContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="profile-phone" className="block text-sm font-medium text-gray-700 mb-2">
                 Phone Number
               </label>
               {editing ? (
                 <input
+                  id="profile-phone"
                   type="tel"
                   name="phone"
                   value={profileData.phone || ''}
@@ -494,11 +498,12 @@ function UnifiedPortalContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="profile-address" className="block text-sm font-medium text-gray-700 mb-2">
                 Address
               </label>
               {editing ? (
                 <input
+                  id="profile-address"
                   type="text"
                   name="address"
                   value={profileData.address || ''}
@@ -567,12 +572,13 @@ function UnifiedPortalContent() {
 
           <form onSubmit={handleLogin} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="login-email" className="block text-sm font-medium text-gray-700 mb-2">
                 Email Address
               </label>
               <div className="relative">
                 <FaEnvelope className="absolute left-3 top-3 text-gray-400" />
                 <input
+                  id="login-email"
                   type="email"
                   name="email"
                   value={loginData.email}
@@ -585,12 +591,13 @@ function UnifiedPortalContent() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label htmlFor="login-password" className="block text-sm font-medium text-gray-700 mb-2">
                 Password
               </label>
               <div className="relative">
                 <FaLock className="absolute left-3 top-3 text-gray-400" />
                 <input
+                  id="login-password"
                   type={showLoginPassword ? 'text' : 'password'}
                   name="password"
                   value={loginData.password}
@@ -656,12 +663,13 @@ function UnifiedPortalContent() {
           <form onSubmit={handleRegister} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="register-email" className="block text-sm font-medium text-gray-700 mb-2">
                   Email Address
                 </label>
                 <div className="relative">
                   <FaEnvelope className="absolute left-3 top-3 text-gray-400" />
                   <input
+                    id="register-email"
                     type="email"
                     name="email"
                     value={registerData.email}
@@ -674,12 +682,13 @@ function UnifiedPortalContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="register-phone" className="block text-sm font-medium text-gray-700 mb-2">
                   Phone Number
                 </label>
                 <div className="relative">
                   <FaPhone className="absolute left-3 top-3 text-gray-400" />
                   <input
+                    id="register-phone"
                     type="tel"
                     name="phone"
                     value={registerData.phone}
@@ -692,12 +701,13 @@ function UnifiedPortalContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="register-studentName" className="block text-sm font-medium text-gray-700 mb-2">
                   Student Name
                 </label>
                 <div className="relative">
                   <FaChild className="absolute left-3 top-3 text-gray-400" />
                   <input
+                    id="register-studentName"
                     type="text"
                     name="studentName"
                     value={registerData.studentName}
@@ -710,12 +720,13 @@ function UnifiedPortalContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="register-dateOfBirth" className="block text-sm font-medium text-gray-700 mb-2">
                   Date of Birth
                 </label>
                 <div className="relative">
                   <FaCalendarAlt className="absolute left-3 top-3 text-gray-400" />
                   <input
+                    id="register-dateOfBirth"
                     type="date"
                     name="dateOfBirth"
                     value={registerData.dateOfBirth}
@@ -727,12 +738,13 @@ function UnifiedPortalContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="register-password" className="block text-sm font-medium text-gray-700 mb-2">
                   Password
                 </label>
                 <div className="relative">
                   <FaLock className="absolute left-3 top-3 text-gray-400" />
                   <input
+                    id="register-password"
                     type={showRegisterPassword ? 'text' : 'password'}
                     name="password"
                     value={registerData.password}
@@ -752,12 +764,13 @@ function UnifiedPortalContent() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label htmlFor="register-confirmPassword" className="block text-sm font-medium text-gray-700 mb-2">
                   Confirm Password
                 </label>
                 <div className="relative">
                   <FaLock className="absolute left-3 top-3 text-gray-400" />
                   <input
+                    id="register-confirmPassword"
                     type="password"
                     name="confirmPassword"
                     value={registerData.confirmPassword}

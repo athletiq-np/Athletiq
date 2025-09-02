@@ -22,12 +22,15 @@ const { specs, swaggerUi } = require('./src/config/swagger');
 // if (process.env.NODE_ENV !== 'test') {
 //   monitoring.initializeMonitoring();
 // }
-console.log('✅ Monitoring temporarily disabled for debugging');
+const { logInfo, logWarn } = require('./src/utils/logger');
+logInfo('Monitoring temporarily disabled for debugging');
 
 const app = express();
 
 // CORS must be first for preflight requests
 app.use(cors(corsOptions));
+// Explicitly enable preflight across-the-board
+app.options('*', cors(corsOptions));
 
 // Request ID (traceability)
 app.use(requestId);
@@ -60,39 +63,69 @@ app.use('/api/auth', require('./src/routes/schoolAuth'));
 app.use('/api/schools', require('./src/routes/schoolRoutes'));
 app.use('/api/athletes', require('./src/routes/athleteRoutes'));
 // Enhanced athlete management (modern unified responses)
-try {
-  app.use('/api/enhanced-athletes', require('./src/routes/enhancedAthleteRoutes'));
-  console.log('✅ Enhanced athlete routes mounted at /api/enhanced-athletes');
-} catch (e) {
-  console.warn('⚠️  Enhanced athlete routes not available:', e.message);
-}
+  try {
+    app.use('/api/enhanced-athletes', require('./src/routes/enhancedAthleteRoutes'));
+    logInfo('Enhanced athlete routes mounted at /api/enhanced-athletes');
+  } catch (e) {
+    logWarn('Enhanced athlete routes not available', { message: e.message });
+  }
 app.use('/api/tournaments', require('./src/routes/tournamentRoutes'));
 app.use('/api/certificates', require('./src/routes/certificateRoutes'));
 app.use('/api/pdf', require('./src/routes/pdfRoutes'));
 app.use('/api/scoresheets', require('./src/routes/scoresheetRoutes'));
 app.use('/api/admin', require('./src/routes/adminRoutes'));
 app.use('/api/meta', require('./src/routes/metaRoutes'));
+// Search functionality
+  try {
+    app.use('/api/search', require('./routes/search'));
+    logInfo('Search routes mounted at /api/search');
+  } catch (e) {
+    logWarn('Search routes not available', { message: e.message });
+  }
+// Notification system
+  try {
+    const { router: notificationRouter } = require('./routes/notifications');
+    app.use('/api/notifications', notificationRouter);
+    logInfo('Notification routes mounted at /api/notifications');
+  } catch (e) {
+    logWarn('Notification routes not available', { message: e.message });
+  }
+// Analytics system
+  try {
+    app.use('/api/analytics', require('./routes/analytics'));
+    logInfo('Analytics routes mounted at /api/analytics');
+  } catch (e) {
+    logWarn('Analytics routes not available', { message: e.message });
+  }
+// Live match tracking
+  try {
+    const { router: liveMatchRouter } = require('./routes/liveMatches');
+    app.use('/api/matches', liveMatchRouter);
+    logInfo('Live match routes mounted at /api/matches');
+  } catch (e) {
+    logWarn('Live match routes not available', { message: e.message });
+  }
 // Matches (basic scheduling & fixtures)
-try {
-  app.use('/api/matches', require('./src/routes/matchRoutes'));
-  console.log('✅ Match routes mounted at /api/matches');
-} catch (e) {
-  console.warn('⚠️  Match routes not available:', e.message);
-}
+  try {
+    app.use('/api/matches', require('./src/routes/matchRoutes'));
+    logInfo('Match routes mounted at /api/matches');
+  } catch (e) {
+    logWarn('Match routes not available', { message: e.message });
+  }
 
 // Debug route to test routing
 app.get('/api/test', (req, res) => {
   res.json({ message: 'Test route working', timestamp: new Date().toISOString() });
 });
-console.log('✅ Test route added');
+logInfo('Test route added');
 
 // Health routes - Always enabled (single registration)
-console.log('🔧 Loading health routes...');
+logInfo('Loading health routes...');
 try {
   app.use('/api/health', require('./src/routes/health'));
-  console.log('✅ Health routes loaded successfully');
+  logInfo('Health routes loaded successfully');
 } catch (error) {
-  console.warn('⚠️  Health routes not available:', error.message);
+  logWarn('Health routes not available', { message: error.message });
 }
 
 // Additional routes - Conditionally enabled
@@ -126,7 +159,7 @@ if (process.env.ENABLE_GUARDIAN_PORTAL !== 'false') {
     app.use('/api/guardian/profile', require('./src/routes/guardian/profile'));
     console.log('✅ Guardian Portal v2 routes enabled');
   } catch (error) {
-    console.warn('⚠️  Guardian portal routes not available:', error.message);
+    logWarn('Guardian portal routes not available', { message: error.message });
     // Create a fallback test route to verify the API is accessible
     app.get('/api/guardian/status', (req, res) => {
       res.json({ 
@@ -136,7 +169,7 @@ if (process.env.ENABLE_GUARDIAN_PORTAL !== 'false') {
         routes: ['auth', 'athletes', 'schools', 'documents', 'profile']
       });
     });
-    console.log('✅ Guardian Portal v2 fallback status route enabled');
+    logInfo('Guardian Portal v2 fallback status route enabled');
   }
 }
 
@@ -147,11 +180,11 @@ if (process.env.ENABLE_UPLOADS !== 'false') {
     app.use('/api/ocr', require('./src/routes/ocr'));
     console.log('✅ Upload and OCR routes enabled');
   } catch (error) {
-    console.warn('⚠️  Upload routes not available:', error.message);
+    logWarn('Upload routes not available', { message: error.message });
   }
 }
 
-console.log('✅ All available routes registered successfully');
+  logInfo('All available routes registered successfully');
 
 // API Documentation with Swagger
 if (process.env.ENABLE_SWAGGER !== 'false') {
@@ -160,9 +193,9 @@ if (process.env.ENABLE_SWAGGER !== 'false') {
       customCss: '.swagger-ui .topbar { display: none }',
       customSiteTitle: 'Athletiq API Documentation'
     }));
-    console.log('✅ API Documentation available at /api-docs');
+    logInfo('API Documentation available at /api-docs');
   } catch (error) {
-    console.warn('⚠️  Swagger documentation not available:', error.message);
+    logWarn('Swagger documentation not available', { message: error.message });
   }
 }
 
@@ -171,7 +204,7 @@ app.use('/uploads', express.static('uploads'));
 
 // Catch-all route for debugging
 app.use('*', (req, res, next) => {
-  console.log(`🔍 Request: ${req.method} ${req.originalUrl}`);
+  logInfo(`Request: ${req.method} ${req.originalUrl}`);
   next();
 });
 
@@ -184,7 +217,7 @@ app.use(errorHandler);
 // Export app for testing; only start server if not required as module
 const PORT = process.env.PORT || 5000;
 if (require.main === module) {
-  app.listen(PORT, () => console.log(`Server started in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`));
+  app.listen(PORT, () => logInfo(`Server started in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`));
 }
 
 module.exports = app;

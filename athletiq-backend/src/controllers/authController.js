@@ -2,6 +2,7 @@ const { pool } = require('../config/db');
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const { sendResponse } = require('../utils/response');
+const { logInfo, logWarn, logError } = require('../utils/logger');
 
 // Helper function to generate and set the cookie
 const sendTokenResponse = (user, statusCode, res) => {
@@ -9,7 +10,7 @@ const sendTokenResponse = (user, statusCode, res) => {
     user: { id: user.id, role: user.role, school_id: user.school_id },
   };
 
-  console.log('JWT_SECRET check:', process.env.JWT_SECRET ? 'Found' : 'Missing', process.env.JWT_SECRET?.length || 0, 'characters');
+  logInfo('JWT_SECRET check', { present: !!process.env.JWT_SECRET, length: process.env.JWT_SECRET?.length || 0 });
   
   const token = jwt.sign(payload, process.env.JWT_SECRET, {
     expiresIn: '7d',
@@ -133,7 +134,7 @@ exports.login = async (req, res, next) => {
   }
 
   try {
-    console.log('🔐 Login attempt for email:', email);
+  logInfo('Login attempt', { email });
     // In test environment ensure we use the test pool so seeded users are found
     let dbPool = pool;
     if (process.env.NODE_ENV === 'test') {
@@ -146,16 +147,16 @@ exports.login = async (req, res, next) => {
     const user = userResult.rows[0];
 
     if (!user || !(await bcrypt.compare(password, user.password_hash))) {
-      console.log('❌ Invalid credentials for email:', email);
+      logWarn('Invalid credentials', { email });
       const error = new Error('Invalid credentials.');
       error.statusCode = 401;
       return next(error);
     }
     
-    console.log('✅ User authenticated successfully:', user.email);
+    logInfo('User authenticated successfully', { email: user.email });
     sendTokenResponse(user, 200, res);
   } catch (error) {
-    console.error('🚫 Login error:', error.message);
+  logError('Login error', error, { message: error.message });
     next(error);
   }
 };
@@ -184,7 +185,7 @@ exports.loginUnified = async (req, res, next) => {
     err.statusCode = 400; return next(err);
   }
   try {
-    console.log('🔐 Unified login attempt:', email);
+  logInfo('Unified login attempt', { email });
     let dbPool = pool;
     if (process.env.NODE_ENV === 'test') {
       try { const { testPool } = require('../../tests/testDb'); if (testPool) dbPool = testPool; } catch (e) { void e; }
@@ -194,7 +195,7 @@ exports.loginUnified = async (req, res, next) => {
     const userResult = await dbPool.query('SELECT * FROM users WHERE email = $1', [email]);
     const userRow = userResult.rows[0];
     if (userRow && await bcrypt.compare(password, userRow.password_hash)) {
-      console.log('✅ Unified login (users) success:', email);
+      logInfo('Unified login (users) success', { email });
       const payload = { user: { id: userRow.id, role: userRow.role, school_id: userRow.school_id } };
       const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
       delete userRow.password_hash;
@@ -205,18 +206,18 @@ exports.loginUnified = async (req, res, next) => {
     const guardianResult = await dbPool.query('SELECT * FROM guardians WHERE email = $1', [email]);
     const guardianRow = guardianResult.rows[0];
     if (guardianRow && await bcrypt.compare(password, guardianRow.password_hash)) {
-      console.log('✅ Unified login (guardian) success:', email);
+  logInfo('Unified login (guardian) success', { email });
       const payload = { user: { id: guardianRow.id, role: 'Guardian' } };
       const token = jwt.sign(payload, process.env.JWT_SECRET, { expiresIn: '7d' });
       delete guardianRow.password_hash;
       return res.status(200).json({ success: true, message: 'Authentication successful', data: { ...guardianRow, role: 'Guardian' }, token, userType: 'guardian' });
     }
 
-    console.log('❌ Unified login failed (no match):', email);
+  logWarn('Unified login failed (no match)', { email });
     const error = new Error('Invalid credentials.');
     error.statusCode = 401; return next(error);
   } catch (err) {
-    console.error('🚫 Unified login error:', err.message);
+  logError('Unified login error', err, { message: err.message });
     return next(err);
   }
 };

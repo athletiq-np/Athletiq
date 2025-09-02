@@ -1,6 +1,7 @@
 // src/components/modals/AddPlayerModal.jsx
 
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import axios from "axios";
 
 export default function AddPlayerModal({
@@ -82,8 +83,9 @@ export default function AddPlayerModal({
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm mb-1">Full Name</label>
+            <label htmlFor="athlete-full-name" className="block text-sm mb-1">Full Name</label>
             <input
+              id="athlete-full-name"
               className="w-full border p-2 rounded"
               name="full_name"
               value={form.full_name}
@@ -93,8 +95,9 @@ export default function AddPlayerModal({
           </div>
 
           <div>
-            <label className="block text-sm mb-1">Date of Birth</label>
+            <label htmlFor="athlete-dob" className="block text-sm mb-1">Date of Birth</label>
             <input
+              id="athlete-dob"
               className="w-full border p-2 rounded"
               name="dob"
               type="date"
@@ -105,8 +108,9 @@ export default function AddPlayerModal({
           </div>
 
           <div>
-            <label className="block text-sm mb-1">School</label>
+            <label htmlFor="athlete-school" className="block text-sm mb-1">School</label>
             <select
+              id="athlete-school"
               className="w-full border p-2 rounded"
               name="school_id"
               value={form.school_id || ""}
@@ -128,16 +132,18 @@ export default function AddPlayerModal({
 
           <div className="flex gap-4 items-center">
             <div>
-              <label className="block text-sm mb-1">Photo</label>
+              <label htmlFor="athlete-photo" className="block text-sm mb-1">Photo</label>
               <input
+                id="athlete-photo"
                 type="file"
                 onChange={(e) => setPhotoFile(e.target.files[0])}
                 accept="image/*"
               />
             </div>
             <div>
-              <label className="block text-sm mb-1">Birth Certificate</label>
+              <label htmlFor="athlete-birth-cert" className="block text-sm mb-1">Birth Certificate</label>
               <input
+                id="athlete-birth-cert"
                 type="file"
                 onChange={(e) => setBirthCertFile(e.target.files[0])}
                 accept="image/*,application/pdf"
@@ -159,3 +165,14 @@ export default function AddPlayerModal({
     </div>
   );
 }
+
+AddPlayerModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  onAdded: PropTypes.func,
+  schools: PropTypes.arrayOf(PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string,
+  })),
+  defaultSchoolId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+};

@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'framer-motion';
-import { FaTimes, FaUser, FaSchool, FaCalendarAlt, FaMapMarkerAlt, FaPhone, FaEnvelope, FaIdCard, FaCertificate, FaHeartbeat, FaMedal, FaEdit } from 'react-icons/fa';
+import { FaTimes, FaUser, FaSchool, FaMapMarkerAlt, FaPhone, FaEnvelope, FaCertificate, FaHeartbeat, FaMedal, FaEdit, FaTrophy } from 'react-icons/fa';
 import VerificationStatusBadge from '../../../components/common/VerificationStatusBadge';
 import ProfileCompletionCircle from '../../../components/common/ProfileCompletionCircle';
 import AthleteMatchesWidget from './AthleteMatchesWidget';

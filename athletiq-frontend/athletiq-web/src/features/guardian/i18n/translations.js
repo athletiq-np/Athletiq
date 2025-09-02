@@ -1,4 +1,6 @@
 // src/features/guardian/i18n/translations.js
+import { useState } from 'react';
+
 export const translations = {
   en: {
     // Authentication

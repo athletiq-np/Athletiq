@@ -34,7 +34,7 @@ const bsAdOffset = 56.7; // Approximate offset between BS and AD years
 export const convertNepaliToEnglish = (bsYear, bsMonth, bsDay) => {
   try {
     // This is a simplified conversion - use proper library in production
-    const approximateAdYear = Math.floor(bsYear - bsAdOffset);
+    let approximateAdYear = Math.floor(bsYear - bsAdOffset);
     
     // Basic month mapping (simplified)
     let adMonth, adDay;

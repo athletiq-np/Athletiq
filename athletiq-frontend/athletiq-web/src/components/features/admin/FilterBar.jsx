@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useTranslation } from 'react-i18next';
 import {
   FaFilter, FaCalendarAlt, FaDownload, FaSync, FaSearch,
-  FaSchool, FaTrophy, FaMapMarkerAlt, FaChevronDown, FaTimes
+  FaSchool, FaTrophy, FaMapMarkerAlt, FaChevronDown, FaTimes, FaUserGraduate
 } from 'react-icons/fa';
 import { HiOutlineAdjustments } from 'react-icons/hi';
 

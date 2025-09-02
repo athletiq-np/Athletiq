@@ -1,6 +1,7 @@
 // src/components/ChangeAdminPasswordModal.js
 
 import React, { useState, useEffect } from "react";
+import PropTypes from "prop-types";
 import axios from "axios";
 
 /**
@@ -70,9 +71,10 @@ export default function ChangeAdminPasswordModal({ open, onClose, school, onChan
         </h2>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>
-            <label className="block text-sm mb-1 font-medium">New Password</label>
+            <label htmlFor="admin-new-password" className="block text-sm mb-1 font-medium">New Password</label>
             <div className="relative">
               <input
+                id="admin-new-password"
                 type={showPwd ? "text" : "password"}
                 className="w-full border rounded p-2 pr-10"
                 value={password}
@@ -121,3 +123,13 @@ ONBOARDING NOTES:
 - Calls PATCH /api/schools/:id/admin-password (requires JWT).
 - Handles loading, error, and resets on modal open.
 */
+
+ChangeAdminPasswordModal.propTypes = {
+  open: PropTypes.bool.isRequired,
+  onClose: PropTypes.func.isRequired,
+  school: PropTypes.shape({
+    id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+    name: PropTypes.string.isRequired,
+  }),
+  onChanged: PropTypes.func,
+};

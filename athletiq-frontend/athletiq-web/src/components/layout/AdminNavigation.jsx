@@ -17,9 +17,15 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Badge } from '@/components/ui/badge';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import GlobalSearch from '../common/GlobalSearch';
+import NotificationSystem from '../common/NotificationSystem';
+import { useNotificationStore } from '../../store/notificationStore';
 
 const AdminNavigation = ({ currentUser, onNavigate, currentPage = 'dashboard' }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [notificationsOpen, setNotificationsOpen] = useState(false);
+  const { unreadCount } = useNotificationStore();
   const [notifications] = useState([
     { id: 1, message: 'New document uploaded', type: 'info', time: '2 min ago' },
     { id: 2, message: 'Processing completed', type: 'success', time: '10 min ago' },
@@ -145,8 +151,10 @@ const AdminNavigation = ({ currentUser, onNavigate, currentPage = 'dashboard' })
             <div className="flex items-center gap-2">
               <Search className="h-4 w-4 text-gray-400" />
               <Input
-                placeholder="Search..."
-                className="w-64 border-0 focus-visible:ring-0 focus-visible:ring-offset-0"
+                placeholder="Search athletes, schools, tournaments..."
+                className="w-64 border-0 focus-visible:ring-0 focus-visible:ring-offset-0 cursor-pointer"
+                onClick={() => setSearchOpen(true)}
+                readOnly
               />
             </div>
           </div>
@@ -155,31 +163,23 @@ const AdminNavigation = ({ currentUser, onNavigate, currentPage = 'dashboard' })
             {/* Notifications */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="relative">
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  className="relative"
+                  onClick={() => setNotificationsOpen(true)}
+                >
                   <Bell className="h-5 w-5" />
-                  {notifications.length > 0 && (
+                  {unreadCount > 0 && (
                     <Badge 
                       variant="destructive" 
                       className="absolute -top-1 -right-1 h-5 w-5 flex items-center justify-center p-0 text-xs"
                     >
-                      {notifications.length}
+                      {unreadCount}
                     </Badge>
                   )}
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-80">
-                <div className="p-2">
-                  <h3 className="font-semibold mb-2">Notifications</h3>
-                  <div className="space-y-2">
-                    {notifications.map((notification) => (
-                      <div key={notification.id} className="p-2 bg-gray-50 rounded text-sm">
-                        <p>{notification.message}</p>
-                        <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </DropdownMenuContent>
             </DropdownMenu>
 
             {/* User Menu */}
@@ -220,6 +220,18 @@ const AdminNavigation = ({ currentUser, onNavigate, currentPage = 'dashboard' })
           onClick={() => setSidebarOpen(false)}
         />
       )}
+
+      {/* Global Search Modal */}
+      <GlobalSearch 
+        isOpen={searchOpen}
+        onClose={() => setSearchOpen(false)}
+      />
+
+      {/* Notification System */}
+      <NotificationSystem
+        isOpen={notificationsOpen}
+        onClose={() => setNotificationsOpen(false)}
+      />
     </div>
   );
 };
