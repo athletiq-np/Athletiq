@@ -1,14 +1,11 @@
 # Railway deployment configuration
 [build]
   builder = "NIXPACKS"
-  buildCommand = "chmod +x railway-build.sh && ./railway-build.sh"
-  watchPatterns = ["athletiq_django/**"]
 
 [deploy]
   healthcheckPath = "/health/"
   healthcheckTimeout = 300
   restartPolicyType = "ON_FAILURE"
-  startCommand = "cd athletiq_django && gunicorn athletiq.wsgi:application --bind 0.0.0.0:$PORT --workers 3 --timeout 120 --log-file -"
 
 [env]
   PYTHONPATH = "/app"
