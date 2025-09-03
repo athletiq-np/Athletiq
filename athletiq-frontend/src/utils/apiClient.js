@@ -11,6 +11,7 @@ import {
   formatErrorResponse 
 } from './errorHandler';
 import csrfManager from './csrfManager';
+import { isTokenExpired } from './tokenUtils';
 
 // Configure axios-retry for the main axios instance
 axiosRetry(axios, { 
@@ -553,14 +554,8 @@ export const tokenManager = {
     const token = tokenManager.get();
     if (!token) return false;
 
-    try {
-      // Basic token validation (check if it's expired)
-      const payload = JSON.parse(atob(token.split('.')[1]));
-      const currentTime = Date.now() / 1000;
-      return payload.exp > currentTime;
-    } catch (error) {
-      return false;
-    }
+    // Use centralized token validation utility
+    return !isTokenExpired(token);
   },
 };
 

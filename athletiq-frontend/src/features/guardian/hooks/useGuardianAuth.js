@@ -2,6 +2,8 @@ import { useState, useEffect, useContext, createContext } from 'react';
 import { toast } from 'react-toastify';
 import { guardianAPI, tokenManager } from '@/utils/apiClient';
 import { AUTH_KEYS, persistUnifiedSession, readLegacyGuardian, clearLegacyGuardian } from '@/utils/authKeys';
+import { isTokenExpired } from '@/utils/tokenUtils';
+import { AUTH_CONFIG } from '@/config/api.config';
 
 // Create Guardian Auth Context
 const GuardianAuthContext = createContext();
@@ -29,29 +31,46 @@ export const GuardianAuthProvider = ({ children }) => {
       // Migration: read unified session first
       const unifiedToken = localStorage.getItem(AUTH_KEYS.TOKEN);
       const unifiedUserRaw = localStorage.getItem(AUTH_KEYS.USER);
+      
       if (unifiedToken && unifiedUserRaw) {
         try {
           const u = JSON.parse(unifiedUserRaw);
           if (u && (u.role === 'Guardian' || u.guardianId)) {
-            setGuardian(u);
-            setIsAuthenticated(true);
-            return;
+            // Check if token is expired
+            if (!isTokenExpired(unifiedToken, AUTH_CONFIG.TOKEN_EXPIRY_BUFFER)) {
+              setGuardian(u);
+              setIsAuthenticated(true);
+              return;
+            } else {
+              console.debug('Unified token expired, clearing session');
+              localStorage.removeItem(AUTH_KEYS.TOKEN);
+              localStorage.removeItem(AUTH_KEYS.USER);
+            }
           }
-        } catch {}
+        } catch (error) {
+          console.error('Error parsing unified user data:', error);
+        }
       }
+      
       // Legacy fallback
       const { token, guardian } = readLegacyGuardian();
-      if (token && tokenManager.isValid() && guardian) {
-        setGuardian(guardian);
-        setIsAuthenticated(true);
-        try {
-          const response = await guardianAPI.getProfile();
-          setGuardian(response.data);
-          // Persist to unified storage
-          persistUnifiedSession({ token, user: { ...response.data, role: response.data.role || 'Guardian' } });
+      if (token && guardian) {
+        // Check if legacy token is valid (basic check since we may not have JWT format)
+        if (tokenManager.isValid()) {
+          setGuardian(guardian);
+          setIsAuthenticated(true);
+          try {
+            const response = await guardianAPI.getProfile();
+            setGuardian(response.data);
+            // Persist to unified storage
+            persistUnifiedSession({ token, user: { ...response.data, role: response.data.role || 'Guardian' } });
+            clearLegacyGuardian();
+          } catch (error) {
+            console.log('Token verification failed, but keeping local data');
+          }
+        } else {
+          console.debug('Legacy token invalid, clearing guardian data');
           clearLegacyGuardian();
-        } catch (error) {
-          console.log('Token verification failed, but keeping local data');
         }
       }
     } catch (error) {

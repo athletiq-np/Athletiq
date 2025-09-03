@@ -22,28 +22,30 @@ export const AuthProvider = ({ children }) => {
 
   // Initialize authentication state
   const initializeAuth = useCallback(async () => {
-    logger.group('Auth Initialization', () => {
-      try {
-        setLoading(true);
-        logger.debug('Checking for existing session...');
-        const currentUser = authService.getCurrentUser();
-        
-        if (currentUser) {
-          logger.debug('User session found:', { user: currentUser });
-          setUser(currentUser);
-        } else {
-          logger.debug('No active session found');
-          // No valid session, clear any stale data
-          authService.clearAuthData();
-        }
-      } catch (err) {
-        logger.error('Auth initialization failed:', err);
-        setError(err.message);
-        authService.clearAuthData();
-      } finally {
-        setLoading(false);
+    try {
+      setLoading(true);
+      setError(null);
+      logger.debug('Checking for existing session...');
+      
+      // Use the enhanced auth initialization method
+      const authResult = await authService.initializeAuth();
+      
+      if (authResult.isAuthenticated && authResult.user) {
+        logger.debug('User session found and validated:', { user: authResult.user });
+        setUser(authResult.user);
+      } else {
+        logger.debug('No valid session found');
+        setUser(null);
       }
-    });
+    } catch (err) {
+      logger.error('Auth initialization failed:', err);
+      setError(err.message);
+      setUser(null);
+      // Clear any potentially stale auth data
+      authService.clearAuthData();
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   // Login handler
