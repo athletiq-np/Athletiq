@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaUserShield, FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaFilter,
@@ -8,16 +7,15 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import apiClient from '@/utils/apiClient';
+import AddGuardianButton from './AddGuardianButton';
 
 const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = null }) => {
-  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterVerification, setFilterVerification] = useState('all');
   const [sortBy, setSortBy] = useState('full_name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedGuardians, setSelectedGuardians] = useState([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedGuardian, setSelectedGuardian] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -80,16 +78,16 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
   };
 
   const handleDelete = async (guardianId) => {
-    if (!window.confirm(t('guardians.confirmDelete'))) return;
+    if (!window.confirm('Are you sure you want to delete this guardian? This action cannot be undone.')) return;
 
     setActionLoading(true);
     try {
       await apiClient.delete(`/guardians/${guardianId}/`);
-      toast.success(t('guardians.deleteSuccess'));
+      toast.success('Guardian deleted successfully!');
       refetchData();
     } catch (error) {
       console.error('Error deleting guardian:', error);
-      toast.error(t('guardians.deleteError'));
+      toast.error('Failed to delete guardian');
     } finally {
       setActionLoading(false);
     }
@@ -107,7 +105,7 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
               apiClient.patch(`/guardians/${id}/`, { verification_status: 'verified' })
             )
           );
-          toast.success(t('guardians.bulkVerifySuccess'));
+          toast.success('Guardians verified successfully!');
           break;
         case 'suspend':
           await Promise.all(
@@ -115,7 +113,7 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
               apiClient.patch(`/guardians/${id}/`, { is_active: false })
             )
           );
-          toast.success(t('guardians.bulkSuspendSuccess'));
+          toast.success('Guardians suspended successfully!');
           break;
         case 'activate':
           await Promise.all(
@@ -123,23 +121,23 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
               apiClient.patch(`/guardians/${id}/`, { is_active: true })
             )
           );
-          toast.success(t('guardians.bulkActivateSuccess'));
+          toast.success('Guardians activated successfully!');
           break;
         case 'delete':
-          if (!window.confirm(t('guardians.confirmBulkDelete'))) return;
+          if (!window.confirm('Are you sure you want to delete the selected guardians? This action cannot be undone.')) return;
           await Promise.all(
             selectedGuardians.map(id => 
               apiClient.delete(`/guardians/${id}/`)
             )
           );
-          toast.success(t('guardians.bulkDeleteSuccess'));
+          toast.success('Guardians deleted successfully!');
           break;
       }
       setSelectedGuardians([]);
       refetchData();
     } catch (error) {
       console.error('Error performing bulk action:', error);
-      toast.error(t('guardians.bulkActionError'));
+      toast.error('Failed to perform bulk action');
     } finally {
       setActionLoading(false);
     }
@@ -147,10 +145,10 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
 
   const getVerificationBadge = (status) => {
     const statusConfig = {
-      verified: { color: 'green', icon: FaCheck, text: t('guardians.verification.verified') },
-      pending: { color: 'yellow', icon: FaExclamationTriangle, text: t('guardians.verification.pending') },
-      rejected: { color: 'red', icon: FaTimes, text: t('guardians.verification.rejected') },
-      incomplete: { color: 'gray', icon: FaExclamationTriangle, text: t('guardians.verification.incomplete') }
+      verified: { color: 'green', icon: FaCheck, text: 'Verified' },
+      pending: { color: 'yellow', icon: FaExclamationTriangle, text: 'Pending' },
+      rejected: { color: 'red', icon: FaTimes, text: 'Rejected' },
+      incomplete: { color: 'gray', icon: FaExclamationTriangle, text: 'Incomplete' }
     };
 
     const config = statusConfig[status] || statusConfig.pending;
@@ -174,12 +172,12 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
         {isActive ? (
           <>
             <FaCheck className="w-3 h-3 mr-1" />
-            {t('guardians.status.active')}
+            Active
           </>
         ) : (
           <>
             <FaTimes className="w-3 h-3 mr-1" />
-            {t('guardians.status.inactive')}
+            Inactive
           </>
         )}
       </span>
@@ -204,7 +202,7 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
         <FaExclamationTriangle className="mx-auto text-red-500 text-4xl mb-4" />
         <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
-          {t('guardians.error.title')}
+          Error Loading Guardians
         </h3>
         <p className="text-red-600 dark:text-red-300">{error}</p>
       </div>
@@ -218,10 +216,10 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex-1">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {t('guardians.title')}
+              Guardians Management
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {t('guardians.subtitle', { count: filteredGuardians.length })}
+              {filteredGuardians.length} guardians found
             </p>
           </div>
 
@@ -231,7 +229,7 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder={t('guardians.search.placeholder')}
+                placeholder="Search guardians..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-athletiq-green focus:border-transparent"
@@ -244,9 +242,9 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
               onChange={(e) => setFilterStatus(e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-athletiq-green focus:border-transparent"
             >
-              <option value="all">{t('guardians.filter.allStatuses')}</option>
-              <option value="active">{t('guardians.status.active')}</option>
-              <option value="inactive">{t('guardians.status.inactive')}</option>
+              <option value="all">All Statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
             </select>
 
             <select
@@ -254,19 +252,13 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
               onChange={(e) => setFilterVerification(e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-athletiq-green focus:border-transparent"
             >
-              <option value="all">{t('guardians.filter.allVerifications')}</option>
-              <option value="verified">{t('guardians.verification.verified')}</option>
-              <option value="pending">{t('guardians.verification.pending')}</option>
-              <option value="rejected">{t('guardians.verification.rejected')}</option>
+              <option value="all">All Verifications</option>
+              <option value="verified">Verified</option>
+              <option value="pending">Pending</option>
+              <option value="rejected">Rejected</option>
             </select>
 
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-athletiq-green hover:bg-athletiq-green-dark text-white rounded-lg transition-colors flex items-center gap-2"
-            >
-              <FaPlus className="w-4 h-4" />
-              {t('guardians.addNew')}
-            </button>
+            <AddGuardianButton onSuccess={refetchData} />
           </div>
         </div>
 
@@ -275,7 +267,7 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
           <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                {t('guardians.selected', { count: selectedGuardians.length })}
+                {selectedGuardians.length} guardians selected
               </span>
               <div className="flex gap-2">
                 <button
@@ -283,28 +275,28 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
                   disabled={actionLoading}
                   className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors disabled:opacity-50"
                 >
-                  {t('guardians.actions.verify')}
+                  Verify
                 </button>
                 <button
                   onClick={() => handleBulkAction('activate')}
                   disabled={actionLoading}
                   className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors disabled:opacity-50"
                 >
-                  {t('guardians.actions.activate')}
+                  Activate
                 </button>
                 <button
                   onClick={() => handleBulkAction('suspend')}
                   disabled={actionLoading}
                   className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded transition-colors disabled:opacity-50"
                 >
-                  {t('guardians.actions.suspend')}
+                  Suspend
                 </button>
                 <button
                   onClick={() => handleBulkAction('delete')}
                   disabled={actionLoading}
                   className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors disabled:opacity-50"
                 >
-                  {t('guardians.actions.delete')}
+                  Delete
                 </button>
               </div>
             </div>
@@ -330,31 +322,31 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
                   onClick={() => handleSort('full_name')}
                 >
-                  {t('guardians.table.name')}
+                  Guardian
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  {t('guardians.table.contact')}
+                  Contact
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
                   onClick={() => handleSort('verification_status')}
                 >
-                  {t('guardians.table.verification')}
+                  Verification
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  {t('guardians.table.status')}
+                  Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  {t('guardians.table.athletes')}
+                  Athletes
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
                   onClick={() => handleSort('created_at')}
                 >
-                  {t('guardians.table.joined')}
+                  Joined
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  {t('guardians.table.actions')}
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -389,7 +381,7 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
                           {guardian.full_name}
                         </div>
                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {guardian.occupation || t('guardians.noOccupation')}
+                          {guardian.occupation || 'No occupation listed'}
                         </div>
                       </div>
                     </div>
@@ -419,7 +411,7 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
                   <td className="px-6 py-4">
                     <div className="flex items-center text-sm text-gray-900 dark:text-white">
                       <FaBaby className="w-4 h-4 mr-1" />
-                      {guardian.athletes_count || 0} {t('guardians.athletes')}
+                      {guardian.athletes_count || 0} athletes
                     </div>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
@@ -430,7 +422,7 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
                       <button
                         onClick={() => handleEdit(guardian)}
                         className="text-athletiq-green hover:text-athletiq-green-dark transition-colors"
-                        title={t('guardians.actions.edit')}
+                        title="Edit Guardian"
                       >
                         <FaEdit className="w-4 h-4" />
                       </button>
@@ -438,7 +430,7 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
                         onClick={() => handleDelete(guardian.guardian_id || guardian.id)}
                         disabled={actionLoading}
                         className="text-red-600 hover:text-red-700 transition-colors disabled:opacity-50"
-                        title={t('guardians.actions.delete')}
+                        title="Delete Guardian"
                       >
                         <FaTrash className="w-4 h-4" />
                       </button>
@@ -454,10 +446,10 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
           <div className="text-center py-12">
             <FaUserShield className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              {t('guardians.empty.title')}
+              No Guardians Found
             </h3>
             <p className="text-gray-500 dark:text-gray-400">
-              {t('guardians.empty.description')}
+              Get started by adding your first guardian.
             </p>
           </div>
         )}

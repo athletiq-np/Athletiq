@@ -170,7 +170,7 @@ export default function GlobalAdminDashboard() {
               console.error('Health stats fetch error:', err);
               return { data: { data: {} } };
             }),
-            fetchWithRetry('/api/athletes/admin/list/').catch(err => {
+            fetchWithRetry('/athletes/admin/list/').catch(err => {
               console.warn('Athletes admin endpoint not available:', err.message);
               // Fallback to regular endpoint
               return fetchWithRetry('/athletes/?select_related=school&exclude=guardian').catch(fallbackErr => {
@@ -184,12 +184,12 @@ export default function GlobalAdminDashboard() {
               setErrors(prev => ({ ...prev, schools: 'Failed to load schools' }));
               return { data: { data: [] } };
             }),
-            fetchWithRetry('/api/organizations/admin/list/').catch(err => {
+            fetchWithRetry('/organizations/admin/list/').catch(err => {
               console.warn('Organizations endpoint not available:', err.message);
               // Don't set error - just return empty data and we'll use sample data in development
               return { data: { data: [] } };
             }),
-            fetchWithRetry('/api/guardian/admin/list/').catch(err => {
+            fetchWithRetry('/guardian/admin/list/').catch(err => {
               console.warn('Guardians endpoint not available:', err.message);
               // Don't set error - just return empty data and we'll use sample data in development
               return { data: { data: [] } };
@@ -199,7 +199,7 @@ export default function GlobalAdminDashboard() {
               setErrors(prev => ({ ...prev, tournaments: 'Failed to load tournaments' }));
               return { data: { data: [] } };
             }),
-            fetchWithRetry('/api/analytics/global/').catch(err => {
+            fetchWithRetry('/health/analytics/global/').catch(err => {
               console.warn('Global analytics endpoint not available:', err.message);
               return { data: { data: null } };
             })

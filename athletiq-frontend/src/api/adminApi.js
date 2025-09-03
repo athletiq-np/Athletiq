@@ -10,7 +10,7 @@ export const adminApi = {
   // Global Analytics
   async getGlobalAnalytics() {
     try {
-      const response = await apiClient.get('/api/analytics/global/');
+      const response = await apiClient.get('/health/analytics/global/');
       return response.data;
     } catch (error) {
       console.warn('Global analytics not available:', error.message);
@@ -20,7 +20,7 @@ export const adminApi = {
 
   async getSystemHealth() {
     try {
-      const response = await apiClient.get('/api/analytics/health/');
+      const response = await apiClient.get('/health/analytics/health/');
       return response.data;
     } catch (error) {
       console.warn('System health not available:', error.message);
@@ -31,7 +31,7 @@ export const adminApi = {
   // Athletes Management
   async getAthletes(params = {}) {
     try {
-      const response = await apiClient.get('/api/athletes/admin/list/', { params });
+      const response = await apiClient.get('/athletes/admin/list/', { params });
       return response.data;
     } catch (error) {
       // Fallback to regular endpoint
@@ -84,7 +84,7 @@ export const adminApi = {
   // Organizations Management
   async getOrganizations(params = {}) {
     try {
-      const response = await apiClient.get('/api/organizations/admin/list/', { params });
+      const response = await apiClient.get('/organizations/admin/list/', { params });
       return response.data;
     } catch (error) {
       console.warn('Organizations endpoint not available:', error.message);
@@ -94,7 +94,7 @@ export const adminApi = {
 
   async verifyOrganization(organizationId) {
     try {
-      const response = await apiClient.post(`/api/organizations/admin/${organizationId}/verify/`, {
+      const response = await apiClient.post(`/organizations/admin/${organizationId}/verify/`, {
         verification_status: 'verified'
       });
       return response.data;
@@ -106,7 +106,7 @@ export const adminApi = {
   // Guardians Management
   async getGuardians(params = {}) {
     try {
-      const response = await apiClient.get('/api/guardian/admin/list/', { params });
+      const response = await apiClient.get('/guardian/admin/list/', { params });
       return response.data;
     } catch (error) {
       console.warn('Guardians endpoint not available:', error.message);

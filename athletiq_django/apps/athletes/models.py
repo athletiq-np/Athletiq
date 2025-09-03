@@ -6,6 +6,14 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from apps.common.models import BaseModel
 from datetime import date
 import uuid
+import random
+
+
+def generate_athlete_id():
+    """Generate custom athlete ID in format NPXXX where XXX is 3 random digits."""
+    # Get last 3 digits randomly to ensure uniqueness
+    random_digits = ''.join([str(random.randint(0, 9)) for _ in range(3)])
+    return f"NP{random_digits}"
 
 
 class Athlete(BaseModel):
@@ -39,7 +47,7 @@ class Athlete(BaseModel):
     
     # Core fields
     id = models.AutoField(primary_key=True)
-    athlete_id = models.UUIDField(default=uuid.uuid4, unique=True, editable=False)
+    athlete_id = models.CharField(max_length=5, unique=True, default=generate_athlete_id, editable=False)
     full_name = models.CharField(max_length=100)
     full_name_nepali = models.CharField(max_length=100, blank=True, null=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
@@ -132,6 +140,17 @@ class Athlete(BaseModel):
     class Meta:
         db_table = 'players'
         ordering = ['-created_at']
+        
+    def save(self, *args, **kwargs):
+        """Override save to ensure unique athlete_id generation."""
+        if not self.athlete_id:
+            # Generate a unique athlete_id
+            while True:
+                new_id = generate_athlete_id()
+                if not Athlete.objects.filter(athlete_id=new_id).exists():
+                    self.athlete_id = new_id
+                    break
+        super().save(*args, **kwargs)
         
     def __str__(self):
         return f"{self.full_name} ({self.athlete_id})"

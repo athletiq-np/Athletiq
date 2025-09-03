@@ -26,7 +26,7 @@ class AthleteListCreateView(generics.ListCreateAPIView):
     """
     List athletes with advanced filtering and create new athletes.
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
     pagination_class = StandardResultsSetPagination
     
     def get_queryset(self):
@@ -34,9 +34,10 @@ class AthleteListCreateView(generics.ListCreateAPIView):
         user = self.request.user
         queryset = Athlete.objects.select_related('school').filter(is_active=True)
         
-        # Role-based filtering
-        if user.role == 'SchoolAdmin':
-            queryset = queryset.filter(school=user.school)
+        # Role-based filtering only if user is authenticated
+        if user and user.is_authenticated and hasattr(user, 'role'):
+            if user.role == 'SchoolAdmin':
+                queryset = queryset.filter(school=user.school)
         
         # Search functionality
         search = self.request.query_params.get('search', '').strip()
@@ -128,18 +129,13 @@ class AthleteListCreateView(generics.ListCreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         
-        # Set created_by to current user
-        serializer.validated_data['created_by'] = request.user
-        
         athlete = serializer.save()
         
         response_serializer = AthleteDetailSerializer(athlete)
-        return Response(
-            success_response(
-                data=response_serializer.data,
-                message="Athlete registered successfully."
-            ),
-            status=status.HTTP_201_CREATED
+        return success_response(
+            data=response_serializer.data,
+            message="Athlete registered successfully.",
+            status_code=status.HTTP_201_CREATED
         )
 
 
@@ -175,11 +171,9 @@ class AthleteDetailView(generics.RetrieveUpdateDestroyAPIView):
         athlete = serializer.save()
         
         response_serializer = AthleteDetailSerializer(athlete)
-        return Response(
-            success_response(
-                data=response_serializer.data,
-                message="Athlete updated successfully."
-            )
+        return success_response(
+            data=response_serializer.data,
+            message="Athlete updated successfully."
         )
     
     def destroy(self, request, *args, **kwargs):
@@ -187,9 +181,9 @@ class AthleteDetailView(generics.RetrieveUpdateDestroyAPIView):
         instance = self.get_object()
         instance.soft_delete()
         
-        return Response(
-            success_response(message="Athlete deleted successfully."),
-            status=status.HTTP_204_NO_CONTENT
+        return success_response(
+            message="Athlete deleted successfully.",
+            status_code=status.HTTP_204_NO_CONTENT
         )
 
 

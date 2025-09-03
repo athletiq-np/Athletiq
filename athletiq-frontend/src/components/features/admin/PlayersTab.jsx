@@ -119,53 +119,11 @@ function PlayersTabComponent({
         console.log('Bulk delete result:', result);
         setSelectedPlayerIds([]);
         if (refetchData) refetchData();
-        alert(`Successfully deleted ${result.data?.deleted_count || selectedPlayerIds.length} players`);
+        toast.success(`Successfully deleted ${result.data?.deleted_count || selectedPlayerIds.length} players`);
       } catch (error) {
         console.error('Error bulk deleting players:', error);
-        alert('Failed to delete players. Please try again.');
+        toast.error('Failed to delete players. Please try again.');
       }
-    }
-  };
-  const handleAddPlayer = async (playerData) => {
-    try {
-      const formData = new FormData();
-      
-      // Append all player data to formData
-      Object.entries(playerData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
-          formData.append(key, value);
-        }
-      });
-      
-      // Add created_by field
-      if (user?.id) {
-        formData.append('created_by', user.id);
-      }
-      
-      // Add school_id if user is school admin
-      if (user?.role === 'school_admin' && user?.school_id) {
-        formData.append('school_id', user.school_id);
-      }
-      
-      console.log('Submitting player data:', Object.fromEntries(formData));
-      const response = await registerPlayer(formData);
-      
-      if (response && response.success) {
-        toast.success('Player created successfully!');
-        setIsModalOpen(false);
-        refetchData();
-        return true;
-      } else {
-        const errorMsg = response?.message || 'Failed to create player';
-        console.error('Error response:', response);
-        toast.error(errorMsg);
-        return false;
-      }
-    } catch (error) {
-      console.error('Error creating player:', error);
-      const errorMsg = error.response?.data?.message || error.message || 'Failed to create player';
-      toast.error(errorMsg);
-      return false;
     }
   };
 
@@ -231,15 +189,16 @@ function PlayersTabComponent({
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with Search and Actions */}
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-2xl font-bold text-athletiq-navy">Players Management</h2>
-          <span className="bg-athletiq-green text-white px-3 py-1 rounded-full text-sm font-medium">
-            {players.length} {players.length === 1 ? 'player' : 'players'}
-          </span>
-        </div>
+    <>
+      <div className="space-y-6">
+        {/* Header with Search and Actions */}
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <div className="flex items-center gap-4">
+            <h2 className="text-2xl font-bold text-athletiq-navy">Players Management</h2>
+            <span className="bg-athletiq-green text-white px-3 py-1 rounded-full text-sm font-medium">
+              {players.length} {players.length === 1 ? 'player' : 'players'}
+            </span>
+          </div>
         
         <div className="flex flex-wrap gap-3 w-full sm:w-auto mt-2 sm:mt-0">
           <AddPlayerButton 
@@ -384,7 +343,16 @@ function PlayersTabComponent({
                   School
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date of Birth
+                  Age/DOB
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Grade/Section
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Guardian
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Sports
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Status
@@ -397,7 +365,7 @@ function PlayersTabComponent({
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredPlayers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12">
+                  <td colSpan={9} className="px-6 py-12">
                     <EmptyState
                       title="No players found"
                       description="Try adjusting your search criteria or add a new player to get started."
@@ -445,48 +413,112 @@ function PlayersTabComponent({
                             {player.full_name || player.name || 'N/A'}
                           </div>
                           <div className="text-sm text-gray-500">
-                            Player ID: {player.id || 'N/A'}
+                            {player.full_name_nepali && `${player.full_name_nepali} • `}
+                            ID: {player.athlete_id || player.id || 'N/A'}
+                          </div>
+                          <div className="text-xs text-gray-400">
+                            {player.gender || 'N/A'}
                           </div>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="text-sm text-gray-900">{player.school_name || 'N/A'}</div>
-                      <div className="text-sm text-gray-500">{player.school_code || 'N/A'}</div>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-900">
-                      {player.dob || 'N/A'}
+                      <div className="text-sm text-gray-900">{player.school?.name || player.school_name || 'N/A'}</div>
+                      <div className="text-sm text-gray-500">{player.school?.school_code || player.school_code || 'N/A'}</div>
                     </td>
                     <td className="px-6 py-4">
-                      {player.is_active || player.status === 'active' ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          Active
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-                          Pending
-                        </span>
+                      <div className="text-sm text-gray-900">
+                        {player.age ? `${player.age} years` : 'N/A'}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {player.date_of_birth || player.dob || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {player.grade ? `Grade ${player.grade}` : 'N/A'}
+                        {player.section && ` - ${player.section}`}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {player.nationality || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {player.guardian_name || 'N/A'}
+                      </div>
+                      <div className="text-sm text-gray-500">
+                        {player.guardian_phone || 'N/A'}
+                      </div>
+                      <div className="text-xs text-gray-400">
+                        {player.relationship_to_player || 'N/A'}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm text-gray-900">
+                        {player.primary_sport || 'N/A'}
+                      </div>
+                      {player.registered_sports && Array.isArray(player.registered_sports) && player.registered_sports.length > 0 && (
+                        <div className="text-xs text-gray-500">
+                          +{player.registered_sports.length} sports
+                        </div>
+                      )}
+                      {player.height_cm && player.weight_kg && (
+                        <div className="text-xs text-gray-400">
+                          {player.height_cm}cm, {player.weight_kg}kg
+                        </div>
                       )}
                     </td>
-                    <td className="px-6 py-4 text-sm font-medium">
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        {player.is_active || player.status === 'active' ? (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                            Pending
+                          </span>
+                        )}
+                        {player.verification_status && (
+                          <div>
+                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                              player.verification_status === 'verified' ? 'bg-blue-100 text-blue-800' :
+                              player.verification_status === 'rejected' ? 'bg-red-100 text-red-800' :
+                              'bg-gray-100 text-gray-800'
+                            }`}>
+                              {player.verification_status === 'verified' ? 'Verified' :
+                               player.verification_status === 'rejected' ? 'Rejected' :
+                               player.verification_status === 'requires_review' ? 'Review' : 'Pending'}
+                            </span>
+                          </div>
+                        )}
+                        {player.profile_completion && (
+                          <div className="text-xs text-gray-500">
+                            {player.profile_completion}% complete
+                          </div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => setViewPlayer(player)}
-                          className="text-athletiq-green hover:text-green-700 p-1 rounded"
-                          title="View Player"
+                          className="p-2 text-blue-600 hover:bg-blue-50 rounded"
+                          title="View Details"
                         >
                           <FaEye />
                         </button>
                         <button
                           onClick={() => setEditPlayer(player)}
-                          className="text-athletiq-navy hover:text-blue-700 p-1 rounded"
+                          className="p-2 text-green-600 hover:bg-green-50 rounded"
                           title="Edit Player"
                         >
                           <FaEdit />
                         </button>
                         <button
                           onClick={() => handleDeletePlayer(player.id)}
-                          className="text-red-600 hover:text-red-700 p-1 rounded"
+                          className="p-2 text-red-600 hover:bg-red-50 rounded"
                           title="Delete Player"
                         >
                           <FaTrash />
@@ -499,6 +531,7 @@ function PlayersTabComponent({
             </tbody>
           </table>
         </div>
+      </div>
       </div>
 
       <BulkPlayerUploadModal 
@@ -546,7 +579,7 @@ function PlayersTabComponent({
           { key: 'profile_complete', label: 'Profile Complete' }
         ]}
       />
-    </div>
+    </>
   );
 }
 

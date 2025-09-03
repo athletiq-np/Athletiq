@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   FaUsers, FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaFilter,
@@ -8,16 +7,15 @@ import {
 } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import apiClient from '@/utils/apiClient';
+import AddOrganizationButton from './AddOrganizationButton';
 
 const OrganizationsTab = ({ organizations = [], refetchData, loading = false, error = null }) => {
-  const { t } = useTranslation();
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
   const [filterType, setFilterType] = useState('all');
   const [sortBy, setSortBy] = useState('name');
   const [sortOrder, setSortOrder] = useState('asc');
   const [selectedOrganizations, setSelectedOrganizations] = useState([]);
-  const [showCreateModal, setShowCreateModal] = useState(false);
   const [showEditModal, setShowEditModal] = useState(false);
   const [selectedOrganization, setSelectedOrganization] = useState(null);
   const [actionLoading, setActionLoading] = useState(false);
@@ -79,16 +77,16 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
   };
 
   const handleDelete = async (organizationId) => {
-    if (!window.confirm(t('organizations.confirmDelete'))) return;
+    if (!window.confirm('Are you sure you want to delete this organization? This action cannot be undone.')) return;
 
     setActionLoading(true);
     try {
       await apiClient.delete(`/organizations/${organizationId}/`);
-      toast.success(t('organizations.deleteSuccess'));
+      toast.success('Organization deleted successfully!');
       refetchData();
     } catch (error) {
       console.error('Error deleting organization:', error);
-      toast.error(t('organizations.deleteError'));
+      toast.error('Failed to delete organization');
     } finally {
       setActionLoading(false);
     }
@@ -106,7 +104,7 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
               apiClient.patch(`/organizations/${id}/`, { status: 'verified' })
             )
           );
-          toast.success(t('organizations.bulkVerifySuccess'));
+          toast.success('Organizations verified successfully!');
           break;
         case 'suspend':
           await Promise.all(
@@ -114,23 +112,23 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
               apiClient.patch(`/organizations/${id}/`, { status: 'suspended' })
             )
           );
-          toast.success(t('organizations.bulkSuspendSuccess'));
+          toast.success('Organizations suspended successfully!');
           break;
         case 'delete':
-          if (!window.confirm(t('organizations.confirmBulkDelete'))) return;
+          if (!window.confirm('Are you sure you want to delete the selected organizations? This action cannot be undone.')) return;
           await Promise.all(
             selectedOrganizations.map(id => 
               apiClient.delete(`/organizations/${id}/`)
             )
           );
-          toast.success(t('organizations.bulkDeleteSuccess'));
+          toast.success('Organizations deleted successfully!');
           break;
       }
       setSelectedOrganizations([]);
       refetchData();
     } catch (error) {
       console.error('Error performing bulk action:', error);
-      toast.error(t('organizations.bulkActionError'));
+      toast.error('Failed to perform bulk action');
     } finally {
       setActionLoading(false);
     }
@@ -138,10 +136,10 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
 
   const getStatusBadge = (status) => {
     const statusConfig = {
-      verified: { color: 'green', icon: FaCheck, text: t('organizations.status.verified') },
-      pending: { color: 'yellow', icon: FaExclamationTriangle, text: t('organizations.status.pending') },
-      suspended: { color: 'red', icon: FaTimes, text: t('organizations.status.suspended') },
-      inactive: { color: 'gray', icon: FaTimes, text: t('organizations.status.inactive') }
+      verified: { color: 'green', icon: FaCheck, text: 'Verified' },
+      pending: { color: 'yellow', icon: FaExclamationTriangle, text: 'Pending' },
+      suspended: { color: 'red', icon: FaTimes, text: 'Suspended' },
+      inactive: { color: 'gray', icon: FaTimes, text: 'Inactive' }
     };
 
     const config = statusConfig[status] || statusConfig.pending;
@@ -157,11 +155,11 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
 
   const getTypeBadge = (type) => {
     const typeConfig = {
-      sports_club: { color: 'blue', text: t('organizations.type.sportsClub') },
-      academy: { color: 'purple', text: t('organizations.type.academy') },
-      federation: { color: 'indigo', text: t('organizations.type.federation') },
-      association: { color: 'pink', text: t('organizations.type.association') },
-      training_center: { color: 'green', text: t('organizations.type.trainingCenter') }
+      sports_club: { color: 'blue', text: 'Sports Club' },
+      academy: { color: 'purple', text: 'Academy' },
+      federation: { color: 'indigo', text: 'Federation' },
+      association: { color: 'pink', text: 'Association' },
+      training_center: { color: 'green', text: 'Training Center' }
     };
 
     const config = typeConfig[type] || { color: 'gray', text: type };
@@ -186,7 +184,7 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
       <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
         <FaExclamationTriangle className="mx-auto text-red-500 text-4xl mb-4" />
         <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
-          {t('organizations.error.title')}
+          Error Loading Organizations
         </h3>
         <p className="text-red-600 dark:text-red-300">{error}</p>
       </div>
@@ -200,10 +198,10 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
           <div className="flex-1">
             <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              {t('organizations.title')}
+              Organizations Management
             </h2>
             <p className="text-sm text-gray-600 dark:text-gray-400">
-              {t('organizations.subtitle', { count: filteredOrganizations.length })}
+              {filteredOrganizations.length} organizations found
             </p>
           </div>
 
@@ -213,7 +211,7 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
               <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
               <input
                 type="text"
-                placeholder={t('organizations.search.placeholder')}
+                placeholder="Search organizations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-athletiq-green focus:border-transparent"
@@ -226,10 +224,10 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
               onChange={(e) => setFilterStatus(e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-athletiq-green focus:border-transparent"
             >
-              <option value="all">{t('organizations.filter.allStatuses')}</option>
-              <option value="verified">{t('organizations.status.verified')}</option>
-              <option value="pending">{t('organizations.status.pending')}</option>
-              <option value="suspended">{t('organizations.status.suspended')}</option>
+              <option value="all">All Statuses</option>
+              <option value="verified">Verified</option>
+              <option value="pending">Pending</option>
+              <option value="suspended">Suspended</option>
             </select>
 
             <select
@@ -237,21 +235,15 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
               onChange={(e) => setFilterType(e.target.value)}
               className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-athletiq-green focus:border-transparent"
             >
-              <option value="all">{t('organizations.filter.allTypes')}</option>
-              <option value="sports_club">{t('organizations.type.sportsClub')}</option>
-              <option value="academy">{t('organizations.type.academy')}</option>
-              <option value="federation">{t('organizations.type.federation')}</option>
-              <option value="association">{t('organizations.type.association')}</option>
-              <option value="training_center">{t('organizations.type.trainingCenter')}</option>
+              <option value="all">All Types</option>
+              <option value="sports_club">Sports Club</option>
+              <option value="academy">Academy</option>
+              <option value="federation">Federation</option>
+              <option value="association">Association</option>
+              <option value="training_center">Training Center</option>
             </select>
 
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-athletiq-green hover:bg-athletiq-green-dark text-white rounded-lg transition-colors flex items-center gap-2"
-            >
-              <FaPlus className="w-4 h-4" />
-              {t('organizations.addNew')}
-            </button>
+            <AddOrganizationButton onSuccess={refetchData} />
           </div>
         </div>
 
@@ -260,7 +252,7 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
           <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                {t('organizations.selected', { count: selectedOrganizations.length })}
+                {selectedOrganizations.length} organizations selected
               </span>
               <div className="flex gap-2">
                 <button
@@ -268,21 +260,21 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
                   disabled={actionLoading}
                   className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors disabled:opacity-50"
                 >
-                  {t('organizations.actions.verify')}
+                  Verify
                 </button>
                 <button
                   onClick={() => handleBulkAction('suspend')}
                   disabled={actionLoading}
                   className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded transition-colors disabled:opacity-50"
                 >
-                  {t('organizations.actions.suspend')}
+                  Suspend
                 </button>
                 <button
                   onClick={() => handleBulkAction('delete')}
                   disabled={actionLoading}
                   className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors disabled:opacity-50"
                 >
-                  {t('organizations.actions.delete')}
+                  Delete
                 </button>
               </div>
             </div>
@@ -308,28 +300,28 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
                   onClick={() => handleSort('name')}
                 >
-                  {t('organizations.table.name')}
+                  Organization
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
                   onClick={() => handleSort('type')}
                 >
-                  {t('organizations.table.type')}
+                  Type
                 </th>
                 <th
                   className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
                   onClick={() => handleSort('status')}
                 >
-                  {t('organizations.table.status')}
+                  Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  {t('organizations.table.contact')}
+                  Contact
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  {t('organizations.table.location')}
+                  Location
                 </th>
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  {t('organizations.table.actions')}
+                  Actions
                 </th>
               </tr>
             </thead>
@@ -392,7 +384,7 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
                       <button
                         onClick={() => handleEdit(organization)}
                         className="text-athletiq-green hover:text-athletiq-green-dark transition-colors"
-                        title={t('organizations.actions.edit')}
+                        title="Edit Organization"
                       >
                         <FaEdit className="w-4 h-4" />
                       </button>
@@ -400,7 +392,7 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
                         onClick={() => handleDelete(organization.id)}
                         disabled={actionLoading}
                         className="text-red-600 hover:text-red-700 transition-colors disabled:opacity-50"
-                        title={t('organizations.actions.delete')}
+                        title="Delete Organization"
                       >
                         <FaTrash className="w-4 h-4" />
                       </button>
@@ -416,10 +408,10 @@ const OrganizationsTab = ({ organizations = [], refetchData, loading = false, er
           <div className="text-center py-12">
             <FaBuilding className="mx-auto h-12 w-12 text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              {t('organizations.empty.title')}
+              No Organizations Found
             </h3>
             <p className="text-gray-500 dark:text-gray-400">
-              {t('organizations.empty.description')}
+              Get started by adding your first organization.
             </p>
           </div>
         )}

@@ -70,6 +70,9 @@ class AthleteCreateSerializer(serializers.ModelSerializer):
     def validate_school_id(self, value):
         """Validate that school exists and is active."""
         try:
+            # Handle both integer and School object
+            if isinstance(value, School):
+                return value
             school = School.objects.get(school_id=value, is_active=True)
             return school
         except School.DoesNotExist:
