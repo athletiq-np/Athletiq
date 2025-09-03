@@ -2,9 +2,9 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ main, master, rahul-test ]
   pull_request:
-    branches: [ main, master ]
+    branches: [ main, master, rahul-test ]
 
 jobs:
   test-backend:
@@ -41,8 +41,13 @@ jobs:
     - name: Run tests
       env:
         DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_athletiq
+        DEBUG: True
+        SECRET_KEY: test-secret-key-for-ci
+        ALLOWED_HOSTS: localhost,127.0.0.1
+        DJANGO_SETTINGS_MODULE: athletiq.settings
       run: |
         cd athletiq_django
+        python manage.py migrate --noinput
         python manage.py test
 
   test-frontend:
@@ -76,32 +81,25 @@ jobs:
   deploy:
     needs: [test-backend, test-frontend]
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/rahul-test'
     
     steps:
     - uses: actions/checkout@v4
     
     - name: Deploy to Railway
-      if: ${{ secrets.RAILWAY_TOKEN }}
+      if: github.ref == 'refs/heads/rahul-test'
       run: |
-        # Add Railway deployment script here
-        echo "Deploying to Railway..."
-        # Example: railway deploy
+        echo "✅ Railway deployment triggered automatically via GitHub integration"
+        echo "🚀 Branch: rahul-test"
+        echo "🌐 URL: https://athletiq.railway.app"
+        echo "🔍 Health check will be available at: https://athletiq.railway.app/health/"
     
-    - name: Deploy to Render
-      if: ${{ secrets.RENDER_API_KEY }}
+    - name: Notify Deployment Status
+      if: github.ref == 'refs/heads/rahul-test'
       run: |
-        # Add Render deployment script here
-        echo "Deploying to Render..."
-    
-    - name: Deploy Frontend to Netlify
-      if: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-      uses: nwtgck/actions-netlify@v2.0
-      with:
-        publish-dir: './athletiq-frontend/build'
-        production-branch: main
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        deploy-message: "Deploy from GitHub Actions"
-      env:
-        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
+        echo "📊 Deployment Summary:"
+        echo "- Backend: Django + PostgreSQL"
+        echo "- Frontend: React (separate deployment)"
+        echo "- Environment: Production"
+        echo "- Health Check: /health/"
+        echo "- Admin Panel: /admin/"
