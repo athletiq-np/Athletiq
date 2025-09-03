@@ -1,5 +1,7 @@
 import { create } from 'zustand';
 import { AUTH_KEYS } from '@/utils/authKeys';
+import { isTokenExpired } from '@/utils/tokenUtils';
+import { AUTH_CONFIG } from '@/config/api.config';
 
 /**
  * Zustand store for managing the authenticated user's state.
@@ -18,8 +20,16 @@ const getInitialUser = () => {
     const storedToken = localStorage.getItem(AUTH_KEYS.TOKEN);
     
     if (storedUser && storedToken) {
-      const user = JSON.parse(storedUser);
-      return { user, isAuthenticated: true };
+      // Check if token is expired before considering user authenticated
+      if (!isTokenExpired(storedToken, AUTH_CONFIG.TOKEN_EXPIRY_BUFFER)) {
+        const user = JSON.parse(storedUser);
+        return { user, isAuthenticated: true };
+      } else {
+        // Token is expired, clear the data
+        localStorage.removeItem(AUTH_KEYS.USER);
+        localStorage.removeItem(AUTH_KEYS.TOKEN);
+        localStorage.removeItem(AUTH_KEYS.REFRESH_TOKEN);
+      }
     }
   } catch (error) {
     console.error('Error loading user from localStorage:', error);

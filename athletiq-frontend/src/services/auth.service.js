@@ -1,6 +1,7 @@
 import apiClient from '@/utils/apiClient';
 import { AUTH_KEYS } from '@/utils/authKeys';
 import { API_ENDPOINTS, AUTH_CONFIG } from '@/config/api.config';
+import { isTokenExpired, getTokenRemainingTime } from '@/utils/tokenUtils';
 
 class AuthService {
   // Login user with email and password using unified authentication
@@ -145,9 +146,11 @@ class AuthService {
       
       if (!token) return false;
       
-      // Optional: Verify token expiration if needed
-      // This is a simple check - for a more robust solution, consider using a JWT library
-      // to properly parse and verify the token's expiration
+      // Check if token is expired using JWT validation
+      if (isTokenExpired(token, AUTH_CONFIG.TOKEN_EXPIRY_BUFFER)) {
+        console.debug('Token is expired');
+        return false;
+      }
       
       return true;
     } catch (error) {
@@ -163,6 +166,50 @@ class AuthService {
     return (user?.role?.toLowerCase() === role?.toLowerCase()) || 
            (Array.isArray(user?.roles) && user.roles.includes(role)) || 
            false;
+  }
+
+  // Initialize authentication - check token validity and refresh if needed
+  async initializeAuth() {
+    try {
+      console.debug('Initializing authentication...');
+      
+      // Check if we have a current user and token
+      const user = this.getCurrentUser();
+      const token = localStorage.getItem(AUTH_CONFIG.TOKEN_KEY) || 
+                   localStorage.getItem(AUTH_KEYS.TOKEN);
+      
+      if (!user || !token) {
+        console.debug('No user or token found, clearing auth data');
+        this.clearAuthData();
+        return { isAuthenticated: false, user: null };
+      }
+      
+      // Check if token is expired
+      if (isTokenExpired(token, AUTH_CONFIG.TOKEN_EXPIRY_BUFFER)) {
+        console.debug('Token is expired, attempting refresh...');
+        
+        try {
+          // Try to refresh the token
+          await this.refreshToken();
+          const refreshedUser = this.getCurrentUser();
+          console.debug('Token refresh successful');
+          return { isAuthenticated: true, user: refreshedUser };
+        } catch (refreshError) {
+          console.warn('Token refresh failed:', refreshError.message);
+          this.clearAuthData();
+          return { isAuthenticated: false, user: null };
+        }
+      }
+      
+      // Token is valid, user is authenticated
+      console.debug('User is authenticated with valid token');
+      return { isAuthenticated: true, user };
+      
+    } catch (error) {
+      console.error('Auth initialization error:', error);
+      this.clearAuthData();
+      return { isAuthenticated: false, user: null };
+    }
   }
 
   // Set authentication data in storage
