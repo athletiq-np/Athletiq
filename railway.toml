@@ -1,11 +1,5 @@
-# Railway deployment configuration
+# Railway deployment configuration - Minimal setup
 [deploy]
   healthcheckPath = "/health/"
   healthcheckTimeout = 300
   restartPolicyType = "ON_FAILURE"
-
-[env]
-  PYTHONPATH = "/app"
-  PORT = "8000"
-  DJANGO_SETTINGS_MODULE = "athletiq.settings"
-  PYTHONUNBUFFERED = "1"
