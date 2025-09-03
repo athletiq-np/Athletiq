@@ -1,0 +1,45 @@
+# Railway Environment Variables for Athletiq Django Backend
+
+# Required Railway Environment Variables
+# Set these in your Railway dashboard under Variables tab
+
+# Django Configuration
+DEBUG=False
+DJANGO_SETTINGS_MODULE=athletiq.settings
+SECRET_KEY=your-super-secret-key-here-change-this-in-production
+ALLOWED_HOSTS=athletiq.railway.app,*.railway.app,localhost,127.0.0.1
+
+# Database (Railway will provide DATABASE_URL automatically)
+# DATABASE_URL=postgresql://user:password@host:port/database
+
+# Redis (if using Railway Redis addon)
+# REDIS_URL=redis://host:port
+
+# File Upload Settings
+MEDIA_ROOT=/app/media
+STATIC_ROOT=/app/static
+STATIC_URL=/static/
+
+# API Settings
+CORS_ALLOWED_ORIGINS=https://your-frontend-domain.com,http://localhost:3000
+CORS_ALLOW_CREDENTIALS=True
+
+# Security Settings
+SECURE_SSL_REDIRECT=False
+SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO,https
+
+# Logging
+LOG_LEVEL=INFO
+DJANGO_LOG_LEVEL=INFO
+
+# Application Settings
+TIME_ZONE=Asia/Kathmandu
+USE_TZ=True
+
+# Optional: External Services (uncomment and set if needed)
+# GOOGLE_CLOUD_PROJECT_ID=your-project-id
+# GOOGLE_APPLICATION_CREDENTIALS=/app/credentials.json
+# TWILIO_ACCOUNT_SID=your-twilio-sid
+# TWILIO_AUTH_TOKEN=your-twilio-token
+# EMAIL_HOST_USER=your-email@domain.com
+# EMAIL_HOST_PASSWORD=your-email-password
