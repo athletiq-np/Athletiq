@@ -1,12 +1,9 @@
 [phases.setup]
-nixPkgs = ["python3", "postgresql_16.dev", "gcc"]
+nixPkgs = ["python311", "python311Packages.pip", "postgresql_16.dev", "gcc"]
 
 [phases.build]
 cmds = [
-  "cd athletiq_django",
-  "pip install -r requirements.txt",
-  "python manage.py collectstatic --noinput",
-  "python manage.py migrate --noinput"
+  "cd athletiq_django && python manage.py collectstatic --noinput"
 ]
 
 [start]
