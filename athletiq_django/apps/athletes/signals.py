@@ -164,16 +164,17 @@ def sync_guardian_info_on_athlete_save(sender, instance, **kwargs):
     """
     Automatically populate guardian contact fields when an athlete is assigned to a guardian.
     """
-    if instance.guardian and instance.guardian_id:
+    # Check if the athlete model has guardian fields before trying to access them
+    if hasattr(instance, 'guardian') and hasattr(instance, 'guardian_id') and instance.guardian and instance.guardian_id:
         try:
             # Sync guardian contact information to athlete fields
-            if not instance.guardian_name or instance.guardian_name != instance.guardian.full_name:
+            if hasattr(instance, 'guardian_name') and (not instance.guardian_name or instance.guardian_name != instance.guardian.full_name):
                 instance.guardian_name = instance.guardian.full_name
                 
-            if not instance.guardian_phone or instance.guardian_phone != instance.guardian.phone:
+            if hasattr(instance, 'guardian_phone') and (not instance.guardian_phone or instance.guardian_phone != instance.guardian.phone):
                 instance.guardian_phone = instance.guardian.phone
                 
-            if not instance.guardian_email or instance.guardian_email != instance.guardian.email:
+            if hasattr(instance, 'guardian_email') and (not instance.guardian_email or instance.guardian_email != instance.guardian.email):
                 instance.guardian_email = instance.guardian.email
                 
         except Exception as e:
@@ -182,8 +183,9 @@ def sync_guardian_info_on_athlete_save(sender, instance, **kwargs):
     # athlete._profile_completion_calculated = True
     # athlete.save()
     
-    if athletes.exists():
-        logger.info(f"Updated {athletes.count()} athletes related to guardian {instance.full_name}")
+    # Note: athletes variable reference removed - was undefined
+    # if athletes.exists():
+    #     logger.info(f"Updated {athletes.count()} athletes related to guardian {instance.full_name}")
 
 
 # Signal to handle school changes

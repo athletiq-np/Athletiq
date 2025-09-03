@@ -1,54 +1,116 @@
+/**
+ * Role-Based Router
+ * Handles automatic routing based on user roles and authentication status
+ */
+
 import React from 'react';
-import { Navigate } from 'react-router-dom';
-import useAuth from '@/hooks/useAuth';
+import { Navigate, useLocation } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { USER_ROLES, AUTH_CONFIG } from '@/config/auth.config';
 
 /**
- * Role-based routing component that redirects users to appropriate dashboards
- * based on their role after successful authentication.
+ * RoleBasedRouter - Automatically routes users based on their role
  */
-const RoleBasedRouter = ({ children }) => {
-  const { user, isAuthenticated } = useAuth();
+export function RoleBasedRouter() {
+  const { isAuthenticated, user, loading, isInitialized } = useAuth();
+  const location = useLocation();
 
-  if (!isAuthenticated || !user) {
-    return <Navigate to="/login" replace />;
+  // Show loading while authentication is being verified
+  if (!isInitialized || loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+      </div>
+    );
   }
 
-  // Define role-based redirect paths
-  const getRoleBasedPath = (role, userType) => {
-    // Handle different user types
-    if (userType === 'guardian') {
-      return '/guardian';
-    }
-    
-    if (userType === 'athlete') {
-      return '/athlete/profile';
-    }
-    
-    // Handle admin/system user roles
-    switch (role?.toLowerCase()) {
-      case 'superadmin':
-        return '/admin';
-      case 'schooladmin':
-        return '/school';
-      case 'coach':
-        return '/coach/dashboard';
-      case 'referee':
-        return '/referee/dashboard';
-      case 'organization':
-        return '/organization/dashboard';
-      default:
-        return '/dashboard';
-    }
-  };
+  // If not authenticated, redirect to login
+  if (!isAuthenticated) {
+    return <Navigate 
+      to="/login" 
+      state={{ from: location.pathname }}
+      replace 
+    />;
+  }
 
-  const redirectPath = getRoleBasedPath(user.role, user.user_type);
+  // If authenticated but no user data, redirect to login
+  if (!user || !user.role) {
+    return <Navigate 
+      to="/login" 
+      state={{ from: location.pathname }}
+      replace 
+    />;
+  }
+
+  // Route based on user role
+  const redirectPath = getRoleBasedRedirect(user.role);
   
-  // If current path doesn't match expected role path, redirect
-  if (window.location.pathname === '/' || window.location.pathname === '/dashboard') {
-    return <Navigate to={redirectPath} replace />;
-  }
+  return <Navigate to={redirectPath} replace />;
+}
 
-  return children;
-};
+/**
+ * Get redirect path based on user role
+ */
+function getRoleBasedRedirect(role) {
+  // Normalize role to lowercase for comparison
+  const normalizedRole = role?.toLowerCase();
+  
+  switch (normalizedRole) {
+    case 'super_admin':
+    case 'superadmin':
+    case 'super-admin':
+      return '/admin';
+      
+    case 'school_admin':
+    case 'schooladmin':
+    case 'school-admin':
+      return '/school';
+      
+    case 'athlete':
+      return '/athlete/dashboard';
+      
+    case 'guardian':
+      return '/guardian/dashboard';
+      
+    case 'viewer':
+      return '/viewer/dashboard';
+      
+    case 'admin':
+      return '/admin';
+      
+    case 'organization':
+    case 'org':
+      return '/organization/dashboard';
+      
+    default:
+      // Fallback to general dashboard or login
+      console.warn('Unknown role for redirect:', role);
+      return '/dashboard';
+  }
+}
+
+/**
+ * RedirectToDashboard - Component that redirects to appropriate dashboard
+ */
+export function RedirectToDashboard() {
+  const { user, getRedirectPath } = useAuth();
+  const redirectPath = getRedirectPath();
+  
+  return <Navigate to={redirectPath} replace />;
+}
+
+/**
+ * LoginRedirect - Handles redirect after login
+ */
+export function LoginRedirect() {
+  const { user } = useAuth();
+  const location = useLocation();
+  
+  // Get intended destination from state or use role-based redirect
+  const from = location.state?.from;
+  const redirectPath = from || getRoleBasedRedirect(user?.role);
+  
+  return <Navigate to={redirectPath} replace />;
+}
 
 export default RoleBasedRouter;

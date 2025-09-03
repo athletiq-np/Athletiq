@@ -24,7 +24,7 @@ class SchoolRegistrationSerializer(serializers.ModelSerializer):
         model = School
         fields = [
             'name', 'address', 'country', 'province', 'district', 'city', 'ward',
-            'phone', 'email', 'website', 'principal_name',
+            'phone', 'email', 'website', 'principal_name', 'logo',
             'admin_name', 'admin_email', 'password'
         ]
         extra_kwargs = {

@@ -15,6 +15,7 @@ urlpatterns = [
     path('bulk-create/', views.bulk_create_athletes, name='athlete-bulk-create'),
     path('bulk-update/', views.bulk_update_athletes, name='athlete-bulk-update'),
     path('bulk-verify/', views.bulk_verify_athletes, name='athlete-bulk-verify'),
+    path('bulk-delete/', views.bulk_delete_athletes, name='athlete-bulk-delete'),
     path('export/', views.export_athletes, name='athlete-export'),
     
     # Search and filtering
@@ -28,6 +29,9 @@ urlpatterns = [
     
     # Analytics and statistics
     path('statistics/', views.athlete_statistics, name='athlete-statistics'),
+    
+    # SuperAdmin endpoints
+    path('admin/list/', views.admin_athletes_list_view, name='admin-list'),
     
     # Utility endpoints
     path('<int:athlete_id>/recalculate-completion/', views.recalculate_profile_completion, name='athlete-recalculate-completion'),

@@ -21,12 +21,12 @@ export const API_ENDPOINTS = {
     UNIFIED_VERIFY: '/auth/unified/verify',
   },
   ATHLETES: {
-    BASE: '/athletes',
-    SEARCH: '/athletes/search',
-    REGISTER: '/athletes',
-    STATS: (id) => `/athletes/${id}/stats`,
-    DOCUMENTS: (id) => `/athletes/${id}/documents`,
-    BULK_IMPORT: '/athletes/bulk-create',
+    BASE: '/athletes/',
+    SEARCH: '/athletes/search/',
+    REGISTER: '/athletes/',
+    STATS: (id) => `/athletes/${id}/stats/`,
+    DOCUMENTS: (id) => `/athletes/${id}/documents/`,
+    BULK_IMPORT: '/athletes/bulk-create/',
   },
   TOURNAMENTS: {
     BASE: '/tournaments/',
@@ -77,24 +77,6 @@ export const API_CONFIG = {
   },
 };
 
-export const AUTH_CONFIG = {
-  // Token storage keys
-  TOKEN_KEY: 'auth_token',
-  REFRESH_TOKEN_KEY: 'refresh_token',
-  USER_DATA_KEY: 'user_data',
-  
-  // Token expiration buffer in seconds
-  TOKEN_EXPIRY_BUFFER: 300, // 5 minutes
-  
-  // Token types for API requests
-  TOKEN_TYPE: 'Bearer',
-  
-  // Auth endpoints
-  ENDPOINTS: {
-    LOGIN: '/auth/unified/login',
-    LOGOUT: '/auth/unified/logout',
-    REFRESH: '/auth/refresh',
-    VERIFY: '/auth/unified/verify',
-    USER_TYPE: '/auth/unified/user-type'
-  }
-};
+// Auth configuration moved to @/config/auth.config.js for consistency
+// Import and re-export for backward compatibility
+export { AUTH_CONFIG, AUTH_STORAGE, AUTH_ENDPOINTS } from './auth.config';

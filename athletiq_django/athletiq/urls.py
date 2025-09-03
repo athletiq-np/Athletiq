@@ -25,6 +25,9 @@ urlpatterns = [
         path('athletes/', include('apps.athletes.urls')),
         path('health/', include('apps.common.urls')),
         
+        # Organizations
+        path('organizations/', include('apps.organizations.urls')),
+        
         # Guardian portal
         path('guardian/', include('apps.guardians.urls')),
         

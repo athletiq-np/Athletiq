@@ -14,11 +14,17 @@ export async function registerPlayer(formData) {
     console.log('Sending request to:', API_ENDPOINTS.ATHLETES.REGISTER);
     console.log('Request data:', Array.from(formData.entries()));
     
+    // Get CSRF token from cookie
+    const csrfToken = document.cookie.split('; ').find(row => row.startsWith('csrftoken='))?.split('=')[1];
+    
     const res = await apiClient.post(API_ENDPOINTS.ATHLETES.REGISTER, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
+      // Don't set Content-Type for FormData - let browser set it automatically
       timeout: 30000, // 30 seconds timeout
+      headers: {
+        'X-CSRFToken': csrfToken, // Add CSRF token
+        'Accept': 'application/json',
+      },
+      withCredentials: true, // Important for CORS with credentials
     });
     
     console.log('API Response:', res);
@@ -47,9 +53,7 @@ export async function extractCertificateOCR(certificateFile) {
   const formData = new FormData();
   formData.append('certificate', certificateFile);
   const res = await apiClient.post('/documents/ocr', formData, {
-    headers: {
-      'Content-Type': 'multipart/form-data',
-    },
+    // Don't set Content-Type for FormData - let browser set it automatically
   });
   return res.data;
 }

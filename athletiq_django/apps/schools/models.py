@@ -52,6 +52,14 @@ class School(BaseModel):
     email = models.EmailField(validators=[EmailValidator()])
     website = models.URLField(blank=True, null=True)
     
+    # School logo
+    logo = models.ImageField(
+        upload_to='school_logos/',
+        blank=True,
+        null=True,
+        help_text="School logo image"
+    )
+    
     # Administration
     principal_name = models.CharField(max_length=255)
     admin_user = models.OneToOneField(
@@ -117,8 +125,8 @@ class School(BaseModel):
         try:
             from apps.tournaments.models import Tournament
             return Tournament.objects.filter(
-                tournament_teams__team__school=self,
-                status__in=['open', 'active']
+                tournament_teams__school_id=self.id,
+                status__in=['ongoing', 'upcoming']
             ).distinct().count()
         except (ImportError, AttributeError):
             # Tournament model not yet implemented

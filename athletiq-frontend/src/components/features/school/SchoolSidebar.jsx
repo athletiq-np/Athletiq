@@ -13,7 +13,7 @@ import { MdDashboard, MdAnalytics, MdSettings, MdNotifications, MdHelp, MdSports
 import { HiMenuAlt3, HiX } from 'react-icons/hi';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import useUserStore from '@/store/userStore';
+import { useAuth } from '@/hooks/useAuth';
 import apiClient from '@/api/apiClient';
 import athletiqLogo from '@/assets/logos/athletiq-logo.png';
 
@@ -53,19 +53,19 @@ export default function SchoolSidebar({
   toggleTheme
 }) {
   const navigate = useNavigate();
-  const clearUser = useUserStore((state) => state.clearUser);
+  const { logout } = useAuth();
   
   // Handle logout
   const handleLogout = async () => {
     try {
       await apiClient.get('/auth/logout');
-      clearUser();
+      logout();
       toast.success('Logged out successfully');
       navigate('/login');
     } catch (error) {
       console.error('Logout error:', error);
       // Clear local state even if server call fails
-      clearUser();
+      logout();
       toast.success('Logged out successfully');
       navigate('/login');
     }

@@ -5,13 +5,13 @@ import { useTranslation } from 'react-i18next';
 import {
   FaUserGraduate, FaSchool, FaTrophy, FaChartLine, FaCogs, FaSignOutAlt,
   FaUserCircle, FaChevronDown, FaChevronRight, FaMoon, FaSun, FaLanguage,
-  FaBell, FaQuestionCircle, FaLifeRing, FaBook, FaVideo, FaNewspaper
+  FaBell, FaQuestionCircle, FaLifeRing, FaBook, FaVideo, FaNewspaper, FaUsers
 } from 'react-icons/fa';
 import { MdDashboard, MdAnalytics, MdSettings, MdNotifications, MdHelp } from 'react-icons/md';
 import { HiMenuAlt3, HiX } from 'react-icons/hi';
 import { Link, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import useUserStore from '@/store/userStore';
+import { useAuth } from '@/hooks/useAuth';
 import apiClient from '@/api/apiClient';
 import athletiqLogo from '@/assets/logos/athletiq-logo.png';
 
@@ -53,11 +53,18 @@ export default function GlobalSidebar({
   theme,
   toggleTheme,
   onLanguageChange,
-  currentLanguage
+  currentLanguage,
+  // Data for badge counts
+  summary,
+  players,
+  schools,
+  organizations,
+  guardians,
+  tournaments
 }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const clearUser = useUserStore((state) => state.clearUser);
+  const { logout } = useAuth();
   
   const [expandedSections, setExpandedSections] = useState({
     management: true,
@@ -77,49 +84,85 @@ export default function GlobalSidebar({
   // Handle logout
   const handleLogout = async () => {
     try {
-      // Call backend logout endpoint
-      await apiClient.get('/auth/logout');
-      clearUser();
-      toast.success(t('auth.logout.success'));
-      navigate('/login');
+      const result = await logout();
+      if (result.success) {
+        toast.success(t('auth.logout.success'));
+        navigate('/login');
+      } else {
+        toast.error(t('auth.logout.error'));
+      }
     } catch (error) {
       toast.error(t('auth.logout.error'));
     }
   };
 
-  // Navigation sections
+  // Navigation sections - Use tabs prop for management section with real data counts
   const navigationSections = [
     {
       id: 'management',
       title: t('sidebar.sections.management'),
       icon: MdDashboard,
-      items: [
-        { id: 'overview', label: t('sidebar.items.overview'), icon: MdDashboard },
-        { id: 'players', label: t('sidebar.items.players'), icon: FaUserGraduate, badge: '120' },
-        { id: 'schools', label: t('sidebar.items.schools'), icon: FaSchool, badge: '45' },
-        { id: 'tournaments', label: t('sidebar.items.tournaments'), icon: FaTrophy, badge: '8' },
-      ]
+      items: tabs.filter(tab => ['overview', 'players', 'schools', 'organizations', 'guardians', 'tournaments'].includes(tab.id))
+        .map(tab => {
+          let badgeCount = 0;
+          
+          // Calculate badge count based on actual data
+          switch(tab.id) {
+            case 'players':
+              badgeCount = players?.length || summary?.registeredPlayers || 0;
+              break;
+            case 'schools':
+              badgeCount = schools?.length || summary?.schools || 0;
+              break;
+            case 'organizations':
+              badgeCount = organizations?.length || summary?.organizations || 0;
+              break;
+            case 'guardians':
+              badgeCount = guardians?.length || summary?.guardians || 0;
+              break;
+            case 'tournaments':
+              badgeCount = tournaments?.length || summary?.tournaments || 0;
+              break;
+            default:
+              badgeCount = undefined;
+          }
+          
+          return {
+            id: tab.id,
+            label: tab.label,
+            icon: tab.icon,
+            badge: badgeCount > 0 ? badgeCount : undefined // Only show badge if count > 0
+          };
+        })
     },
     {
       id: 'analytics',
       title: t('sidebar.sections.analytics'),
       icon: MdAnalytics,
-      items: [
-        { id: 'analytics', label: t('sidebar.items.analytics'), icon: FaChartLine },
-        { id: 'reports', label: t('sidebar.items.reports'), icon: FaNewspaper },
-        { id: 'insights', label: t('sidebar.items.insights'), icon: MdAnalytics },
-      ]
+      items: tabs.filter(tab => ['analytics'].includes(tab.id))
+        .map(tab => ({
+          id: tab.id,
+          label: tab.label,
+          icon: tab.icon
+        })).concat([
+          { id: 'reports', label: t('sidebar.items.reports'), icon: FaNewspaper },
+          { id: 'insights', label: t('sidebar.items.insights'), icon: MdAnalytics },
+        ])
     },
     {
       id: 'settings',
       title: t('sidebar.sections.settings'),
       icon: MdSettings,
-      items: [
-        { id: 'settings', label: t('sidebar.items.settings'), icon: FaCogs },
-        { id: 'nepal-monitor', label: 'Nepal Athlete Monitor', icon: FaChartLine, isExternal: true, href: '/admin/nepal-athlete-monitor' },
-        { id: 'notifications', label: t('sidebar.items.notifications'), icon: MdNotifications },
-        { id: 'preferences', label: t('sidebar.items.preferences'), icon: FaCogs },
-      ]
+      items: tabs.filter(tab => ['settings'].includes(tab.id))
+        .map(tab => ({
+          id: tab.id,
+          label: tab.label,
+          icon: tab.icon
+        })).concat([
+          { id: 'nepal-monitor', label: 'Nepal Athlete Monitor', icon: FaChartLine, isExternal: true, href: '/admin/nepal-athlete-monitor' },
+          { id: 'notifications', label: t('sidebar.items.notifications'), icon: MdNotifications },
+          { id: 'preferences', label: t('sidebar.items.preferences'), icon: FaCogs },
+        ])
     },
     {
       id: 'help',

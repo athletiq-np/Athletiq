@@ -3,6 +3,10 @@ import { FaSpinner, FaExclamationCircle, FaSchool, FaSearch, FaPlus, FaUpload, F
 import AddSchoolModal from '@/components/features/school/AddSchoolModal';
 import { toast } from 'react-toastify';
 import schoolApi from '@/api/schoolApi';
+import { TableLoading } from './LoadingStates';
+import { InlineError, EmptyState } from './ErrorStates';
+import { AdvancedSearch, DataViewControls, RealTimeStatus } from './InteractiveFeatures';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export default function SchoolsTab({ schools: initialSchools = [], refetchData: externalRefetch, loading: externalLoading = false, error: externalError = null }) {
   // State management
@@ -367,59 +371,30 @@ export default function SchoolsTab({ schools: initialSchools = [], refetchData: 
 
   // Show loading state
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64 bg-white/50 dark:bg-gray-800/50 rounded-lg p-6 shadow-sm dark:shadow-gray-900/20">
-        <FaSpinner className="animate-spin text-4xl text-athletiq-blue dark:text-blue-400 mb-4" />
-        <p className="text-gray-600 dark:text-gray-300 font-medium">Loading schools data...</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">Please wait while we fetch the latest information</p>
-      </div>
-    );
+    return <TableLoading rows={8} columns={6} />;
   }
 
   // Show error state
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border-l-4 border-red-400 dark:border-red-600 p-4">
-        <div className="flex">
-          <div className="flex-shrink-0">
-            <FaExclamationCircle className="h-5 w-5 text-red-400" aria-hidden="true" />
-          </div>
-          <div className="ml-3">
-            <p className="text-sm text-red-700 dark:text-red-300">
-              Failed to load schools. {error.message || 'Please try again later.'}
-              <button
-                onClick={refetchData}
-                className="ml-2 text-sm font-medium text-red-700 dark:text-red-300 underline hover:text-red-600 dark:hover:text-red-200"
-              >
-                Retry
-              </button>
-            </p>
-          </div>
-        </div>
-      </div>
+      <InlineError 
+        error={{ message: error }}
+        onRetry={externalRefetch || fetchSchools}
+        className="mb-6"
+      />
     );
   }
 
   // Show empty state
   if (schools.length === 0) {
     return (
-      <div className="text-center py-12">
-        <FaSchool className="mx-auto h-12 w-12 text-gray-400 dark:text-gray-500" />
-        <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-gray-100">No schools found</h3>
-        <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-          Get started by adding a new school.
-        </p>
-        <div className="mt-6">
-          <button
-            type="button"
-            onClick={handleAddSchool}
-            className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-athletiq-green hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800"
-          >
-            <FaPlus className="-ml-1 mr-2 h-5 w-5" />
-            Add School
-          </button>
-        </div>
-      </div>
+      <EmptyState
+        icon={FaSchool}
+        title="No schools found"
+        message="Get started by adding a new school to the system."
+        action={handleAddSchool}
+        actionLabel="Add New School"
+      />
     );
   }
 

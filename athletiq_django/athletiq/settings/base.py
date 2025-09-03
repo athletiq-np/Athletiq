@@ -37,6 +37,7 @@ LOCAL_APPS = [
     'core',
     'apps.authentication',
     'apps.schools',
+    'apps.organizations',
     'apps.tournaments',
     'apps.athletes',
     'apps.guardians',

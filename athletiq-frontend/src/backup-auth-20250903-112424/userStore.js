@@ -18,8 +18,30 @@ const getInitialUser = () => {
     const storedToken = localStorage.getItem(AUTH_KEYS.TOKEN);
     
     if (storedUser && storedToken) {
-      const user = JSON.parse(storedUser);
-      return { user, isAuthenticated: true };
+      // Verify token expiration
+      try {
+        const payload = JSON.parse(atob(storedToken.split('.')[1]));
+        const currentTime = Date.now() / 1000;
+        
+        if (payload.exp <= currentTime) {
+          const refreshToken = localStorage.getItem(AUTH_KEYS.REFRESH_TOKEN);
+          // If we have a refresh token, let the auth process handle the refresh
+          if (refreshToken) {
+            const user = JSON.parse(storedUser);
+            return { user, isAuthenticated: true };
+          }
+          // No refresh token, clear stale data
+          localStorage.removeItem(AUTH_KEYS.USER);
+          localStorage.removeItem(AUTH_KEYS.TOKEN);
+          return { user: null, isAuthenticated: false };
+        }
+        
+        const user = JSON.parse(storedUser);
+        return { user, isAuthenticated: true };
+      } catch (error) {
+        console.error('Error parsing token:', error);
+        return { user: null, isAuthenticated: false };
+      }
     }
   } catch (error) {
     console.error('Error loading user from localStorage:', error);

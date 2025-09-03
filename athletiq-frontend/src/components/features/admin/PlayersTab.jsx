@@ -1,108 +1,20 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { FaUpload, FaDownload, FaSearch, FaEye, FaEdit, FaTrash, FaUserGraduate,
   FaSpinner, FaExclamationCircle, FaUserSlash } from 'react-icons/fa';
 import { FaPlus } from 'react-icons/fa';
 
-// Simple Modal Component
-const SimpleModal = ({ isOpen, onClose, children }) => {
-  console.log('SimpleModal called with props:', { isOpen, hasChildren: !!children });
-  
-  if (!isOpen) {
-    console.log('SimpleModal not rendering because isOpen is false');
-    return null;
-  }
+// Enhanced Components
+import { TableLoading, StatsCardsLoading } from './LoadingStates';
+import { InlineError, EmptyState } from './ErrorStates';
+import { AdvancedSearch, FilterOptions, DataViewControls } from './InteractiveFeatures';
+import { DataExportModal } from './DataExportUtility';
 
-  console.log('SimpleModal rendering with isOpen:', isOpen);
-  
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        borderRadius: '0.5rem',
-        padding: '1.5rem',
-        position: 'relative',
-        maxWidth: '90%',
-        maxHeight: '90vh',
-        overflow: 'auto',
-        boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)'
-      }}>
-        <button
-          onClick={(e) => {
-            console.log('Close button clicked');
-            onClose(e);
-          }}
-          style={{
-            position: 'absolute',
-            top: '0.5rem',
-            right: '0.5rem',
-            background: 'none',
-            border: 'none',
-            fontSize: '1.5rem',
-            cursor: 'pointer',
-            color: '#6b7280',
-            '&:hover': {
-              color: '#374151'
-            }
-          }}
-        >
-          ×
-        </button>
-        {children || <div>No children provided to SimpleModal</div>}
-      </div>
-    </div>
-  );
-};
-
-// Minimal AddPlayerModal for debugging
-const AddPlayerModal = ({ isOpen, onClose }) => {
-  console.log('AddPlayerModal render - isOpen:', isOpen);
-  
-  if (!isOpen) {
-    console.log('Modal not rendering because isOpen is false');
-    return null;
-  }
-
-  return (
-    <div style={{
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: 'rgba(0,0,0,0.5)',
-      display: 'flex',
-      justifyContent: 'center',
-      alignItems: 'center',
-      zIndex: 1000
-    }}>
-      <div style={{
-        backgroundColor: 'white',
-        padding: '20px',
-        borderRadius: '4px',
-        minWidth: '300px'
-      }}>
-        <h2>Add New Player</h2>
-        <div>This is a test modal</div>
-        <button onClick={onClose}>Close</button>
-      </div>
-    </div>
-  );
-};
+// Remove the test AddPlayerModal - we'll use AddPlayerButton instead
 
 import EditPlayerModal from "@features/player/EditPlayerModal";
-import { registerPlayer } from '@/api/playerApi';
+import ViewPlayerModal from "@features/player/ViewPlayerModal";
+import { adminApi } from '@/api/adminApi';
 import { toast } from 'react-toastify';
 import BulkPlayerUploadModal from '@features/player/BulkPlayerUploadModal';
 import AddPlayerButton from '@/components/AddPlayerButton';
@@ -136,32 +48,12 @@ function PlayersTabComponent({
   const [searchText, setSearchText] = useState("");
   const [selectedSchoolId, setSelectedSchoolId] = useState("");
   const [selectedPlayerIds, setSelectedPlayerIds] = useState([]);
+  const [showExportModal, setShowExportModal] = useState(false);
   
-  // Use useRef to maintain form data between renders
-  const formDataRef = useRef({
-    name: '',
-    email: '',
-    phone: '',
-    school_id: schools[0]?.id || ''
-  });
-  
-  // Modal state
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  // Modal state (removed test modal states)
   const [bulkPlayerOpen, setBulkPlayerOpen] = useState(false);
   const [editPlayer, setEditPlayer] = useState(null);
   const [viewPlayer, setViewPlayer] = useState(null);
-  
-  const handleAddPlayerClick = useCallback((e) => {
-    e?.preventDefault?.();
-    e?.stopPropagation?.();
-    console.log('Opening modal');
-    setIsModalOpen(true);
-  }, []);
-  
-  // Debug effect to track modal state changes
-  useEffect(() => {
-    console.log('Modal state changed:', isModalOpen);
-  }, [isModalOpen]);
   
   // Debug effect to log component re-renders
   useEffect(() => {
@@ -206,24 +98,34 @@ function PlayersTabComponent({
     }
   };
 
-  const handleDeletePlayer = (playerId) => {
+  const handleDeletePlayer = async (playerId) => {
     if (window.confirm('Are you sure you want to delete this player?')) {
-      // TODO: Implement delete API call
-      console.log('Delete player:', playerId);
-      refetchData();
+      try {
+        await adminApi.deleteAthlete(playerId);
+        console.log('Player deleted successfully:', playerId);
+        if (refetchData) refetchData();
+      } catch (error) {
+        console.error('Error deleting player:', error);
+        alert('Failed to delete player. Please try again.');
+      }
     }
   };
 
-  const handleBulkDeletePlayers = () => {
+  const handleBulkDeletePlayers = async () => {
     if (selectedPlayerIds.length === 0) return;
     if (window.confirm(`Are you sure you want to delete ${selectedPlayerIds.length} players?`)) {
-      // TODO: Implement bulk delete API call
-      console.log('Bulk delete players:', selectedPlayerIds);
-      setSelectedPlayerIds([]);
-      refetchData();
+      try {
+        const result = await adminApi.bulkDeleteAthletes(selectedPlayerIds);
+        console.log('Bulk delete result:', result);
+        setSelectedPlayerIds([]);
+        if (refetchData) refetchData();
+        alert(`Successfully deleted ${result.data?.deleted_count || selectedPlayerIds.length} players`);
+      } catch (error) {
+        console.error('Error bulk deleting players:', error);
+        alert('Failed to delete players. Please try again.');
+      }
     }
   };
-
   const handleAddPlayer = async (playerData) => {
     try {
       const formData = new FormData();
@@ -269,12 +171,7 @@ function PlayersTabComponent({
 
   // Show loading state
   if (loading) {
-    return (
-      <div className="flex flex-col items-center justify-center h-64">
-        <FaSpinner className="animate-spin text-4xl text-athletiq-blue mb-4" />
-        <p className="text-gray-600">Loading players...</p>
-      </div>
-    );
+    return <TableLoading message="Loading players..." rows={10} />;
   }
 
   // Show error state
@@ -311,14 +208,15 @@ function PlayersTabComponent({
           Get started by adding a new player or importing in bulk.
         </p>
         <div className="mt-6 space-x-3">
-          <button
-            type="button"
-            onClick={handleAddPlayerClick}
+          <AddPlayerButton 
+            onPlayerAdded={handlePlayerAdded}
+            schools={schools}
+            user={user}
             className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-athletiq-green hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
           >
             <FaPlus className="-ml-1 mr-2 h-5 w-5" />
             Add Player
-          </button>
+          </AddPlayerButton>
           <button
             type="button"
             onClick={() => setBulkPlayerOpen(true)}
@@ -332,31 +230,8 @@ function PlayersTabComponent({
     );
   }
 
-  // Test element to verify component rendering
-  console.log('Rendering PlayersTab with isModalOpen:', isModalOpen);
-  
   return (
     <div className="space-y-6">
-      {/* Add Player Modal */}
-      <AddPlayerModal 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)}
-      />
-      
-      {/* Test element */}
-      <div style={{
-        position: 'fixed',
-        top: '10px',
-        right: '10px',
-        backgroundColor: 'red',
-        color: 'white',
-        padding: '10px',
-        zIndex: 10000,
-        borderRadius: '4px',
-        border: '2px solid white'
-      }}>
-        PlayersTab Rendered
-      </div>
       {/* Header with Search and Actions */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center gap-4">
@@ -369,6 +244,8 @@ function PlayersTabComponent({
         <div className="flex flex-wrap gap-3 w-full sm:w-auto mt-2 sm:mt-0">
           <AddPlayerButton 
             onPlayerAdded={handlePlayerAdded}
+            schools={schools}
+            user={user}
             className="inline-flex items-center justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-athletiq-green hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 w-full sm:w-auto"
           >
             <FaPlus className="-ml-1 mr-2 h-4 w-4" />
@@ -407,38 +284,82 @@ function PlayersTabComponent({
           </div>
         )}
         
-        {/* Search and Filter Bar */}
-        <div className="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
-          <div className="relative flex-1">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="h-5 w-5 text-gray-400" />
+        {/* Enhanced Search and Filter Bar */}
+        <div className="space-y-4">
+          <div className="flex flex-col lg:flex-row gap-4">
+            {/* Advanced Search */}
+            <div className="flex-1">
+              <AdvancedSearch
+                onSearch={(query, filters) => {
+                  setSearchText(query);
+                  // Handle advanced filters if needed
+                }}
+                placeholder="Search players by name, school, or ID..."
+                initialValue={searchText}
+              />
             </div>
-            <input
-              type="text"
-              placeholder="Search players..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg leading-5 bg-white dark:bg-gray-800 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-athletiq-green focus:border-transparent"
-            />
+
+            {/* Data Export */}
+            <button
+              onClick={() => setShowExportModal(true)}
+              className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+            >
+              <FaDownload className="w-4 h-4" />
+              <span>Export Data</span>
+            </button>
           </div>
 
-          {/* School Filter (for super admin) */}
-          {user?.role === "super_admin" && (
-            <div className="sm:w-64">
-              <select
-                value={selectedSchoolId}
-                onChange={(e) => setSelectedSchoolId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-athletiq-green focus:border-transparent"
-              >
-                <option value="">All Schools</option>
-                {schools.map(school => (
-                  <option key={school.id} value={school.id}>
-                    {school.name} ({school.school_code})
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
+          {/* Filter Options */}
+          <FilterOptions
+            filters={[
+              {
+                key: 'school',
+                label: 'School',
+                type: 'select',
+                options: [
+                  { value: '', label: 'All Schools' },
+                  ...schools.map(school => ({
+                    value: school.id,
+                    label: `${school.name} (${school.school_code})`
+                  }))
+                ],
+                value: selectedSchoolId,
+                onChange: setSelectedSchoolId,
+                visible: user?.role === "super_admin"
+              },
+              {
+                key: 'status',
+                label: 'Profile Status',
+                type: 'select',
+                options: [
+                  { value: '', label: 'All Statuses' },
+                  { value: 'complete', label: 'Complete Profiles' },
+                  { value: 'incomplete', label: 'Incomplete Profiles' }
+                ],
+                value: '',
+                onChange: (value) => {
+                  // Handle profile status filter
+                }
+              }
+            ]}
+            onFiltersChange={(filters) => {
+              console.log('Filters changed:', filters);
+            }}
+          />
+
+          {/* Data View Controls */}
+          <DataViewControls
+            viewMode="table"
+            onViewModeChange={(mode) => console.log('View mode:', mode)}
+            sortOptions={[
+              { value: 'name', label: 'Name' },
+              { value: 'school', label: 'School' },
+              { value: 'created', label: 'Date Added' }
+            ]}
+            onSortChange={(sort) => console.log('Sort:', sort)}
+            totalItems={filteredPlayers.length}
+            showViewModeToggle={false}
+          />
         </div>
       </div>
 
@@ -476,10 +397,21 @@ function PlayersTabComponent({
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredPlayers.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-gray-500">
-                    <FaUserGraduate className="mx-auto text-4xl text-gray-300 mb-4" />
-                    <p className="text-lg font-medium">No players found</p>
-                    <p className="text-sm">Try adjusting your search or add a new player</p>
+                  <td colSpan={6} className="px-6 py-12">
+                    <EmptyState
+                      title="No players found"
+                      description="Try adjusting your search criteria or add a new player to get started."
+                      icon={FaUserGraduate}
+                      actionLabel="Add New Player"
+                      onAction={() => {
+                        // This will be handled by AddPlayerButton component
+                      }}
+                      suggestions={[
+                        "Check your search terms",
+                        "Try selecting a different school",
+                        "Clear all filters to see all players"
+                      ]}
+                    />
                   </td>
                 </tr>
               ) : (
@@ -569,46 +501,6 @@ function PlayersTabComponent({
         </div>
       </div>
 
-      {/* Add Player Button */}
-      <div className="fixed bottom-6 right-6 z-50">
-        <motion.button
-          onClick={handleAddPlayerClick}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 
-                   text-white rounded-full font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
-        >
-          <FaPlus className="w-5 h-5" />
-          <span>Add Player</span>
-        </motion.button>
-      </div>
-
-      {/* Test Modal */}
-      <SimpleModal 
-        isOpen={isModalOpen}
-        onClose={() => {
-          console.log('Closing modal');
-          setIsModalOpen(false);
-        }}
-      >
-        <h2>Test Modal</h2>
-        <p>If you can see this, the modal is working!</p>
-        <button 
-          onClick={() => console.log('Test button clicked')}
-          style={{
-            marginTop: '1rem',
-            padding: '0.5rem 1rem',
-            backgroundColor: 'green',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-            cursor: 'pointer'
-          }}
-        >
-          Test Button
-        </button>
-      </SimpleModal>
-      
       <BulkPlayerUploadModal 
         open={bulkPlayerOpen}
         onClose={() => setBulkPlayerOpen(false)}
@@ -624,9 +516,35 @@ function PlayersTabComponent({
       />
       
       <ViewPlayerModal 
-        open={!!viewPlayer}
+        isOpen={!!viewPlayer}
         player={viewPlayer}
         onClose={() => setViewPlayer(null)}
+        schools={schools}
+      />
+
+      {/* Data Export Modal */}
+      <DataExportModal
+        isOpen={showExportModal}
+        onClose={() => setShowExportModal(false)}
+        dataType="players"
+        onExport={async (format, options) => {
+          return filteredPlayers.map(player => ({
+            name: player.full_name || player.name,
+            school: player.school_name,
+            school_code: player.school_code,
+            id: player.id,
+            created_at: player.created_at,
+            profile_complete: player.profile_complete
+          }));
+        }}
+        availableColumns={[
+          { key: 'name', label: 'Name' },
+          { key: 'school', label: 'School' },
+          { key: 'school_code', label: 'School Code' },
+          { key: 'id', label: 'ID' },
+          { key: 'created_at', label: 'Created Date' },
+          { key: 'profile_complete', label: 'Profile Complete' }
+        ]}
       />
     </div>
   );

@@ -63,7 +63,7 @@ const AppRoutes = () => {
 
       {/* Admin routes */}
       <Route path="/admin/*" element={
-        <ProtectedRoute requiredRoles={['superadmin']}>
+        <ProtectedRoute requiredRoles={['superadmin', 'super_admin', 'super-admin', 'admin']}>
           <Routes>
             <Route path="" element={<GlobalAdminDashboard />} />
             <Route path="dashboard" element={<GlobalAdminDashboard />} />
@@ -73,7 +73,7 @@ const AppRoutes = () => {
 
       {/* School Admin routes */}
       <Route path="/school/*" element={
-        <ProtectedRoute requiredRoles={['schooladmin']}>
+        <ProtectedRoute requiredRoles={['schooladmin', 'school_admin', 'school-admin', 'SchoolAdmin']}>
           <Routes>
             <Route path="" element={<SchoolDashboard />} />
           </Routes>
@@ -113,7 +113,11 @@ const AppRoutes = () => {
       <Route path="/organization/*" element={
         <ProtectedRoute requiredRoles={['Organization']}>
           <Routes>
-            <Route path="dashboard" element={<div>Organization Dashboard - Coming Soon</div>} />
+            <Route path="dashboard" element={
+              <Suspense fallback={<div>Loading Organization Dashboard...</div>}>
+                {React.createElement(React.lazy(() => import('@/pages/organization/OrganizationDashboard')))}
+              </Suspense>
+            } />
             <Route path="" element={<Navigate to="dashboard" replace />} />
           </Routes>
         </ProtectedRoute>

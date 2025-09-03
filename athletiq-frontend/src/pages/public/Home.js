@@ -8,12 +8,12 @@
 
 import React, { useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import useUserStore from '@/store/userStore'; // Import our global user store
+import { useAuth } from '@/hooks/useAuth'; // Import our global user store
 import { FaArrowRight, FaShieldAlt, FaTrophy, FaUsers, FaUserGraduate, FaUserTie } from 'react-icons/fa';
 
 export default function Home() {
   // Get the user object from our Zustand store
-  const { user } = useUserStore();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   // This effect runs whenever the 'user' object changes.

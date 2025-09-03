@@ -13,6 +13,7 @@ from core.utils.responses import (
     success_response, error_response, created_response,
     unauthorized_response, validation_error_response
 )
+from core.permissions import IsSuperAdmin
 from .models import Guardian, AthleteClaimRequest, GuardianNotification, GuardianSession
 from .serializers import (
     GuardianRegistrationSerializer, GuardianLoginSerializer, GuardianSerializer,
@@ -823,6 +824,60 @@ def mark_all_notifications_read_view(request):
         return success_response(
             data={'updated_count': updated_count},
             message=f'Marked {updated_count} notifications as read'
+        )
+        
+    except Exception as e:
+        return error_response(
+            message=str(e),
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsSuperAdmin])
+def admin_guardians_list_view(request):
+    """
+    SuperAdmin view to list all guardians.
+    """
+    try:
+        guardians = Guardian.objects.all().order_by('-created_at')
+        
+        # Apply filters
+        search = request.GET.get('search', '')
+        status_filter = request.GET.get('status', '')
+        verification_filter = request.GET.get('verification', '')
+        
+        if search:
+            guardians = guardians.filter(
+                Q(full_name__icontains=search) |
+                Q(email__icontains=search)
+            )
+        
+        if status_filter:
+            is_active = status_filter.lower() == 'active'
+            guardians = guardians.filter(is_active=is_active)
+            
+        if verification_filter:
+            guardians = guardians.filter(verification_status=verification_filter)
+        
+        # Serialize guardians data
+        guardians_data = []
+        for guardian in guardians:
+            guardians_data.append({
+                'id': guardian.guardian_id,
+                'full_name': guardian.full_name,
+                'email': guardian.email,
+                'phone': guardian.phone,
+                'verification_status': guardian.verification_status,
+                'email_verified': guardian.email_verified,
+                'is_active': guardian.is_active,
+                'created_at': guardian.created_at.isoformat() if guardian.created_at else None,
+                'last_login': guardian.last_login.isoformat() if guardian.last_login else None,
+            })
+        
+        return success_response(
+            data=guardians_data,
+            message=f'Retrieved {len(guardians_data)} guardians'
         )
         
     except Exception as e:

@@ -1,11 +1,11 @@
 import React from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
-import useUserStore from '@/store/userStore';
+import useAuth from '@/hooks/useAuth';
 // I've added a few more icons that might be useful
 import { FaTachometerAlt, FaUsers, FaSchool, FaTrophy, FaSignOutAlt } from 'react-icons/fa';
 
 export default function Sidebar() {
-  const { user, clearUser } = useUserStore();
+  const { user, logout } = useAuth();
   const navigate = useNavigate();
 
   // This list defines all possible navigation links for the application.
@@ -25,7 +25,7 @@ export default function Sidebar() {
   );
 
   const handleLogout = async () => {
-    clearUser();
+    logout();
     navigate('/login');
   };
 

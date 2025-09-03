@@ -40,4 +40,7 @@ urlpatterns = [
     # Communication
     path('communication-history', views.guardian_communication_history_view, name='guardian_communication_history'),
     path('feedback', views.guardian_feedback_view, name='guardian_feedback'),
+    
+    # SuperAdmin guardian management
+    path('admin/list/', views.admin_guardians_list_view, name='admin-list'),
 ]

@@ -201,14 +201,18 @@ export default function PremiumStatsCards({ summary, loading, formatDate }) {
             <div className="mb-2">
               <div className="text-3xl font-bold text-gray-900 dark:text-white group-hover:scale-105 transition-transform duration-300">
                 {loading ? (
-                  <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-16 rounded"></div>
+                  <div className="animate-pulse bg-gray-200 dark:bg-gray-700 h-8 w-20 rounded-lg"></div>
                 ) : (
-                  <>
+                  <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, delay: 0.2 }}
+                  >
                     {card.isPrice && '$'}
                     {card.isText ? card.value : (card.value?.toLocaleString() || '0')}
                     {card.isPercentage && '%'}
                     {card.suffix && ` ${card.suffix}`}
-                  </>
+                  </motion.div>
                 )}
               </div>
             </div>

@@ -181,16 +181,16 @@ def get_my_school_tournaments(request):
             
             # Get tournaments where school's teams are registered
             registered_tournaments = Tournament.objects.filter(
-                tournament_teams__team__school=school,
+                tournament_teams__school_id=school.id,
                 is_active=True
-            ).distinct().select_related('organizer').prefetch_related('tournament_teams__team')
+            ).distinct().select_related('organizer').prefetch_related('tournament_teams')
             
             # Get available tournaments (not registered yet)
             available_tournaments = Tournament.objects.filter(
-                status__in=['draft', 'open', 'active'],
+                status__in=['draft', 'upcoming', 'ongoing'],
                 is_active=True
             ).exclude(
-                tournament_teams__team__school=school
+                tournament_teams__school_id=school.id
             ).select_related('organizer')
             
             # Apply search filter if provided

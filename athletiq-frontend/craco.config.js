@@ -2,14 +2,7 @@ const path = require('path');
 
 module.exports = {
   devServer: {
-    port: 3000,
-    proxy: {
-      '/api': {
-        target: 'http://localhost:8000',
-        changeOrigin: true,
-        secure: false
-      }
-    }
+    port: 3000
   },
   webpack: {
     alias: {

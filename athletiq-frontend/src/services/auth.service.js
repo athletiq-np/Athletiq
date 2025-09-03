@@ -1,305 +1,425 @@
-import apiClient from '@/utils/apiClient';
-import { AUTH_KEYS } from '@/utils/authKeys';
-import { API_ENDPOINTS, AUTH_CONFIG } from '@/config/api.config';
+/**
+ * Unified Authentication Service
+ * Single service for all authentication operations
+ */
+
+import { authStorage, AUTH_ENDPOINTS, AUTH_CONFIG, USER_ROLES } from '@/config/auth.config';
+import { logger } from '@/utils/logger';
+
+// Base URL for API requests
+const API_BASE_URL = process.env.NODE_ENV === 'production' 
+  ? `${process.env.REACT_APP_API_URL || 'http://localhost:8000'}/api`
+  : '/api';
 
 class AuthService {
-  // Login user with email and password using unified authentication
-  async login(email, password) {
-    try {
-      console.debug('Attempting login for:', email);
-      
-      // Make the login request
-      const response = await apiClient.post(
-        AUTH_CONFIG.ENDPOINTS.LOGIN, 
-        { email, password },
-        { skipAuthRefresh: true } // Don't trigger refresh for login
-      );
-      
-      console.debug('Login response:', response.data);
-      
-      // Handle unified auth response structure
-      if (!response.data?.success) {
-        const errorMsg = response.data?.message || 'Login failed';
-        console.error('Login failed:', errorMsg);
-        throw new Error(errorMsg);
-      }
-      
-      const { token, refresh_token, user, user_type, role, redirect_path } = response.data.data || {};
-      
-      if (!token) {
-        throw new Error('No access token received');
-      }
-      
-      // Normalize user data for consistent handling
-      const normalizedUser = {
-        ...(user || {}),
-        user_type: user_type || user?.user_type,
-        role: role || user?.role,
-        id: user?.id || user?.guardian_id || user?.user_id,
-        name: user?.name || user?.full_name || '',
-        email: user?.email || email,
-        guardianId: user?.guardian_id,
-        redirect_path: redirect_path || this.getDefaultRedirectPath(role || user?.role)
-      };
-      
-      console.debug('Normalized user data:', normalizedUser);
-      
-      // Store tokens and user data
-      this.setAuthData({ 
-        access: token, 
-        refresh: refresh_token, 
-        user: normalizedUser 
-      });
-      
-      return { 
-        user: normalizedUser, 
-        access: token,
-        refresh_token,
-        redirect_path: normalizedUser.redirect_path
-      };
-    } catch (error) {
-      this.clearAuthData();
-      throw error;
-    }
+  constructor() {
+    this.baseURL = API_BASE_URL;
+    this.isRefreshing = false;
+    this.refreshPromise = null;
   }
 
-  // Get default redirect path based on user role
-  getDefaultRedirectPath(role) {
-    if (!role) return '/dashboard';
+  /**
+   * Make authenticated API request
+   */
+  async makeRequest(endpoint, options = {}) {
+    const url = `${this.baseURL}${endpoint}`;
+    const token = authStorage.getToken();
     
-    const roleLower = role.toLowerCase();
-    
-    // Define role-based redirect paths
-    const rolePaths = {
-      'superadmin': '/admin',
-      'admin': '/admin/dashboard',
-      'guardian': '/guardian/dashboard',
-      'athlete': '/athlete/dashboard',
-      'school_admin': '/school-admin/dashboard',
-      'coach': '/coach/dashboard'
+    const config = {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        ...(token && { Authorization: `${AUTH_CONFIG.TOKEN_TYPE} ${token}` }),
+        ...options.headers,
+      },
+      credentials: 'include',
+      ...options,
     };
-    
-    return rolePaths[roleLower] || '/dashboard';
-  }
-  
-  // Register a new user
-  async register(userData) {
+
     try {
-      const response = await apiClient.post(API_ENDPOINTS.AUTH.REGISTER, userData);
-      const { access, refresh, user } = response.data;
+      const response = await fetch(url, config);
       
-      // Store tokens and user data
-      this.setAuthData({ access, refresh, user });
+      // Handle authentication errors
+      if (response.status === 401) {
+        // Check if this is a verification request (auth check)
+        const isVerificationRequest = endpoint === AUTH_ENDPOINTS.VERIFY;
+        
+        const refreshResult = await this.handleTokenRefresh();
+        if (refreshResult.success) {
+          // Retry request with new token
+          config.headers.Authorization = `${AUTH_CONFIG.TOKEN_TYPE} ${authStorage.getToken()}`;
+          return await fetch(url, config);
+        } else {
+          // Refresh failed
+          if (isVerificationRequest) {
+            // For verification requests, don't logout - just throw error
+            throw new Error('Authentication failed');
+          } else {
+            // For other requests, logout user
+            await this.logout();
+            throw new Error('Authentication failed');
+          }
+        }
+      }
       
-      return { user, access };
+      if (!response.ok) {
+        throw new Error(`Request failed: ${response.status} ${response.statusText}`);
+      }
+      
+      return response;
     } catch (error) {
-      this.clearAuthData();
+      logger.error('API request failed:', error);
       throw error;
     }
   }
 
-  // Logout user
-  logout() {
-    // Call logout API if needed
-    apiClient.post(API_ENDPOINTS.AUTH.LOGOUT).catch(() => {});
-    
-    // Clear all auth data
-    this.clearAuthData();
-  }
-
-  // Get current user
-  getCurrentUser() {
+  /**
+   * Login user with credentials
+   */
+  async login(credentials) {
     try {
-      // Try to get from current config key first, then fall back to legacy key
-      let userJson = localStorage.getItem(AUTH_CONFIG.USER_DATA_KEY);
+      logger.info('🔐 Starting login process');
       
-      if (!userJson) {
-        userJson = localStorage.getItem(AUTH_KEYS.USER);
+      const response = await fetch(`${this.baseURL}${AUTH_ENDPOINTS.LOGIN}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(credentials),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Login failed: ${response.status}`);
       }
+
+      const responseData = await response.json();
       
-      if (!userJson) return null;
+      // Debug: Log the actual response structure
+      logger.info('🔍 Login response data:', JSON.stringify(responseData, null, 2));
       
-      const user = JSON.parse(userJson);
-      
-      // Ensure required fields exist
-      return {
-        id: user.id || user.user_id || null,
-        email: user.email || '',
-        name: user.name || user.full_name || '',
-        role: user.role || '',
-        user_type: user.user_type || '',
-        ...user // Spread the rest of the user object
+      // Handle nested response structure from Django unified auth
+      const authData = responseData.data || responseData;
+      const tokens = {
+        access: authData.token || authData.access,
+        refresh: authData.refresh_token || authData.refresh
       };
-    } catch (error) {
-      console.error('Error parsing user data:', error);
-      return null;
-    }
-  }
-
-  // Check if user is authenticated
-  isAuthenticated() {
-    try {
-      // Check for token in current config key first, then fall back to legacy key
-      const token = localStorage.getItem(AUTH_CONFIG.TOKEN_KEY) || 
-                   localStorage.getItem(AUTH_KEYS.TOKEN);
+      const userData = authData.user || null;
       
-      if (!token) return false;
-      
-      // Optional: Verify token expiration if needed
-      // This is a simple check - for a more robust solution, consider using a JWT library
-      // to properly parse and verify the token's expiration
-      
-      return true;
-    } catch (error) {
-      console.error('Error checking authentication:', error);
-      return false;
-    }
-  }
-
-  // Check if user has specific role
-  hasRole(role) {
-    const user = this.getCurrentUser();
-    // Check both user.role (current) and user.roles (legacy) for backward compatibility
-    return (user?.role?.toLowerCase() === role?.toLowerCase()) || 
-           (Array.isArray(user?.roles) && user.roles.includes(role)) || 
-           false;
-  }
-
-  // Set authentication data in storage
-  setAuthData({ access, refresh, user }) {
-    try {
-      if (access) {
-        localStorage.setItem(AUTH_CONFIG.TOKEN_KEY, access);
-        // Set legacy key for backward compatibility
-        if (AUTH_KEYS.TOKEN && AUTH_KEYS.TOKEN !== AUTH_CONFIG.TOKEN_KEY) {
-          localStorage.setItem(AUTH_KEYS.TOKEN, access);
-        }
+      // Store authentication data
+      if (tokens.access) {
+        authStorage.setToken(tokens.access);
+        logger.info('✅ Access token stored');
       }
-      if (refresh) {
-        localStorage.setItem(AUTH_CONFIG.REFRESH_TOKEN_KEY, refresh);
-        // Set legacy key for backward compatibility
-        if (AUTH_KEYS.REFRESH_TOKEN && AUTH_KEYS.REFRESH_TOKEN !== AUTH_CONFIG.REFRESH_TOKEN_KEY) {
-          localStorage.setItem(AUTH_KEYS.REFRESH_TOKEN, refresh);
-        }
+      
+      if (tokens.refresh) {
+        authStorage.setRefreshToken(tokens.refresh);
+        logger.info('✅ Refresh token stored');
       }
-      if (user) {
-        const userData = {
-          ...user,
-          // Ensure required fields
-          id: user.id || user.user_id,
-          email: user.email,
-          role: user.role || '',
-          user_type: user.user_type || ''
+      
+      if (userData) {
+        // Normalize user data to match frontend expectations
+        const normalizedUser = {
+          ...userData,
+          // Map API fields to expected frontend fields
+          username: userData.full_name || userData.username || userData.email,
+          id: userData.guardian_id || userData.user_id || userData.id,
+          role: userData.role || authData.role,
+          user_type: authData.user_type || userData.user_type,
+          // Keep original fields as well for compatibility
+          full_name: userData.full_name,
+          email: userData.email,
+          guardian_id: userData.guardian_id,
         };
-        localStorage.setItem(AUTH_CONFIG.USER_DATA_KEY, JSON.stringify(userData));
-        // Set legacy key for backward compatibility
-        if (AUTH_KEYS.USER && AUTH_KEYS.USER !== AUTH_CONFIG.USER_DATA_KEY) {
-          localStorage.setItem(AUTH_KEYS.USER, JSON.stringify(userData));
-        }
-      }
-    } catch (error) {
-      console.error('Error setting auth data:', error);
-      throw new Error('Failed to save authentication data');
-    }
-  }
-
-  // Clear all authentication data
-  clearAuthData() {
-    try {
-      // Clear current auth data
-      [
-        // Current auth keys
-        AUTH_CONFIG.TOKEN_KEY,
-        AUTH_CONFIG.REFRESH_TOKEN_KEY,
-        AUTH_CONFIG.USER_DATA_KEY,
         
-        // Legacy auth keys
-        AUTH_KEYS.TOKEN,
-        AUTH_KEYS.REFRESH_TOKEN,
-        AUTH_KEYS.USER,
-        AUTH_KEYS.GUARDIAN_TOKEN_LEGACY,
-        AUTH_KEYS.GUARDIAN_TOKEN_ALT_LEGACY,
-        AUTH_KEYS.GUARDIAN_DATA_LEGACY,
-        AUTH_KEYS.GUARDIAN_INFO_LEGACY
-      ].filter(Boolean).forEach(key => {
-        try {
-          localStorage.removeItem(key);
-        } catch (error) {
-          console.warn(`Failed to remove auth key ${key}:`, error);
-        }
-      });
+        authStorage.setUserData(normalizedUser);
+        logger.info('✅ User data stored:', {
+          username: normalizedUser.username,
+          role: normalizedUser.role,
+          id: normalizedUser.id,
+          user_type: normalizedUser.user_type
+        });
+      }
+
+      logger.info('🎉 Login successful');
       
-      // Clear any session storage that might contain auth data
-      sessionStorage.clear();
+      // Handle missing user object gracefully
+      if (!userData) {
+        logger.warn('⚠️ No user object in login response, using default values');
+        // Create a default user object if missing
+        const defaultUser = {
+          id: null,
+          username: credentials.email,
+          email: credentials.email,
+          role: authData.role || 'user',
+          user_type: authData.user_type || 'user'
+        };
+        authStorage.setUserData(defaultUser);
+      }
       
-      // Clear all cookies (for domains we have access to)
-      document.cookie.split(';').forEach(cookie => {
-        const [name] = cookie.trim().split('=');
-        document.cookie = `${name}=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;`;
-      });
+      const finalUser = authStorage.getUserData();
       
+      return {
+        success: true,
+        user: finalUser,
+        redirectTo: this.getRedirectPath(finalUser?.role || authData.role || 'user')
+      };
+
     } catch (error) {
-      console.error('Error clearing auth data:', error);
-      // Even if there's an error, we want to continue with the logout flow
+      logger.error('❌ Login failed:', error);
+      return {
+        success: false,
+        error: error.message || 'Login failed'
+      };
     }
   }
 
-  // Refresh access token
-  async refreshToken() {
+  /**
+   * Logout user and clear all data
+   */
+  async logout() {
     try {
-      const refreshToken = localStorage.getItem(AUTH_CONFIG.REFRESH_TOKEN_KEY) || 
-                          localStorage.getItem(AUTH_KEYS.REFRESH_TOKEN);
+      logger.info('🚪 Starting logout process');
+      
+      // Attempt to notify server
+      try {
+        await fetch(`${this.baseURL}${AUTH_ENDPOINTS.LOGOUT}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `${AUTH_CONFIG.TOKEN_TYPE} ${authStorage.getToken()}`,
+            'Content-Type': 'application/json',
+          },
+          credentials: 'include',
+        });
+      } catch (error) {
+        // Server logout failed, but continue with local cleanup
+        logger.warn('Server logout failed, continuing with local cleanup:', error);
+      }
+      
+      // Clear all local authentication data
+      authStorage.clearAll();
+      
+      logger.info('✅ Logout completed');
+      return { success: true };
+      
+    } catch (error) {
+      logger.error('❌ Logout error:', error);
+      // Even if logout fails, clear local data
+      authStorage.clearAll();
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Refresh authentication token
+   */
+  async handleTokenRefresh() {
+    // Prevent multiple simultaneous refresh attempts
+    if (this.isRefreshing) {
+      return this.refreshPromise;
+    }
+
+    this.isRefreshing = true;
+    this.refreshPromise = this.performTokenRefresh();
+    
+    try {
+      const result = await this.refreshPromise;
+      return result;
+    } finally {
+      this.isRefreshing = false;
+      this.refreshPromise = null;
+    }
+  }
+
+  async performTokenRefresh() {
+    try {
+      const refreshToken = authStorage.getRefreshToken();
       
       if (!refreshToken) {
-        console.warn('No refresh token available in storage');
-        throw new Error('No refresh token available');
+        logger.warn('No refresh token available');
+        return { success: false, error: 'No refresh token' };
       }
 
-      console.debug('Attempting to refresh access token...');
+      logger.info('🔄 Refreshing authentication token');
       
-      // Use the unified login endpoint for token refresh
-      const response = await apiClient.post(AUTH_CONFIG.ENDPOINTS.LOGIN, {
-        refresh_token: refreshToken
-      }, {
-        skipAuthRefresh: true // Prevent infinite refresh loops
+      const response = await fetch(`${this.baseURL}${AUTH_ENDPOINTS.REFRESH}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ refresh: refreshToken }),
       });
 
-      if (!response.data?.success || !response.data?.data?.token) {
-        console.error('Invalid refresh response:', response.data);
-        throw new Error('Invalid refresh response');
+      if (!response.ok) {
+        throw new Error(`Token refresh failed: ${response.status}`);
       }
 
-      const { token, refresh_token, user } = response.data.data;
+      const data = await response.json();
       
-      // Update stored tokens and user data
-      this.setAuthData({
-        access: token,
-        refresh: refresh_token,
-        user: user
-      });
-      
-      console.debug('Token refresh successful');
-      return token;
-      
+      if (data.access) {
+        authStorage.setToken(data.access);
+        logger.info('✅ Token refreshed successfully');
+        return { success: true };
+      } else {
+        throw new Error('No access token in refresh response');
+      }
+
     } catch (error) {
-      console.error('Token refresh failed:', error);
-      this.clearAuthData();
+      logger.error('❌ Token refresh failed:', error);
+      return { success: false, error: error.message };
+    }
+  }
+
+  /**
+   * Check if a JWT token is expired (basic check without verification)
+   */
+  isTokenExpired(token) {
+    try {
+      if (!token) return true;
       
-      // Rethrow with a more specific error if needed
-      if (error.response) {
-        // The request was made and the server responded with a status code
-        // that falls out of the range of 2xx
-        const { status, data } = error.response;
-        console.error('Refresh error response:', { status, data });
-        
-        if (status === 400 || status === 401) {
-          throw new Error('Session expired. Please log in again.');
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Math.floor(Date.now() / 1000);
+      
+      // Add 60 second buffer to account for clock skew
+      return payload.exp < (currentTime + 60);
+    } catch (error) {
+      // If we can't parse the token, consider it expired
+      return true;
+    }
+  }
+
+  /**
+   * Verify current authentication status
+   */
+  async verifyAuth() {
+    try {
+      const token = authStorage.getToken();
+      const userData = authStorage.getUserData();
+      
+      if (!token || !userData) {
+        return { isAuthenticated: false };
+      }
+
+      // Check if token is expired before making server request
+      if (this.isTokenExpired(token)) {
+        logger.info('Token is expired, attempting refresh');
+        const refreshResult = await this.handleTokenRefresh();
+        if (!refreshResult.success) {
+          logger.warn('Token refresh failed during verification');
+          return { isAuthenticated: false };
         }
       }
+
+      // For page refresh scenarios, trust local storage if we have both token and user data
+      // Only verify with server if absolutely necessary to avoid premature logout
+      try {
+        // Attempt server verification, but don't fail if it doesn't work
+        const response = await this.makeRequest(AUTH_ENDPOINTS.VERIFY, {
+          method: 'POST',
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          return {
+            isAuthenticated: true,
+            user: data.user || userData
+          };
+        } else {
+          // Server verification failed, but we still have local data
+          // Trust it for now - the next API call will handle token refresh if needed
+          logger.warn('Server auth verification failed, trusting local storage');
+          return {
+            isAuthenticated: true,
+            user: userData
+          };
+        }
+      } catch (error) {
+        // Network or other error during verification
+        // Trust local storage to avoid logging out user unnecessarily
+        logger.warn('Auth verification request failed, trusting local storage:', error.message);
+        return {
+          isAuthenticated: true,
+          user: userData
+        };
+      }
+
+    } catch (error) {
+      logger.error('Auth verification failed:', error);
+      return { isAuthenticated: false };
+    }
+  }
+
+  /**
+   * Get redirect path based on user role
+   */
+  getRedirectPath(role) {
+    return AUTH_CONFIG.ROLE_REDIRECTS[role] || AUTH_CONFIG.LOGIN_REDIRECT;
+  }
+
+  /**
+   * Check if user is authenticated
+   */
+  isAuthenticated() {
+    return authStorage.isAuthenticated();
+  }
+
+  /**
+   * Get current user data
+   */
+  getCurrentUser() {
+    return authStorage.getUserData();
+  }
+
+  /**
+   * Get current user token
+   */
+  getToken() {
+    return authStorage.getToken();
+  }
+
+  /**
+   * Register new user
+   */
+  async register(userData) {
+    try {
+      logger.info('📝 Starting registration process');
       
-      throw new Error('Failed to refresh session. Please log in again.');
+      const response = await fetch(`${this.baseURL}${AUTH_ENDPOINTS.REGISTER}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify(userData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || `Registration failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      logger.info('✅ Registration successful');
+      
+      return {
+        success: true,
+        message: data.message || 'Registration successful'
+      };
+
+    } catch (error) {
+      logger.error('❌ Registration failed:', error);
+      return {
+        success: false,
+        error: error.message || 'Registration failed'
+      };
     }
   }
 }
 
-export default new AuthService();
+// Export singleton instance
+export const authService = new AuthService();
+export default authService;

@@ -13,4 +13,8 @@ urlpatterns = [
     
     # Health stats endpoint
     path('stats/', views.health_stats_view, name='health-stats'),
+    
+    # SuperAdmin analytics endpoints
+    path('analytics/global/', views.global_analytics_view, name='global-analytics'),
+    path('analytics/health/', views.system_health_view, name='system-health'),
 ]

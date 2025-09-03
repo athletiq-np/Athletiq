@@ -12,8 +12,8 @@ import { HiOutlineCog, HiMenuAlt3, HiX } from 'react-icons/hi';
 import { MdPending, MdDashboard, MdAnalytics, MdSettings, MdNotifications, MdSports, MdGroup } from 'react-icons/md';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import apiClient from '@/api/apiClient';
-import useUserStore from '@/store/userStore';
+import apiClient from '@/utils/apiClient';
+import { useAuth } from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import athletiqLogo from '@/assets/logos/athletiq-logo.png';
 
@@ -41,7 +41,7 @@ import SchoolSettings from './SchoolSettings';
  * - Modern UI with smooth animations
  */
 export default function GlobalSchoolDashboard() {
-  const { user } = useUserStore();
+  const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -103,14 +103,14 @@ export default function GlobalSchoolDashboard() {
         notificationsRes,
         activitiesRes
       ] = await Promise.all([
-        apiClient.get('/schools/me'),
-        apiClient.get('/schools/me/tournament-stats').catch(() => ({ data: { data: {} } })),
-        apiClient.get('/schools/me/athletes?limit=100&page=1').catch(() => ({ data: { data: [] } })),
-        apiClient.get('/schools/houses').catch(() => ({ data: { data: [] } })),
-        apiClient.get('/schools/staff').catch(() => ({ data: { data: [] } })),
-        apiClient.get('/schools/me/tournaments?limit=100&page=1').catch(() => ({ data: { data: [] } })),
-        apiClient.get('/schools/notifications?limit=20').catch(() => ({ data: { data: [] } })),
-        apiClient.get('/schools/activities?limit=50').catch(() => ({ data: { data: [] } })),
+        apiClient.get('/schools/me/'),
+        apiClient.get('/schools/me/tournament-stats/').catch(() => ({ data: { data: {} } })),
+        apiClient.get('/schools/me/athletes/?limit=100&page=1').catch(() => ({ data: { data: [] } })),
+        apiClient.get('/schools/houses/').catch(() => ({ data: { data: [] } })),
+        apiClient.get('/schools/staff/').catch(() => ({ data: { data: [] } })),
+        apiClient.get('/schools/me/tournaments/?limit=100&page=1').catch(() => ({ data: { data: [] } })),
+        apiClient.get('/schools/notifications/?limit=20').catch(() => ({ data: { data: [] } })),
+        apiClient.get('/schools/activities/?limit=50').catch(() => ({ data: { data: [] } })),
       ]);
       
       // Set school data

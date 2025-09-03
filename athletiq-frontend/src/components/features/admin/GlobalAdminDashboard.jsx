@@ -2,7 +2,7 @@
 
 /**
  * 🏆 ATHLETIQ - Global Admin Dashboard
- * Enterprise-grade admin dashboard with real-time monitoring
+ * Enterprise-grade admin dashboard with comprehensive monitoring
  */
 import React, { useEffect, useState, useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -17,10 +17,11 @@ import { HiOutlineCog, HiMenuAlt3, HiX } from 'react-icons/hi';
 import { MdPending, MdDashboard, MdAnalytics, MdSettings, MdNotifications } from 'react-icons/md';
 import { Link, useSearchParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import apiClient from '@/api/apiClient';
-import useUserStore from '@/store/userStore';
+import apiClient from '@/utils/apiClient';
+import { useAuth } from '@/hooks/useAuth';
 import athletiqLogo from '@/assets/logos/athletiq-logo.png';
 import { useTheme } from '@/contexts/ThemeContext';
+import { authStorage } from '@/config/auth.config';
 
 // Enhanced sidebar component
 import GlobalSidebar from './GlobalSidebar';
@@ -32,10 +33,12 @@ import DashboardSettings from './DashboardSettings';
 
 // Import existing tab components
 import PlayersTab from '@/components/features/admin/PlayersTab';
-import SchoolsTab from '@features/admin/SchoolsTab';
-import TournamentsTab from '@features/admin/TournamentsTab';
-import StatsTab from '@features/admin/StatsTab';
-import TournamentCreationCard from '@features/tournament/TournamentCreationCard';
+import SchoolsTab from '@/components/features/admin/SchoolsTab';
+import OrganizationsTab from '@/components/features/admin/OrganizationsTab';
+import GuardiansTab from '@/components/features/admin/GuardiansTab';
+import TournamentsTab from '@/components/features/admin/TournamentsTab';
+import EnhancedStatsTab from '@/components/features/admin/EnhancedStatsTab';
+import TournamentCreationCard from '@/components/features/tournament/TournamentCreationCard';
 import TestModal from '@/components/TestModal';
 
 /**
@@ -53,7 +56,7 @@ import TestModal from '@/components/TestModal';
  */
 export default function GlobalAdminDashboard() {
   const { t, i18n } = useTranslation();
-  const { user } = useUserStore();
+  const { user } = useAuth();
   const { theme, darkMode, toggleTheme } = useTheme();
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -81,21 +84,28 @@ export default function GlobalAdminDashboard() {
   });
   const [players, setPlayers] = useState([]);
   const [schools, setSchools] = useState([]);
+  const [organizations, setOrganizations] = useState([]);
+  const [guardians, setGuardians] = useState([]);
   const [tournaments, setTournaments] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [recentActivities, setRecentActivities] = useState([]); // Added semicolon here
+  const [analytics, setAnalytics] = useState(null); // Global analytics data
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState({
     dashboard: true,
     players: true,
     schools: true,
+    organizations: true,
+    guardians: true,
     tournaments: true
   });
   const [errors, setErrors] = useState({
     dashboard: null,
     players: null,
     schools: null,
+    organizations: null,
+    guardians: null,
     tournaments: null
   });
   
@@ -134,6 +144,8 @@ export default function GlobalAdminDashboard() {
         dashboard: true,
         players: true,
         schools: true,
+        organizations: true,
+        guardians: true,
         tournaments: true
       }));
       
@@ -142,54 +154,74 @@ export default function GlobalAdminDashboard() {
         dashboard: null,
         players: null,
         schools: null,
+        organizations: null,
+        guardians: null,
         tournaments: null
       });
 
-      // Set auth token if exists
-      const token = localStorage.getItem('token');
-      if (token) {
-        apiClient.defaults.headers.common['Authorization'] = `Bearer ${token}`;
-      }
+      // Our unified apiClient automatically includes auth headers
+      // No need to manually set Authorization header
 
       // Fetch data with error boundaries
       const fetchData = async () => {
         try {
-          const [summaryRes, playersRes, schoolsRes, tournamentsRes] = await Promise.all([
+          const [summaryRes, playersRes, schoolsRes, organizationsRes, guardiansRes, tournamentsRes, analyticsRes] = await Promise.all([
             fetchWithRetry('/health/stats/').catch(err => {
               console.error('Health stats fetch error:', err);
               return { data: { data: {} } };
             }),
-            fetchWithRetry('/athletes/?select_related=school&exclude=guardian').catch(err => {
-              console.error('Athletes fetch error:', err);
-              setErrors(prev => ({ ...prev, players: 'Failed to load players' }));
-              return { data: { data: [] } };
+            fetchWithRetry('/api/athletes/admin/list/').catch(err => {
+              console.warn('Athletes admin endpoint not available:', err.message);
+              // Fallback to regular endpoint
+              return fetchWithRetry('/athletes/?select_related=school&exclude=guardian').catch(fallbackErr => {
+                console.error('Athletes fetch error:', fallbackErr);
+                setErrors(prev => ({ ...prev, players: 'Failed to load players' }));
+                return { data: { data: [] } };
+              });
             }),
             fetchWithRetry('/schools/').catch(err => {
               console.error('Schools fetch error:', err);
               setErrors(prev => ({ ...prev, schools: 'Failed to load schools' }));
               return { data: { data: [] } };
             }),
+            fetchWithRetry('/api/organizations/admin/list/').catch(err => {
+              console.warn('Organizations endpoint not available:', err.message);
+              // Don't set error - just return empty data and we'll use sample data in development
+              return { data: { data: [] } };
+            }),
+            fetchWithRetry('/api/guardian/admin/list/').catch(err => {
+              console.warn('Guardians endpoint not available:', err.message);
+              // Don't set error - just return empty data and we'll use sample data in development
+              return { data: { data: [] } };
+            }),
             fetchWithRetry('/tournaments/').catch(err => {
               console.error('Tournaments fetch error:', err);
               setErrors(prev => ({ ...prev, tournaments: 'Failed to load tournaments' }));
               return { data: { data: [] } };
+            }),
+            fetchWithRetry('/api/analytics/global/').catch(err => {
+              console.warn('Global analytics endpoint not available:', err.message);
+              return { data: { data: null } };
             })
           ]);
 
-          return { summaryRes, playersRes, schoolsRes, tournamentsRes };
+          return { summaryRes, playersRes, schoolsRes, organizationsRes, guardiansRes, tournamentsRes, analyticsRes };
         } catch (error) {
           console.error('Error in parallel fetching:', error);
           throw error;
         }
       };
 
-      const { summaryRes, playersRes, schoolsRes, tournamentsRes } = await fetchData();
+      const { summaryRes, playersRes, schoolsRes, organizationsRes, guardiansRes, tournamentsRes, analyticsRes } = await fetchData();
       
       console.log('📊 API Responses:', {
         summary: summaryRes.data,
         players: playersRes.data,
         schools: schoolsRes.data,
-        tournaments: tournamentsRes.data
+        organizations: organizationsRes.data,
+        guardians: guardiansRes.data,
+        tournaments: tournamentsRes.data,
+        analytics: analyticsRes?.data
       });
       
       // Enhanced data extraction with validation
@@ -253,6 +285,8 @@ export default function GlobalAdminDashboard() {
       }
       
       const playersData = extractData(playersRes, 'players');
+      let organizationsData = extractData(organizationsRes, 'organizations');
+      let guardiansData = extractData(guardiansRes, 'guardians');
       const tournamentsData = extractData(tournamentsRes, 'tournaments');
 
       // Log data for debugging
@@ -260,6 +294,8 @@ export default function GlobalAdminDashboard() {
         summary: summaryData,
         players: playersData,
         schools: schoolsData,
+        organizations: organizationsData,
+        guardians: guardiansData,
         tournaments: tournamentsData,
         schoolsRaw: schoolsRes?.data  // Log raw response for debugging
       });
@@ -268,6 +304,8 @@ export default function GlobalAdminDashboard() {
       const stats = {
         playerCount: summaryData.registered_players ?? playersData.length,
         schoolCount: summaryData.schools ?? schoolsData.length,
+        organizationCount: summaryData.organizations ?? organizationsData.length,
+        guardianCount: summaryData.guardians ?? guardiansData.length,
         tournamentCount: summaryData.tournaments ?? tournamentsData.length,
         pendingVerifications: summaryData.pending_verifications ?? 0,
         missingDocs: summaryData.missing_docs ?? 0,
@@ -281,6 +319,8 @@ export default function GlobalAdminDashboard() {
       const updateLoading = {
         players: playersData.length > 0,
         schools: schoolsData.length > 0,
+        organizations: organizationsData.length > 0,
+        guardians: guardiansData.length > 0,
         tournaments: tournamentsData.length > 0,
         dashboard: true
       };
@@ -301,6 +341,22 @@ export default function GlobalAdminDashboard() {
         return prev;
       });
       
+      setOrganizations(prev => {
+        if (JSON.stringify(prev) !== JSON.stringify(organizationsData)) {
+          console.log('Updating organizations state with:', organizationsData);
+          return organizationsData;
+        }
+        return prev;
+      });
+      
+      setGuardians(prev => {
+        if (JSON.stringify(prev) !== JSON.stringify(guardiansData)) {
+          console.log('Updating guardians state with:', guardiansData);
+          return guardiansData;
+        }
+        return prev;
+      });
+      
       setTournaments(prev => {
         if (JSON.stringify(prev) !== JSON.stringify(tournamentsData)) {
           return tournamentsData;
@@ -308,11 +364,21 @@ export default function GlobalAdminDashboard() {
         return prev;
       });
       
+      // Process and set analytics data
+      const analyticsData = analyticsRes?.data?.data;
+      if (analyticsData) {
+        setAnalytics(analyticsData);
+        console.log('Global analytics data loaded:', analyticsData);
+      }
+      
       // Log state updates for debugging
       console.log('Updated state with new data:', {
         players: playersData.length,
         schools: schoolsData.length,
+        organizations: organizationsData.length,
+        guardians: guardiansData.length,
         tournaments: tournamentsData.length,
+        analytics: analyticsData ? 'loaded' : 'not available',
         schoolsSample: schoolsData.slice(0, 2) // Show first 2 schools for debugging
       });
 
@@ -321,6 +387,8 @@ export default function GlobalAdminDashboard() {
         const newSummary = {
           registeredPlayers: stats.playerCount,
           schools: stats.schoolCount,
+          organizations: stats.organizationCount,
+          guardians: stats.guardianCount,
           pendingVerifications: stats.pendingVerifications,
           missingDocs: stats.missingDocs,
           tournaments: stats.tournamentCount,
@@ -386,6 +454,45 @@ export default function GlobalAdminDashboard() {
       // Load enterprise features in the background
       loadEnterpriseFeatures();
       
+      // Add sample data for testing when no real data is available
+      if (process.env.NODE_ENV === 'development' && organizationsData.length === 0) {
+        const sampleOrganizations = [
+          {
+            id: 'sample-1',
+            name: 'Nepal Sports Federation',
+            type: 'Sports Federation',
+            created_at: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: 'sample-2', 
+            name: 'Kathmandu Sports Club',
+            type: 'Sports Club',
+            created_at: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ];
+        organizationsData = sampleOrganizations;
+      }
+      
+      if (process.env.NODE_ENV === 'development' && guardiansData.length === 0) {
+        const sampleGuardians = [
+          {
+            id: 'guardian-1',
+            full_name: 'Ram Bahadur Gurung',
+            email: 'ram.gurung@example.com',
+            verification_status: 'verified',
+            created_at: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000).toISOString()
+          },
+          {
+            id: 'guardian-2',
+            full_name: 'Sita Devi Sharma',
+            email: 'sita.sharma@example.com', 
+            verification_status: 'pending',
+            created_at: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString()
+          }
+        ];
+        guardiansData = sampleGuardians;
+      }
+      
       // Update loading states
       setIsLoading(prev => ({
         ...prev,
@@ -422,6 +529,8 @@ export default function GlobalAdminDashboard() {
         dashboard: errorMessage,
         players: errorMessage,
         schools: errorMessage,
+        organizations: errorMessage,
+        guardians: errorMessage,
         tournaments: errorMessage
       });
       toast.error(t('dashboard.error.loadFailed'));
@@ -430,6 +539,8 @@ export default function GlobalAdminDashboard() {
       setSummary({
         registeredPlayers: 0,
         schools: 0,
+        organizations: 0,
+        guardians: 0,
         pendingVerifications: 0,
         missingDocs: 0,
         tournaments: 0,
@@ -439,6 +550,8 @@ export default function GlobalAdminDashboard() {
       });
       setPlayers([]);
       setSchools([]);
+      setOrganizations([]);
+      setGuardians([]);
       setTournaments([]);
     } finally {
       setLoading(false);
@@ -447,6 +560,8 @@ export default function GlobalAdminDashboard() {
         dashboard: false,
         players: false,
         schools: false,
+        organizations: false,
+        guardians: false,
         tournaments: false
       }));
     }
@@ -480,6 +595,8 @@ export default function GlobalAdminDashboard() {
     { id: 'overview', label: t('dashboard.tabs.overview'), icon: MdDashboard },
     { id: 'players', label: t('dashboard.tabs.players'), icon: FaUserGraduate },
     { id: 'schools', label: t('dashboard.tabs.schools'), icon: FaSchool },
+    { id: 'organizations', label: t('dashboard.tabs.organizations'), icon: FaUsers },
+    { id: 'guardians', label: t('dashboard.tabs.guardians'), icon: FaUsers },
     { id: 'tournaments', label: t('dashboard.tabs.tournaments'), icon: FaTrophy },
     { id: 'analytics', label: t('dashboard.tabs.analytics'), icon: MdAnalytics },
     { id: 'settings', label: t('dashboard.tabs.settings'), icon: MdSettings },
@@ -518,6 +635,13 @@ export default function GlobalAdminDashboard() {
         toggleTheme={toggleTheme}
         onLanguageChange={handleLanguageChange}
         currentLanguage={i18n.language}
+        // Pass data for real-time badge counts
+        summary={summary}
+        players={players}
+        schools={schools}
+        organizations={organizations}
+        guardians={guardians}
+        tournaments={tournaments}
       />
 
       {/* Main Content Area */}
@@ -691,21 +815,29 @@ export default function GlobalAdminDashboard() {
                         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                           {t('dashboard.quickStats.title')}
                         </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                           <div className="text-center bg-white/50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
-                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{summary.registeredPlayers}</div>
+                            <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{players?.length || summary.registeredPlayers || 0}</div>
                             <div className="text-sm text-gray-600 dark:text-gray-300">{t('dashboard.quickStats.players')}</div>
                           </div>
                           <div className="text-center bg-white/50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
-                            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{summary.schools}</div>
+                            <div className="text-2xl font-bold text-green-600 dark:text-green-400">{schools?.length || summary.schools || 0}</div>
                             <div className="text-sm text-gray-600 dark:text-gray-300">{t('dashboard.quickStats.schools')}</div>
                           </div>
                           <div className="text-center bg-white/50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
-                            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{summary.tournaments}</div>
+                            <div className="text-2xl font-bold text-indigo-600 dark:text-indigo-400">{organizations?.length || summary.organizations || 0}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-300">{t('dashboard.quickStats.organizations')}</div>
+                          </div>
+                          <div className="text-center bg-white/50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
+                            <div className="text-2xl font-bold text-pink-600 dark:text-pink-400">{guardians?.length || summary.guardians || 0}</div>
+                            <div className="text-sm text-gray-600 dark:text-gray-300">{t('dashboard.quickStats.guardians')}</div>
+                          </div>
+                          <div className="text-center bg-white/50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
+                            <div className="text-2xl font-bold text-purple-600 dark:text-purple-400">{tournaments?.length || summary.tournaments || 0}</div>
                             <div className="text-sm text-gray-600 dark:text-gray-300">{t('dashboard.quickStats.tournaments')}</div>
                           </div>
                           <div className="text-center bg-white/50 dark:bg-gray-800/30 p-4 rounded-xl border border-gray-100 dark:border-gray-700/50">
-                            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{summary.activeTournaments}</div>
+                            <div className="text-2xl font-bold text-orange-600 dark:text-orange-400">{tournaments?.filter(t => t?.status?.toLowerCase() === 'active').length || summary.activeTournaments || 0}</div>
                             <div className="text-sm text-gray-600 dark:text-gray-300">{t('dashboard.quickStats.active')}</div>
                           </div>
                         </div>
@@ -729,6 +861,45 @@ export default function GlobalAdminDashboard() {
                         </h3>
                         <RecentPlayersCard 
                           players={players.slice(0, 5)}
+                          setActiveTab={setActiveTab}
+                          formatDate={formatDate}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Organizations and Guardians Recent Data */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                      {/* Organizations Card */}
+                      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50 shadow-lg">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                            <FaUsers className="mr-2 text-indigo-500" />
+                            {t('dashboard.recentOrganizations.title') || 'Recent Organizations'}
+                          </h3>
+                          <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                            {organizations?.length || 0}
+                          </span>
+                        </div>
+                        <RecentOrganizationsCard 
+                          organizations={organizations?.slice(0, 5) || []}
+                          setActiveTab={setActiveTab}
+                          formatDate={formatDate}
+                        />
+                      </div>
+                      
+                      {/* Guardians Card */}
+                      <div className="bg-white dark:bg-gray-800 rounded-xl p-6 border border-gray-200 dark:border-gray-700/50 shadow-lg">
+                        <div className="flex items-center justify-between mb-4">
+                          <h3 className="text-lg font-semibold text-gray-900 dark:text-white flex items-center">
+                            <FaUsers className="mr-2 text-pink-500" />
+                            {t('dashboard.recentGuardians.title') || 'Recent Guardians'}
+                          </h3>
+                          <span className="text-xs text-gray-500 bg-gray-100 dark:bg-gray-700 px-2 py-1 rounded">
+                            {guardians?.length || 0}
+                          </span>
+                        </div>
+                        <RecentGuardiansCard 
+                          guardians={guardians?.slice(0, 5) || []}
                           setActiveTab={setActiveTab}
                           formatDate={formatDate}
                         />
@@ -780,6 +951,46 @@ export default function GlobalAdminDashboard() {
                   </div>
                 )}
 
+                {/* Organizations Tab */}
+                {activeTab === 'organizations' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Organizations Management</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {!isLoading.organizations && `${organizations.length} ${organizations.length === 1 ? 'organization' : 'organizations'} found`}
+                        </p>
+                      </div>
+                    </div>
+                    <OrganizationsTab 
+                      key="organizations-tab"
+                      organizations={organizations} 
+                      refetchData={fetchDashboardData}
+                      loading={isLoading.organizations}
+                    />
+                  </div>
+                )}
+
+                {/* Guardians Tab */}
+                {activeTab === 'guardians' && (
+                  <div className="space-y-6">
+                    <div className="flex items-center justify-between mb-6">
+                      <div>
+                        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Guardians Management</h2>
+                        <p className="text-sm text-gray-500 dark:text-gray-400">
+                          {!isLoading.guardians && `${guardians.length} ${guardians.length === 1 ? 'guardian' : 'guardians'} found`}
+                        </p>
+                      </div>
+                    </div>
+                    <GuardiansTab 
+                      key="guardians-tab"
+                      guardians={guardians} 
+                      refetchData={fetchDashboardData}
+                      loading={isLoading.guardians}
+                    />
+                  </div>
+                )}
+
                 {/* Tournaments Tab */}
                 {activeTab === 'tournaments' && (
                   <TournamentsTab 
@@ -790,11 +1001,14 @@ export default function GlobalAdminDashboard() {
 
                 {/* Analytics Tab */}
                 {activeTab === 'analytics' && (
-                  <StatsTab 
+                  <EnhancedStatsTab 
                     summary={summary}
                     players={players}
                     schools={schools}
                     tournaments={tournaments}
+                    organizations={organizations}
+                    guardians={guardians}
+                    analytics={analytics}
                   />
                 )}
 
@@ -938,6 +1152,127 @@ function RecentActivitiesCard({ activities, formatDate }) {
       
       {/* Test Modal */}
       <TestModal />
+    </div>
+  );
+}
+
+// Recent Organizations Card Component
+function RecentOrganizationsCard({ organizations, setActiveTab, formatDate }) {
+  const { t } = useTranslation();
+  
+  return (
+    <div className="space-y-3">
+      {!organizations || organizations.length === 0 ? (
+        <div className="text-center py-8">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-indigo-100 dark:bg-indigo-900/30 flex items-center justify-center">
+            <FaUsers className="text-indigo-500 text-2xl" />
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 mb-2 font-medium">
+            No organizations yet
+          </p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            Organizations will appear here once they register
+          </p>
+          <button
+            onClick={() => setActiveTab('organizations')}
+            className="mt-4 text-indigo-500 hover:text-indigo-600 transition-colors text-sm font-medium"
+          >
+            Manage Organizations →
+          </button>
+        </div>
+      ) : (
+        <>
+          {organizations.slice(0, 5).map((org, index) => (
+            <div key={org.id || index} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-500 flex items-center justify-center">
+                <FaUsers className="text-white text-sm" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900 dark:text-white">{org.name || org.organization_name || 'Unknown Organization'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{org.type || 'Organization'}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatDate(org.created_at || new Date())}
+                </p>
+              </div>
+            </div>
+          ))}
+          <div className="mt-4">
+            <button
+              onClick={() => setActiveTab('organizations')}
+              className="text-athletiq-green hover:text-athletiq-navy transition-colors text-sm font-medium"
+            >
+              {t('dashboard.recentOrganizations.viewAll')}
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
+}
+
+// Recent Guardians Card Component
+function RecentGuardiansCard({ guardians, setActiveTab, formatDate }) {
+  const { t } = useTranslation();
+  
+  return (
+    <div className="space-y-3">
+      {!guardians || guardians.length === 0 ? (
+        <div className="text-center py-8">
+          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-pink-100 dark:bg-pink-900/30 flex items-center justify-center">
+            <FaUsers className="text-pink-500 text-2xl" />
+          </div>
+          <p className="text-gray-500 dark:text-gray-400 mb-2 font-medium">
+            No guardians yet
+          </p>
+          <p className="text-sm text-gray-400 dark:text-gray-500">
+            Guardians will appear here once they register
+          </p>
+          <button
+            onClick={() => setActiveTab('guardians')}
+            className="mt-4 text-pink-500 hover:text-pink-600 transition-colors text-sm font-medium"
+          >
+            Manage Guardians →
+          </button>
+        </div>
+      ) : (
+        <>
+          {guardians.slice(0, 5).map((guardian, index) => (
+            <div key={guardian.id || index} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
+              <div className="w-10 h-10 rounded-full bg-gradient-to-r from-pink-500 to-rose-500 flex items-center justify-center">
+                <FaUsers className="text-white text-sm" />
+              </div>
+              <div className="flex-1">
+                <p className="font-medium text-gray-900 dark:text-white">{guardian.full_name || guardian.name || 'Unknown Guardian'}</p>
+                <p className="text-sm text-gray-500 dark:text-gray-400">{guardian.email || 'Guardian'}</p>
+              </div>
+              <div className="text-right">
+                <div className="text-xs text-gray-500 dark:text-gray-400">
+                  {formatDate(guardian.created_at || new Date())}
+                </div>
+                {guardian.verification_status && (
+                  <div className={`text-xs px-2 py-1 rounded-full mt-1 ${
+                    guardian.verification_status === 'verified' 
+                      ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
+                      : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200'
+                  }`}>
+                    {guardian.verification_status}
+                  </div>
+                )}
+              </div>
+            </div>
+          ))}
+          <div className="mt-4">
+            <button
+              onClick={() => setActiveTab('guardians')}
+              className="text-athletiq-green hover:text-athletiq-navy transition-colors text-sm font-medium"
+            >
+              {t('dashboard.recentGuardians.viewAll')}
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

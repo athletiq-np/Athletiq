@@ -134,8 +134,8 @@ export default function AddSchoolModal({ open, onClose, onAdded, viewMode: initi
     
     try {
       // Required validation
-      if (!form.name || !form.address) {
-        setErr("School name and address are required.");
+      if (!form.name || !form.address || !form.country || !form.province || !form.district || !form.city) {
+        setErr("School name, address, country, province, district, and city are required.");
         setLoading(false);
         return;
       }
@@ -164,6 +164,20 @@ export default function AddSchoolModal({ open, onClose, onAdded, viewMode: initi
         }
       }
 
+      // Required validation for all schools
+      if (!form.name || !form.address || !form.country || !form.province || !form.district || !form.city || !form.phone || !form.email || !form.principal_name) {
+        setErr("All required fields must be filled out.");
+        setLoading(false);
+        return;
+      }
+
+      // Phone number validation and formatting
+      let formattedPhone = form.phone.trim();
+      if (formattedPhone && !formattedPhone.startsWith('+')) {
+        // Add + prefix if missing (default to Nepal +977)
+        formattedPhone = '+977' + formattedPhone;
+      }
+
       // Prepare school data with proper structure
       const schoolData = {
         name: form.name,
@@ -173,7 +187,7 @@ export default function AddSchoolModal({ open, onClose, onAdded, viewMode: initi
         district: form.district || '',
         city: form.city || '',
         ward: form.ward || '',
-        phone: form.phone || '',
+        phone: formattedPhone,
         email: form.email || '',
         website: form.website || '',
         principal_name: form.principal_name || '',
@@ -547,7 +561,7 @@ export default function AddSchoolModal({ open, onClose, onAdded, viewMode: initi
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">City/Municipality</label>
+                        <label className="block text-sm font-medium text-gray-700">City/Municipality <span className="text-red-500">*</span></label>
                         <input
                           type="text"
                           name="city"
@@ -559,6 +573,7 @@ export default function AddSchoolModal({ open, onClose, onAdded, viewMode: initi
                           placeholder="City"
                           disabled={isViewMode}
                           readOnly={isViewMode}
+                          required
                         />
                       </div>
                       
@@ -638,7 +653,7 @@ export default function AddSchoolModal({ open, onClose, onAdded, viewMode: initi
                     </div>
                     
                     <div>
-                      <label className="block text-sm font-medium text-gray-700">Principal's Name</label>
+                      <label className="block text-sm font-medium text-gray-700">Principal's Name <span className="text-red-500">*</span></label>
                       <input
                         type="text"
                         name="principal_name"

@@ -65,12 +65,25 @@ class Logger {
   // Group related logs together
   group(label, callback) {
     if (this.level <= LOG_LEVELS.DEBUG) {
-      console.groupCollapsed(`${this.prefix} ${label}`);
-      try {
-        callback();
-      } finally {
-        console.groupEnd();
+      if (typeof callback === 'function') {
+        // Callback style
+        console.groupCollapsed(`${this.prefix} ${label}`);
+        try {
+          callback();
+        } finally {
+          console.groupEnd();
+        }
+      } else {
+        // Manual style - just start the group
+        console.groupCollapsed(`${this.prefix} ${label}`);
       }
+    }
+  }
+
+  // Manual group end
+  groupEnd() {
+    if (this.level <= LOG_LEVELS.DEBUG) {
+      console.groupEnd();
     }
   }
 
@@ -97,6 +110,8 @@ export const log = (...args) => logger.log(...args);
 export const info = (...args) => logger.info(...args);
 export const warn = (...args) => logger.warn(...args);
 export const error = (...args) => logger.error(...args);
+export const group = (label, callback) => logger.group(label, callback);
+export const groupEnd = () => logger.groupEnd();
 export const time = (label) => logger.time(label);
 export const timeEnd = (label) => logger.timeEnd(label);
 

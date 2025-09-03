@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
 import { registerPlayer } from '@/api/playerApi';
 
-const AddPlayerButton = ({ onPlayerAdded, children, className }) => {
+const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], user }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
+    full_name: '',
     email: '',
     phone_number: '',
     date_of_birth: '',
     position: '',
     team: '',
+    school_id: '',
     // Add other player fields as needed
     gender: '',
     address: '',
@@ -41,11 +43,13 @@ const AddPlayerButton = ({ onPlayerAdded, children, className }) => {
     setFormData({
       first_name: '',
       last_name: '',
+      full_name: '',
       email: '',
       phone_number: '',
       date_of_birth: '',
       position: '',
       team: '',
+      school_id: '',
       gender: '',
       address: '',
       city: '',
@@ -63,10 +67,21 @@ const AddPlayerButton = ({ onPlayerAdded, children, className }) => {
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [name]: value
+      };
+      
+      // Auto-generate full_name when first_name or last_name changes
+      if (name === 'first_name' || name === 'last_name') {
+        const firstName = name === 'first_name' ? value : prev.first_name;
+        const lastName = name === 'last_name' ? value : prev.last_name;
+        newData.full_name = `${firstName} ${lastName}`.trim();
+      }
+      
+      return newData;
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -77,9 +92,15 @@ const AddPlayerButton = ({ onPlayerAdded, children, className }) => {
     try {
       const formDataToSend = new FormData();
       
+      // Set school_id if user is school admin
+      let schoolId = formData.school_id;
+      if (user?.role === 'school_admin' && user?.school_id) {
+        schoolId = user.school_id;
+      }
+      
       // Append all form data to FormData
       Object.entries(formData).forEach(([key, value]) => {
-        if (value !== null && value !== undefined) {
+        if (value !== null && value !== undefined && value !== '') {
           if (value instanceof File) {
             formDataToSend.append(key, value);
           } else if (typeof value === 'object') {
@@ -89,6 +110,11 @@ const AddPlayerButton = ({ onPlayerAdded, children, className }) => {
           }
         }
       });
+      
+      // Make sure school_id is set
+      if (schoolId) {
+        formDataToSend.set('school_id', schoolId);
+      }
 
       const response = await registerPlayer(formDataToSend);
       if (onPlayerAdded) {
@@ -120,7 +146,7 @@ const AddPlayerButton = ({ onPlayerAdded, children, className }) => {
           onClick={handleClose}
         >
           <div 
-            className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl relative"
+            className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-xl relative p-6"
             onClick={e => e.stopPropagation()}
           >
             <button
@@ -151,7 +177,7 @@ const AddPlayerButton = ({ onPlayerAdded, children, className }) => {
                     value={formData.first_name}
                     onChange={handleChange}
                     required
-                    className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -169,6 +195,30 @@ const AddPlayerButton = ({ onPlayerAdded, children, className }) => {
                   />
                 </div>
               </div>
+              
+              {/* School Selection - only show for super admin */}
+              {user?.role === 'super_admin' && (
+                <div>
+                  <label htmlFor="school_id" className="block text-sm font-medium text-gray-700">
+                    School *
+                  </label>
+                  <select
+                    id="school_id"
+                    name="school_id"
+                    value={formData.school_id}
+                    onChange={handleChange}
+                    required
+                    className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                  >
+                    <option value="">Select School</option>
+                    {schools.map(school => (
+                      <option key={school.school_id || school.id} value={school.school_id || school.id}>
+                        {school.name} ({school.school_code})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
               
               <div>
                 <label htmlFor="email" className="block text-sm font-medium text-gray-700">

@@ -14,7 +14,7 @@ import { MdPending, MdDashboard, MdAnalytics, MdSettings, MdNotifications } from
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import apiClient from '@/api/apiClient';
-import useUserStore from '@/store/userStore';
+import useAuth from '@/hooks/useAuth';
 import { useTheme } from '@/contexts/ThemeContext';
 import athletiqLogo from '@/assets/logos/athletiq-logo.png';
 
@@ -49,7 +49,7 @@ import Analytics from './sections/Analytics';
  */
 export default function SchoolDashboardLayout({ school, onRefresh }) {
   const { t, i18n } = useTranslation();
-  const { user } = useUserStore();
+  const { user } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   

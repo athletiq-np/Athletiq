@@ -1,10 +1,10 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import useUserStore from '@/store/userStore';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function AdminDashboard() {
   const navigate = useNavigate();
-  const { user } = useUserStore();
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">

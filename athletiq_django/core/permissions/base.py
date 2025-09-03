@@ -224,6 +224,64 @@ class IsSuperAdminOrReadOnly(permissions.BasePermission):
         )
 
 
+class IsOrganizationAdmin(permissions.BasePermission):
+    """
+    Permission class for Organization Admin role.
+    """
+    
+    def has_permission(self, request, view):
+        """
+        Check if user is authenticated and has Organization Admin role.
+        """
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            hasattr(request.user, 'role') and
+            str(request.user.role).lower() == 'organization'
+        )
+
+
+class IsOrganizationOwnerOrSuperAdmin(permissions.BasePermission):
+    """
+    Permission class for organization-specific resources.
+    """
+    
+    def has_permission(self, request, view):
+        """
+        Check basic authentication and role.
+        """
+        return (
+            request.user and 
+            request.user.is_authenticated and 
+            hasattr(request.user, 'role') and
+            str(request.user.role).lower() in ['organization', 'superadmin']
+        )
+    
+    def has_object_permission(self, request, view, obj):
+        """
+        Check if user owns the organization or is SuperAdmin.
+        """
+        # SuperAdmin can access everything
+        if str(request.user.role).lower() == 'superadmin':
+            return True
+        
+        # Organization admin can only access their own organization's resources
+        if str(request.user.role).lower() == 'organization':
+            # Check if object has organization relationship
+            if hasattr(obj, 'organization'):
+                user_organization = getattr(request.user, 'organization', None)
+                return user_organization and obj.organization == user_organization
+            elif hasattr(obj, 'organization_id'):
+                user_organization = getattr(request.user, 'organization', None)
+                return user_organization and obj.organization_id == user_organization.id
+            # If object is an organization itself
+            elif obj.__class__.__name__ == 'Organization':
+                user_organization = getattr(request.user, 'organization', None)
+                return user_organization and obj == user_organization
+        
+        return False
+
+
 class RoleBasedPermission(permissions.BasePermission):
     """
     Generic role-based permission class.

@@ -1,12 +1,12 @@
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import useUserStore from '@/store/userStore';
+import { useAuth } from '@/hooks/useAuth';
 
 export default function ProtectedRoute({ children, roles }) {
-  const { user, isLoading } = useUserStore();
+  const { user, loading } = useAuth();
   const location = useLocation();
 
-  if (isLoading) {
+  if (loading) {
     return <div className="flex items-center justify-center h-screen">Loading...</div>;
   }
 

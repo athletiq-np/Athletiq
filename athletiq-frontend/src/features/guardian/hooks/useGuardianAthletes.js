@@ -15,7 +15,7 @@ export const useGuardianAthletes = () => {
       
       // Use new getAthletes method (with deprecation warning fallback)
       const response = await guardianAPI.getAthletes();
-      setAthletes(response.data || []);
+      setAthletes(response || []);
     } catch (error) {
       console.error('Fetch athletes error:', error);
       setError(error.message);
@@ -30,7 +30,7 @@ export const useGuardianAthletes = () => {
     try {
       // Use new addAthlete method (with deprecation warning fallback)
       const response = await guardianAPI.addAthlete(athleteData);
-      const newAthlete = response.data;
+      const newAthlete = response;
       setAthletes(prev => [...prev, newAthlete]);
       toast.success('Athlete added successfully!');
       return { success: true, data: newAthlete };
@@ -45,7 +45,7 @@ export const useGuardianAthletes = () => {
   const updateAthlete = async (athleteId, updates) => {
     try {
       const response = await guardianAPI.updateChild(athleteId, updates); // Keep existing update method for now
-      const updatedAthlete = response.data;
+      const updatedAthlete = response;
       setAthletes(prev => 
         prev.map(athlete => athlete.id === athleteId ? updatedAthlete : athlete)
       );
@@ -67,7 +67,7 @@ export const useGuardianAthletes = () => {
   const getAthleteStatus = async (athleteId) => {
     try {
       const response = await guardianAPI.getAthleteStatus(athleteId);
-      return { success: true, data: response.data };
+      return { success: true, data: response };
     } catch (error) {
       console.error('Get athlete status error:', error);
       return { success: false, message: error.message };

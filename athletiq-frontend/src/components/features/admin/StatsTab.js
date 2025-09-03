@@ -1,8 +1,9 @@
 // src/components/AdminDashboard/StatsTab.js
 import React from "react";
-import { FaUsers, FaSchool, FaTrophy, FaChartBar, FaUserGraduate, FaCalendarAlt } from 'react-icons/fa';
+import { FaUsers, FaSchool, FaTrophy, FaChartBar, FaUserGraduate, FaCalendarAlt, FaGraduationCap, FaUserShield } from 'react-icons/fa';
+import { MdVerified, MdPending, MdTrendingUp, MdTrendingDown } from 'react-icons/md';
 
-export default function StatsTab({ summary, players, schools, tournaments }) {
+export default function StatsTab({ summary, players, schools, tournaments, organizations, guardians, analytics }) {
   const calculateActivePlayersPercentage = () => {
     if (!players || players.length === 0) return 0;
     const activePlayers = players.filter(p => p.is_active || p.status === 'active').length;

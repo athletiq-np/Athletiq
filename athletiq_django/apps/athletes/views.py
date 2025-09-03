@@ -911,3 +911,140 @@ def get_athletes_by_school(request, school_id):
             error_response(message=f"Failed to get school athletes: {str(e)}"),
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )
+
+
+@api_view(['GET'])
+@permission_classes([permissions.IsAuthenticated])
+def admin_athletes_list_view(request):
+    """
+    SuperAdmin view to list all athletes with advanced filtering.
+    """
+    from core.permissions import IsSuperAdmin
+    
+    # Check if user is SuperAdmin
+    if not IsSuperAdmin().has_permission(request, None):
+        return Response(
+            error_response(message="Permission denied. SuperAdmin access required."),
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    try:
+        athletes = Athlete.objects.select_related('school').all().order_by('-created_at')
+        
+        # Apply filters
+        search = request.GET.get('search', '')
+        status_filter = request.GET.get('status', '')
+        verification_filter = request.GET.get('verification', '')
+        school_filter = request.GET.get('school', '')
+        gender_filter = request.GET.get('gender', '')
+        
+        if search:
+            athletes = athletes.filter(
+                Q(full_name__icontains=search) |
+                Q(full_name_nepali__icontains=search) |
+                Q(athlete_id__icontains=search) |
+                Q(citizenship_no__icontains=search) |
+                Q(guardian_name__icontains=search) |
+                Q(school__name__icontains=search)
+            )
+        
+        if status_filter:
+            is_active = status_filter.lower() == 'active'
+            athletes = athletes.filter(is_active=is_active)
+            
+        if verification_filter:
+            athletes = athletes.filter(verification_status=verification_filter)
+            
+        if school_filter:
+            athletes = athletes.filter(school_id=school_filter)
+            
+        if gender_filter:
+            athletes = athletes.filter(gender=gender_filter)
+        
+        # Serialize athletes data
+        athletes_data = []
+        for athlete in athletes:
+            athletes_data.append({
+                'id': athlete.id,
+                'athlete_id': athlete.athlete_id,
+                'full_name': athlete.full_name,
+                'full_name_nepali': athlete.full_name_nepali,
+                'gender': athlete.gender,
+                'date_of_birth': athlete.date_of_birth.isoformat() if athlete.date_of_birth else None,
+                'school': {
+                    'id': athlete.school.school_id if athlete.school else None,
+                    'name': athlete.school.name if athlete.school else None,
+                } if athlete.school else None,
+                'guardian_name': athlete.guardian_name,
+                'guardian_phone': athlete.guardian_phone,
+                'verification_status': athlete.verification_status,
+                'profile_completion': athlete.profile_completion,
+                'is_active': athlete.is_active,
+                'created_at': athlete.created_at.isoformat() if athlete.created_at else None,
+                'updated_at': athlete.updated_at.isoformat() if athlete.updated_at else None,
+            })
+        
+        return Response({
+            'success': True,
+            'data': athletes_data,
+            'message': f'Retrieved {len(athletes_data)} athletes'
+        })
+        
+    except Exception as e:
+        return Response(
+            error_response(message=f"Failed to get athletes: {str(e)}"),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def bulk_delete_athletes(request):
+    """
+    Bulk delete athletes (soft delete).
+    """
+    from core.permissions import IsSuperAdmin
+    
+    # Check if user is SuperAdmin or SchoolAdmin
+    if not (IsSuperAdmin().has_permission(request, None) or 
+            getattr(request.user, 'role', None) == 'SchoolAdmin'):
+        return Response(
+            error_response(message="Permission denied. Admin access required."),
+            status=status.HTTP_403_FORBIDDEN
+        )
+    
+    try:
+        athlete_ids = request.data.get('athlete_ids', [])
+        
+        if not athlete_ids:
+            return Response(
+                error_response(message="No athlete IDs provided"),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Get athletes to delete
+        queryset = Athlete.objects.filter(id__in=athlete_ids)
+        
+        # If SchoolAdmin, restrict to their school
+        if getattr(request.user, 'role', None) == 'SchoolAdmin':
+            queryset = queryset.filter(school=request.user.school)
+        
+        deleted_count = 0
+        for athlete in queryset:
+            athlete.soft_delete()
+            deleted_count += 1
+        
+        return Response({
+            'success': True,
+            'data': {
+                'deleted_count': deleted_count,
+                'requested_count': len(athlete_ids)
+            },
+            'message': f'Successfully deleted {deleted_count} athletes'
+        })
+        
+    except Exception as e:
+        return Response(
+            error_response(message=f"Failed to delete athletes: {str(e)}"),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )

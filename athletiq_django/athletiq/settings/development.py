@@ -9,7 +9,7 @@ DEBUG = True
 ALLOWED_HOSTS = ['localhost', '127.0.0.1', '0.0.0.0']
 
 # Development-specific settings
-APPEND_SLASH = False  # Disable automatic slash appending to handle both URL formats
+APPEND_SLASH = True  # Enable automatic slash appending to match URL patterns
 
 # Database - Use SQLite for development
 DATABASES = {

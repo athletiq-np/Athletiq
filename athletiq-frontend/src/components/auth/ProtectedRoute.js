@@ -1,58 +1,156 @@
+/**
+ * Protected Route Component
+ * Handles authentication and authorization for routes
+ */
+
 import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
-import useAuth from '@/hooks/useAuth';
+import { useAuth } from '@/hooks/useAuth';
+import { USER_ROLES, isAuthorized } from '@/config/auth.config';
+
+// Loading component
+const LoadingScreen = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-500"></div>
+  </div>
+);
+
+// Unauthorized component
+const UnauthorizedScreen = () => (
+  <div className="flex items-center justify-center min-h-screen">
+    <div className="text-center">
+      <h1 className="text-4xl font-bold text-gray-700 mb-4">403</h1>
+      <p className="text-xl text-gray-600 mb-8">You don't have permission to access this page.</p>
+      <button 
+        onClick={() => window.history.back()}
+        className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded"
+      >
+        Go Back
+      </button>
+    </div>
+  </div>
+);
 
 /**
- * Protected route component that checks authentication and role permissions
+ * ProtectedRoute - Protects routes based on authentication and authorization
  */
-const ProtectedRoute = ({ 
+export function ProtectedRoute({ 
   children, 
-  requiredRoles = [], 
-  requiredUserTypes = [],
-  fallbackPath = '/login' 
-}) => {
-  const { user, isAuthenticated } = useAuth();
+  allowedRoles = [], 
+  requireAuth = true,
+  redirectTo = '/login',
+  showUnauthorized = true 
+}) {
+  const { isAuthenticated, user, loading, isInitialized } = useAuth();
   const location = useLocation();
 
-  // Check if user is authenticated
-  if (!isAuthenticated || !user) {
+  // Show loading while authentication is being verified
+  if (!isInitialized || loading) {
+    return <LoadingScreen />;
+  }
+
+  // Check authentication requirement
+  if (requireAuth && !isAuthenticated) {
     return <Navigate 
-      to={fallbackPath} 
-      state={{ from: location }} 
+      to={redirectTo} 
+      state={{ from: location.pathname }}
       replace 
     />;
   }
 
-  // Check role permissions if specified
-  if (requiredRoles.length > 0) {
-    const userRole = user.role;
-    const hasRequiredRole = requiredRoles.some(requiredRole => 
-      requiredRole.toLowerCase() === userRole?.toLowerCase()
-    );
-    
-    if (!hasRequiredRole) {
-      console.log('Unauthorized access - Missing required role:', { 
-        requiredRoles, 
-        userRole,
-        user
-      });
-      return <Navigate to="/unauthorized" replace />;
-    }
-  }
-
-  // Check user type permissions if specified
-  if (requiredUserTypes.length > 0) {
-    const userType = user.user_type?.toLowerCase();
-    const hasRequiredUserType = requiredUserTypes.some(type => 
-      type.toLowerCase() === userType
-    );
-    
-    if (!hasRequiredUserType) {
-      return <Navigate to="/unauthorized" replace />;
+  // Check authorization if roles are specified
+  if (allowedRoles.length > 0 && user && !isAuthorized(user.role, allowedRoles)) {
+    if (showUnauthorized) {
+      return <UnauthorizedScreen />;
+    } else {
+      return <Navigate 
+        to="/unauthorized" 
+        state={{ from: location.pathname }}
+        replace 
+      />;
     }
   }
 
   return children;
-};
+}
+
+/**
+ * PublicRoute - For routes that should only be accessible to non-authenticated users
+ */
+export function PublicRoute({ children, redirectTo = '/' }) {
+  const { isAuthenticated, loading, isInitialized, getRedirectPath } = useAuth();
+
+  // Show loading while authentication is being verified
+  if (!isInitialized || loading) {
+    return <LoadingScreen />;
+  }
+
+  // If user is authenticated, redirect to appropriate dashboard
+  if (isAuthenticated) {
+    const redirectPath = getRedirectPath();
+    return <Navigate to={redirectPath} replace />;
+  }
+
+  return children;
+}
+
+/**
+ * RoleBasedRoute - Routes that are only accessible to specific roles
+ */
+export function RoleBasedRoute({ children, allowedRoles, fallbackRoute = '/unauthorized' }) {
+  return (
+    <ProtectedRoute 
+      allowedRoles={allowedRoles}
+      redirectTo={fallbackRoute}
+      showUnauthorized={false}
+    >
+      {children}
+    </ProtectedRoute>
+  );
+}
+
+/**
+ * AdminRoute - Shortcut for admin-only routes
+ */
+export function AdminRoute({ children }) {
+  return (
+    <RoleBasedRoute allowedRoles={[USER_ROLES.SUPER_ADMIN, USER_ROLES.SCHOOL_ADMIN]}>
+      {children}
+    </RoleBasedRoute>
+  );
+}
+
+/**
+ * SuperAdminRoute - Shortcut for super admin only routes
+ */
+export function SuperAdminRoute({ children }) {
+  return (
+    <RoleBasedRoute allowedRoles={[USER_ROLES.SUPER_ADMIN]}>
+      {children}
+    </RoleBasedRoute>
+  );
+}
+
+/**
+ * AthleteRoute - Shortcut for athlete routes
+ */
+export function AthleteRoute({ children }) {
+  return (
+    <RoleBasedRoute allowedRoles={[USER_ROLES.ATHLETE]}>
+      {children}
+    </RoleBasedRoute>
+  );
+}
+
+/**
+ * GuardianRoute - Shortcut for guardian routes  
+ */
+export function GuardianRoute({ children }) {
+  return (
+    <RoleBasedRoute allowedRoles={[USER_ROLES.GUARDIAN]}>
+      {children}
+    </RoleBasedRoute>
+  );
+}
 
 export default ProtectedRoute;

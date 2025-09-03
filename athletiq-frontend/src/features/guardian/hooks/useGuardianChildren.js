@@ -14,7 +14,7 @@ export const useGuardianChildren = () => {
       setError(null);
       
       const response = await guardianAPI.getChildren();
-      setChildren(response.data || []);
+      setChildren(response || []);
     } catch (error) {
       console.error('Fetch children error:', error);
       setError(error.message);
@@ -28,7 +28,7 @@ export const useGuardianChildren = () => {
   const addChild = async (childData) => {
     try {
       const response = await guardianAPI.addChild(childData);
-      const newChild = response.data;
+      const newChild = response;
       setChildren(prev => [...prev, newChild]);
       toast.success('Child added successfully!');
       return { success: true, data: newChild };
@@ -43,7 +43,7 @@ export const useGuardianChildren = () => {
   const updateChild = async (childId, updates) => {
     try {
       const response = await guardianAPI.updateChild(childId, updates);
-      const updatedChild = response.data;
+      const updatedChild = response;
       setChildren(prev => 
         prev.map(child => child.id === childId ? updatedChild : child)
       );

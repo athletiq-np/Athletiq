@@ -5,7 +5,8 @@
  * from the Django backend, including CSRF token management and user feedback.
  */
 
-import { API_CONFIG, AUTH_CONFIG, API_ENDPOINTS } from '@/config/api.config';
+import { API_CONFIG, authStorage } from '@/config/auth.config';
+import { API_ENDPOINTS } from '@/config/api.config';
 
 // Error types for categorization
 export const ERROR_TYPES = {
@@ -236,13 +237,10 @@ export const showSuccessNotification = (message) => {
  * Clear authentication data
  */
 export const clearAuthData = () => {
-  localStorage.removeItem(AUTH_CONFIG.TOKEN_KEY);
-  localStorage.removeItem(AUTH_CONFIG.REFRESH_TOKEN_KEY);
-  localStorage.removeItem(AUTH_CONFIG.USER_DATA_KEY);
-  // Clear any legacy auth data
-  localStorage.removeItem('guardian-token');
-  localStorage.removeItem('guardian-data');
-  localStorage.removeItem('token'); // Legacy token key
+  console.warn('🧹 errorHandler.clearAuthData() called');
+  
+  // Clear all authentication data using unified storage
+  authStorage.clearAll();
 };
 
 /**

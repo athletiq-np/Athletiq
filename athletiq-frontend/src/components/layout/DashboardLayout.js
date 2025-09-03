@@ -11,7 +11,7 @@ import {
   FaCog,
   FaSignOutAlt,
 } from 'react-icons/fa';
-import useUserStore from '@/store/userStore';
+import useAuth from '@/hooks/useAuth';
 import athletiqLogo from '@/assets/logos/athletiq-logo.png';
 
 const NAV_LINKS = [
@@ -48,7 +48,7 @@ const NAV_LINKS = [
 ];
 
 export default function DashboardLayout() {
-  const { user } = useUserStore();
+  const { user } = useAuth();
   const location = useLocation();
   const [searchParams] = useSearchParams();
   const lang = 'en';
