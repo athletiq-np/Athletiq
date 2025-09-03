@@ -1,0 +1,107 @@
+name: Deploy to Production
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  test-backend:
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_athletiq
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        cd athletiq_django
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Run tests
+      env:
+        DATABASE_URL: postgresql://postgres:postgres@localhost:5432/test_athletiq
+      run: |
+        cd athletiq_django
+        python manage.py test
+
+  test-frontend:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: athletiq-frontend/package-lock.json
+    
+    - name: Install dependencies
+      run: |
+        cd athletiq-frontend
+        npm ci
+    
+    - name: Run tests
+      run: |
+        cd athletiq-frontend
+        npm test -- --coverage --watchAll=false
+    
+    - name: Build frontend
+      run: |
+        cd athletiq-frontend
+        npm run build
+
+  deploy:
+    needs: [test-backend, test-frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Deploy to Railway
+      if: ${{ secrets.RAILWAY_TOKEN }}
+      run: |
+        # Add Railway deployment script here
+        echo "Deploying to Railway..."
+        # Example: railway deploy
+    
+    - name: Deploy to Render
+      if: ${{ secrets.RENDER_API_KEY }}
+      run: |
+        # Add Render deployment script here
+        echo "Deploying to Render..."
+    
+    - name: Deploy Frontend to Netlify
+      if: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+      uses: nwtgck/actions-netlify@v2.0
+      with:
+        publish-dir: './athletiq-frontend/build'
+        production-branch: main
+        github-token: ${{ secrets.GITHUB_TOKEN }}
+        deploy-message: "Deploy from GitHub Actions"
+      env:
+        NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+        NETLIFY_SITE_ID: ${{ secrets.NETLIFY_SITE_ID }}
