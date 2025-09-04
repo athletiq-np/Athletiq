@@ -40,12 +40,32 @@ export const adminApi = {
     }
   },
 
-  async deleteAthlete(athleteId) {
+  async updateAthlete(athleteId, data) {
     try {
-      const response = await apiClient.delete(`/athletes/${athleteId}/`);
+      const response = await apiClient.put(`/athletes/${athleteId}/`, data);
       return response.data;
     } catch (error) {
-      throw new Error(`Failed to delete athlete: ${error.message}`);
+      throw new Error(`Failed to update athlete: ${error.message}`);
+    }
+  },
+
+  async deleteAthlete(athleteId) {
+    try {
+      console.log('Attempting to delete athlete with ID:', athleteId);
+      const response = await apiClient.delete(`/athletes/${athleteId}/`);
+      console.log('Delete response:', response);
+      
+      // Handle both 200 and 204 responses
+      if (response.status === 204 || response.data === null) {
+        return { success: true, message: 'Athlete deleted successfully.' };
+      }
+      
+      return response.data || { success: true, message: 'Athlete deleted successfully.' };
+    } catch (error) {
+      console.error('Delete athlete error:', error);
+      console.error('Error response:', error.response);
+      
+      throw new Error(`Failed to delete athlete: ${error.response?.data?.message || error.message}`);
     }
   },
 
@@ -78,6 +98,36 @@ export const adminApi = {
       return response.data;
     } catch (error) {
       throw new Error(`Failed to bulk verify athletes: ${error.message}`);
+    }
+  },
+
+  async bulkUploadAthletes(athletesData) {
+    try {
+      console.log('Creating athletes in bulk...', athletesData);
+      const response = await apiClient.post('/athletes/bulk-create/', {
+        athletes: athletesData
+      });
+      console.log('Bulk create response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Bulk create error:', error);
+      console.error('Error response:', error.response);
+      throw new Error(`Failed to create athletes: ${error.response?.data?.message || error.message}`);
+    }
+  },
+
+  async updateAthleteStatus(athleteId, status) {
+    try {
+      console.log('Updating athlete status:', { athleteId, status });
+      const response = await apiClient.patch(`/athletes/${athleteId}/`, {
+        is_active: status === 'active'
+      });
+      console.log('Status update response:', response);
+      return response.data;
+    } catch (error) {
+      console.error('Update athlete status error:', error);
+      console.error('Error response:', error.response);
+      throw new Error(`Failed to update athlete status: ${error.response?.data?.message || error.message}`);
     }
   },
 

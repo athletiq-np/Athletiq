@@ -221,8 +221,8 @@ def bulk_export_athletes_task(self, school_id: int = None, filters: Dict[str, An
         if filters:
             if filters.get('verification_status'):
                 queryset = queryset.filter(verification_status=filters['verification_status'])
-            if filters.get('registration_status'):
-                queryset = queryset.filter(registration_status=filters['registration_status'])
+            if filters.get('is_active') is not None:
+                queryset = queryset.filter(is_active=filters['is_active'])
             if filters.get('gender'):
                 queryset = queryset.filter(gender=filters['gender'])
             if filters.get('grade'):
@@ -237,7 +237,7 @@ def bulk_export_athletes_task(self, school_id: int = None, filters: Dict[str, An
             'athlete_id', 'full_name', 'full_name_nepali', 'gender', 'date_of_birth',
             'grade', 'school_name', 'guardian_name', 'guardian_phone', 'guardian_email',
             'address', 'citizenship_no', 'height_cm', 'weight_kg', 'blood_group',
-            'primary_sport', 'registration_status', 'verification_status',
+            'primary_sport', 'is_active', 'verification_status',
             'profile_completion', 'created_at'
         ]
         writer.writerow(headers)
@@ -262,7 +262,7 @@ def bulk_export_athletes_task(self, school_id: int = None, filters: Dict[str, An
                 athlete.weight_kg or '',
                 athlete.blood_group or '',
                 athlete.primary_sport or '',
-                athlete.registration_status,
+                'Active' if athlete.is_active else 'Inactive',
                 athlete.verification_status,
                 athlete.profile_completion,
                 athlete.created_at.strftime('%Y-%m-%d %H:%M:%S')
@@ -305,7 +305,7 @@ def bulk_update_athlete_status_task(self, athlete_ids: List[int], status_updates
         
         # Validate status updates
         allowed_fields = [
-            'registration_status', 'verification_status', 'profile_status',
+            'is_active', 'verification_status', 'profile_status',
             'document_verified', 'guardian_verified'
         ]
         

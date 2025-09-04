@@ -72,9 +72,9 @@ class AthleteCreateSerializer(serializers.ModelSerializer):
         try:
             # Handle both integer and School object
             if isinstance(value, School):
-                return value
+                return value.school_id
             school = School.objects.get(school_id=value, is_active=True)
-            return school
+            return value  # Return the original value (integer), not the school object
         except School.DoesNotExist:
             raise serializers.ValidationError("Invalid school ID or school is not active.")
     
@@ -83,7 +83,7 @@ class AthleteCreateSerializer(serializers.ModelSerializer):
         if value is not None:
             try:
                 guardian = Guardian.objects.get(guardian_id=value, is_active=True)
-                return guardian
+                return value  # Return the original value (integer), not the guardian object
             except Guardian.DoesNotExist:
                 raise serializers.ValidationError("Invalid guardian ID or guardian is not active.")
         return None
@@ -138,27 +138,38 @@ class AthleteCreateSerializer(serializers.ModelSerializer):
     def validate(self, attrs):
         """Cross-field validation."""
         # If guardian_id is provided, some guardian fields should match
-        guardian = attrs.get('guardian_id')
-        if guardian:
-            if attrs.get('guardian_name') and attrs['guardian_name'] != guardian.full_name:
-                raise serializers.ValidationError({
-                    'guardian_name': 'Guardian name must match the selected guardian.'
-                })
-            if attrs.get('guardian_phone') and attrs['guardian_phone'] != guardian.phone:
-                raise serializers.ValidationError({
-                    'guardian_phone': 'Guardian phone must match the selected guardian.'
-                })
-            if attrs.get('guardian_email') and attrs['guardian_email'] != guardian.email:
-                raise serializers.ValidationError({
-                    'guardian_email': 'Guardian email must match the selected guardian.'
-                })
+        guardian_id = attrs.get('guardian_id')
+        if guardian_id:
+            try:
+                guardian = Guardian.objects.get(guardian_id=guardian_id, is_active=True)
+                if attrs.get('guardian_name') and attrs['guardian_name'] != guardian.full_name:
+                    raise serializers.ValidationError({
+                        'guardian_name': 'Guardian name must match the selected guardian.'
+                    })
+                if attrs.get('guardian_phone') and attrs['guardian_phone'] != guardian.phone:
+                    raise serializers.ValidationError({
+                        'guardian_phone': 'Guardian phone must match the selected guardian.'
+                    })
+                if attrs.get('guardian_email') and attrs['guardian_email'] != guardian.email:
+                    raise serializers.ValidationError({
+                        'guardian_email': 'Guardian email must match the selected guardian.'
+                    })
+            except Guardian.DoesNotExist:
+                # This should have been caught in validate_guardian_id, but just in case
+                pass
         
         return attrs
     
     def create(self, validated_data):
         """Create athlete with proper relationships."""
-        school = validated_data.pop('school_id')
-        guardian = validated_data.pop('guardian_id', None)
+        school_id = validated_data.pop('school_id')
+        guardian_id = validated_data.pop('guardian_id', None)
+        
+        # Get the actual school object
+        school = School.objects.get(school_id=school_id, is_active=True)
+        guardian = None
+        if guardian_id:
+            guardian = Guardian.objects.get(guardian_id=guardian_id, is_active=True)
         
         athlete = Athlete.objects.create(
             school=school,
@@ -176,18 +187,19 @@ class AthleteUpdateSerializer(serializers.ModelSerializer):
     """
     Serializer for updating athlete information.
     """
+    school_id = serializers.IntegerField(write_only=True, required=False)
     
     class Meta:
         model = Athlete
         fields = [
             'full_name', 'full_name_nepali', 'date_of_birth', 'gender',
-            'nationality', 'citizenship_no', 'grade', 'section',
+            'nationality', 'citizenship_no', 'grade', 'section', 'school_id',
             'guardian_name', 'relationship_to_player', 'guardian_phone', 
             'guardian_email', 'address', 'province', 'district',
             'municipality_or_rural_municipality', 'ward_no', 'height_cm',
             'weight_kg', 'blood_group', 'registered_sports', 'primary_sport',
             'father_name', 'mother_name', 'medical_conditions', 'allergies',
-            'emergency_contact', 'medical_notes'
+            'emergency_contact', 'medical_notes', 'verification_status'
         ]
     
     def validate_date_of_birth(self, value):
@@ -218,11 +230,34 @@ class AthleteUpdateSerializer(serializers.ModelSerializer):
             validate_email(value)
         return value
     
+    def validate_school_id(self, value):
+        """Validate that school exists and is active."""
+        if value is not None:
+            try:
+                school = School.objects.get(school_id=value, is_active=True)
+                return value  # Return the original value (integer), not the school object
+            except School.DoesNotExist:
+                raise serializers.ValidationError("Invalid school ID or school is not active.")
+        return value
+    
     def update(self, instance, validated_data):
         """Update athlete and recalculate profile completion."""
-        athlete = super().update(instance, validated_data)
-        athlete.calculate_profile_completion()
-        return athlete
+        # Handle school_id separately
+        school_id = validated_data.pop('school_id', None)
+        if school_id is not None:
+            try:
+                school = School.objects.get(school_id=school_id, is_active=True)
+                instance.school = school
+            except School.DoesNotExist:
+                raise serializers.ValidationError("Invalid school ID or school is not active.")
+        
+        # Update other fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
+        
+        instance.save()
+        instance.calculate_profile_completion()
+        return instance
 
 
 class AthleteBulkCreateSerializer(serializers.Serializer):
@@ -254,19 +289,27 @@ class AthleteBulkCreateSerializer(serializers.Serializer):
         created_athletes = []
         errors = []
         
+        print(f"Creating {len(athletes_data)} athletes")  # Debug logging
+        
         for i, athlete_data in enumerate(athletes_data):
             try:
+                print(f"Processing athlete {i}: {athlete_data}")  # Debug logging
                 serializer = AthleteCreateSerializer(data=athlete_data)
                 if serializer.is_valid():
                     athlete = serializer.save()
                     created_athletes.append(athlete)
+                    print(f"Successfully created athlete: {athlete.full_name}")  # Debug logging
                 else:
+                    print(f"Validation errors for athlete {i}: {serializer.errors}")  # Debug logging
                     errors.append({
                         'index': i,
                         'name': athlete_data.get('full_name', 'Unknown'),
                         'errors': serializer.errors
                     })
             except Exception as e:
+                import traceback
+                print(f"Exception creating athlete {i}: {str(e)}")  # Debug logging
+                print(f"Traceback: {traceback.format_exc()}")  # Debug logging
                 errors.append({
                     'index': i,
                     'name': athlete_data.get('full_name', 'Unknown'),
@@ -274,7 +317,7 @@ class AthleteBulkCreateSerializer(serializers.Serializer):
                 })
         
         return {
-            'created_athletes': created_athletes,
+            'created_athletes': [athlete.id for athlete in created_athletes],  # Return IDs instead of objects
             'errors': errors,
             'success_count': len(created_athletes),
             'error_count': len(errors)
@@ -299,7 +342,7 @@ class AthleteExportSerializer(serializers.ModelSerializer):
             'guardian_phone', 'guardian_email', 'address', 'province', 'district',
             'municipality_or_rural_municipality', 'ward_no', 'height_cm', 'weight_kg',
             'blood_group', 'primary_sport', 'father_name', 'mother_name',
-            'registration_status', 'verification_status', 'profile_completion',
+            'is_active', 'verification_status', 'profile_completion',
             'created_at', 'updated_at'
         ]
 
@@ -371,15 +414,7 @@ class AthleteSearchSerializer(serializers.Serializer):
         child=serializers.IntegerField(),
         required=False
     )
-    registration_status = serializers.ListField(
-        child=serializers.ChoiceField(choices=[
-            ('pending', 'Pending'),
-            ('active', 'Active'),
-            ('inactive', 'Inactive'),
-            ('suspended', 'Suspended'),
-        ]),
-        required=False
-    )
+    is_active = serializers.BooleanField(required=False)
     verification_status = serializers.ListField(
         child=serializers.ChoiceField(choices=[
             ('pending', 'Pending Verification'),

@@ -283,7 +283,11 @@ class ApiClient {
     
     // Parse response and return in axios-compatible format  
     const responseData = await this.handleResponse(response);
-    return { data: responseData };
+    return { 
+      data: responseData,
+      status: response.status,
+      statusText: response.statusText
+    };
   }
 
   /**
@@ -333,6 +337,11 @@ class ApiClient {
       }
       
       throw new Error(errorMessage);
+    }
+
+    // Handle 204 No Content responses
+    if (response.status === 204) {
+      return null;
     }
 
     // Handle different content types

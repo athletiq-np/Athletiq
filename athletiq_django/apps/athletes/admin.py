@@ -199,12 +199,12 @@ class AthleteAdmin(admin.ModelAdmin):
     
     def activate_athletes(self, request, queryset):
         """Activate selected athletes."""
-        updated = queryset.update(is_active=True, registration_status='active')
+        updated = queryset.update(is_active=True)
         self.message_user(request, f'{updated} athletes activated.')
     activate_athletes.short_description = 'Activate selected athletes'
     
     def deactivate_athletes(self, request, queryset):
         """Deactivate selected athletes."""
-        updated = queryset.update(is_active=False, registration_status='inactive')
+        updated = queryset.update(is_active=False)
         self.message_user(request, f'{updated} athletes deactivated.')
     deactivate_athletes.short_description = 'Deactivate selected athletes'

@@ -327,9 +327,17 @@ export default function GlobalAdminDashboard() {
       
       // Update state with new data - ensure we're using the processed data
       setPlayers(prev => {
+        console.log('🔄 Comparing players data:');
+        console.log('Previous players count:', prev.length);
+        console.log('New players count:', playersData.length);
+        console.log('Previous players IDs:', prev.map(p => p.id));
+        console.log('New players IDs:', playersData.map(p => p.id));
+        
         if (JSON.stringify(prev) !== JSON.stringify(playersData)) {
+          console.log('✅ Players data changed, updating state');
           return playersData;
         }
+        console.log('⚠️ Players data unchanged, keeping previous state');
         return prev;
       });
       
@@ -910,25 +918,15 @@ export default function GlobalAdminDashboard() {
 
                 {/* Players Tab */}
                 {activeTab === 'players' && (
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between mb-6">
-                      <div>
-                        <h2 className="text-2xl font-bold text-gray-800 dark:text-white">Players Management</h2>
-                        <p className="text-sm text-gray-500 dark:text-gray-400">
-                          {!isLoading.players && `${players.length} ${players.length === 1 ? 'player' : 'players'} found`}
-                        </p>
-                      </div>
-                    </div>
-                    <PlayersTab 
-                      key="players-tab"  // Add key to prevent unwanted re-renders
-                      players={players} 
-                      schools={schools}
-                      user={user}
-                      refetchData={fetchDashboardData}
-                      loading={isLoading.players}
-                      error={errors.players}
-                    />
-                  </div>
+                  <PlayersTab 
+                    key="players-tab"  // Add key to prevent unwanted re-renders
+                    players={players} 
+                    schools={schools}
+                    user={user}
+                    refetchData={fetchDashboardData}
+                    loading={isLoading.players}
+                    error={errors.players}
+                  />
                 )}
 
                 {/* Schools Tab */}

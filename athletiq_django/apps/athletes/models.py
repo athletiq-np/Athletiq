@@ -10,9 +10,9 @@ import random
 
 
 def generate_athlete_id():
-    """Generate custom athlete ID in format NPXXX where XXX is 3 random digits."""
-    # Get last 3 digits randomly to ensure uniqueness
-    random_digits = ''.join([str(random.randint(0, 9)) for _ in range(3)])
+    """Generate custom athlete ID in format NPXXXXXX where XXXXXX is 6 random digits."""
+    # Get 6 random digits to ensure better uniqueness (1 million combinations)
+    random_digits = ''.join([str(random.randint(0, 9)) for _ in range(6)])
     return f"NP{random_digits}"
 
 
@@ -47,7 +47,7 @@ class Athlete(BaseModel):
     
     # Core fields
     id = models.AutoField(primary_key=True)
-    athlete_id = models.CharField(max_length=5, unique=True, default=generate_athlete_id, editable=False)
+    athlete_id = models.CharField(max_length=8, unique=True, default=generate_athlete_id, editable=False)
     full_name = models.CharField(max_length=100)
     full_name_nepali = models.CharField(max_length=100, blank=True, null=True)
     gender = models.CharField(max_length=10, choices=GENDER_CHOICES)
