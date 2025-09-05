@@ -3,7 +3,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   FaUpload, FaDownload, FaSearch, FaEye, FaEdit, FaTrash, FaUserGraduate,
   FaSpinner, FaExclamationCircle, FaUserSlash, FaPlus, FaFilter, FaSort,
-  FaCopy, FaUserCheck, FaUserTimes, FaFileAlt, FaHistory
+  FaCopy, FaUserCheck, FaUserTimes, FaFileAlt, FaHistory, FaClipboardCheck,
+  FaCheck, FaExclamationTriangle
 } from 'react-icons/fa';
 
 // Enhanced Components
@@ -11,10 +12,10 @@ import { TableLoading, StatsCardsLoading } from './LoadingStates';
 import { InlineError, EmptyState } from './ErrorStates';
 import { DataExportModal } from './DataExportUtility';
 
-// Remove the test AddPlayerModal - we'll use AddPlayerButton instead
-
-import EditPlayerModal from "@features/player/EditPlayerModal";
+// Import the new enhanced edit modal
+import EditAthleteModal from "@features/athlete/EditAthleteModal";
 import ViewPlayerModal from "@features/player/ViewPlayerModal";
+import DocumentReviewModal from "./DocumentReviewModal";
 import { adminApi } from '@/api/adminApi';
 import { toast } from 'react-toastify';
 import BulkPlayerUploadModal from '@features/player/BulkPlayerUploadModal';
@@ -39,9 +40,10 @@ function PlayersTabComponent({
   }, [refetchData]);
 
   // Memoize modal callbacks to prevent re-renders
-  const handleCloseEditModal = useCallback(() => setEditPlayer(null), []);
+  const handleCloseEditModal = useCallback(() => setEditingAthleteId(null), []);
   const handleCloseViewModal = useCallback(() => setViewPlayer(null), []);
-  const handlePlayerUpdated = useCallback(() => {
+  const handleCloseDocumentReview = useCallback(() => setDocumentReviewPlayer(null), []);
+  const handleAthleteUpdated = useCallback(() => {
     if (refetchData) refetchData();
   }, [refetchData]);
 
@@ -57,10 +59,11 @@ function PlayersTabComponent({
   const [deletingPlayerId, setDeletingPlayerId] = useState(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(null);
 
-  // Modal state (removed test modal states)
+  // Modal state (updated to use new editing system)
   const [bulkPlayerOpen, setBulkPlayerOpen] = useState(false);
-  const [editPlayer, setEditPlayer] = useState(null);
+  const [editingAthleteId, setEditingAthleteId] = useState(null);
   const [viewPlayer, setViewPlayer] = useState(null);
+  const [documentReviewPlayer, setDocumentReviewPlayer] = useState(null);
 
 
 
@@ -99,6 +102,28 @@ function PlayersTabComponent({
         filtered = filtered.filter(player => player.verification_status === 'verified');
       } else if (statusFilter === 'unverified') {
         filtered = filtered.filter(player => player.verification_status !== 'verified');
+      } else if (statusFilter === 'pending_review') {
+        filtered = filtered.filter(player => 
+          player.verification_status === 'pending' || 
+          player.verification_status === 'requires_review' ||
+          !player.verification_status
+        );
+      } else if (statusFilter === 'rejected_docs') {
+        filtered = filtered.filter(player => player.verification_status === 'rejected');
+      } else if (statusFilter === 'has_documents') {
+        filtered = filtered.filter(player => 
+          player.profile_photo_url || 
+          player.birth_certificate_url || 
+          player.birth_certificate_no ||
+          (player.additional_documents_count && player.additional_documents_count > 0)
+        );
+      } else if (statusFilter === 'no_documents') {
+        filtered = filtered.filter(player => 
+          !player.profile_photo_url && 
+          !player.birth_certificate_url && 
+          !player.birth_certificate_no &&
+          (!player.additional_documents_count || player.additional_documents_count === 0)
+        );
       }
     }
 
@@ -315,6 +340,26 @@ function PlayersTabComponent({
     }
   };
 
+  const handleBulkVerifyDocuments = async (verificationStatus) => {
+    if (selectedPlayerIds.length === 0) return;
+    
+    const statusText = verificationStatus === 'verified' ? 'verify' : 'reject';
+    const confirmMessage = `Are you sure you want to ${statusText} documents for ${selectedPlayerIds.length} athletes?`;
+    
+    if (window.confirm(confirmMessage)) {
+      try {
+        const result = await adminApi.bulkVerifyDocuments(selectedPlayerIds, verificationStatus);
+        console.log('Bulk verification result:', result);
+        setSelectedPlayerIds([]);
+        if (refetchData) refetchData();
+        toast.success(`Successfully updated document verification for ${result.data?.successful_count || selectedPlayerIds.length} athletes`);
+      } catch (error) {
+        console.error('Error bulk verifying documents:', error);
+        toast.error(`Failed to ${statusText} documents. Please try again.`);
+      }
+    }
+  };
+
   // Show loading state
   if (loading) {
     return <TableLoading message="Loading players..." rows={10} />;
@@ -442,17 +487,48 @@ function PlayersTabComponent({
                 </motion.button>
 
                 {selectedPlayerIds.length > 0 && (
-                  <motion.button
-                    initial={{ opacity: 0, scale: 0.8 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    whileHover={{ scale: 1.02 }}
-                    whileTap={{ scale: 0.98 }}
-                    onClick={handleBulkDeletePlayers}
-                    className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:from-red-600 hover:to-pink-700 focus:outline-none focus:ring-4 focus:ring-red-500/20"
-                  >
-                    <FaTrash className="mr-2 h-4 w-4" />
-                    Delete Selected ({selectedPlayerIds.length})
-                  </motion.button>
+                  <>
+                    {/* Bulk Document Verification - Only for Super Admin */}
+                    {user?.role === 'super_admin' && (
+                      <>
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleBulkVerifyDocuments('verified')}
+                          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:from-green-600 hover:to-emerald-700 focus:outline-none focus:ring-4 focus:ring-green-500/20"
+                        >
+                          <FaCheck className="mr-2 h-4 w-4" />
+                          Verify Docs ({selectedPlayerIds.length})
+                        </motion.button>
+                        
+                        <motion.button
+                          initial={{ opacity: 0, scale: 0.8 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          whileHover={{ scale: 1.02 }}
+                          whileTap={{ scale: 0.98 }}
+                          onClick={() => handleBulkVerifyDocuments('rejected')}
+                          className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:from-orange-600 hover:to-red-600 focus:outline-none focus:ring-4 focus:ring-orange-500/20"
+                        >
+                          <FaExclamationTriangle className="mr-2 h-4 w-4" />
+                          Reject Docs ({selectedPlayerIds.length})
+                        </motion.button>
+                      </>
+                    )}
+                    
+                    <motion.button
+                      initial={{ opacity: 0, scale: 0.8 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                      onClick={handleBulkDeletePlayers}
+                      className="inline-flex items-center px-6 py-3 bg-gradient-to-r from-red-500 to-pink-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-200 hover:from-red-600 hover:to-pink-700 focus:outline-none focus:ring-4 focus:ring-red-500/20"
+                    >
+                      <FaTrash className="mr-2 h-4 w-4" />
+                      Delete Selected ({selectedPlayerIds.length})
+                    </motion.button>
+                  </>
                 )}
               </div>
             </div>
@@ -532,8 +608,12 @@ function PlayersTabComponent({
                   <option value="">All Statuses</option>
                   <option value="active">Active</option>
                   <option value="inactive">Inactive</option>
-                  <option value="verified">Verified</option>
-                  <option value="unverified">Unverified</option>
+                  <option value="verified">Document Verified</option>
+                  <option value="unverified">Document Unverified</option>
+                  <option value="pending_review">Documents Pending Review</option>
+                  <option value="rejected_docs">Documents Rejected</option>
+                  <option value="has_documents">Has Documents</option>
+                  <option value="no_documents">No Documents</option>
                 </select>
               </div>
 
@@ -636,6 +716,9 @@ function PlayersTabComponent({
                   </th>
                   <th className="w-1/8 px-3 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                     Status
+                  </th>
+                  <th className="w-1/8 px-3 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
+                    Documents
                   </th>
                   <th className="w-32 px-3 py-4 text-left text-xs font-semibold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                     Actions
@@ -767,6 +850,22 @@ function PlayersTabComponent({
                               </span>
                             </div>
                           )}
+                          
+                          {/* Document Count Indicator */}
+                          {(player.profile_photo_url || player.birth_certificate_url || player.birth_certificate_no || player.additional_documents_count > 0) && (
+                            <div className="flex items-center">
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-400 border border-purple-200 dark:border-purple-800">
+                                <FaFileAlt className="mr-1" />
+                                {(() => {
+                                  let count = 0;
+                                  if (player.profile_photo_url) count++;
+                                  if (player.birth_certificate_url || player.birth_certificate_no) count++;
+                                  if (player.additional_documents_count) count += player.additional_documents_count;
+                                  return `${count} Doc${count !== 1 ? 's' : ''}`;
+                                })()}
+                              </span>
+                            </div>
+                          )}
                           {player.profile_completion && (
                             <div className="text-xs text-gray-500 dark:text-gray-400">
                               <div className="flex items-center space-x-2">
@@ -779,6 +878,30 @@ function PlayersTabComponent({
                                 <span className="text-xs font-medium">{player.profile_completion}%</span>
                               </div>
                             </div>
+                          )}
+                        </div>
+                      </td>
+                      
+                      {/* Documents Column */}
+                      <td className="px-3 py-4">
+                        <div className="flex items-center space-x-2">
+                          {player.documents && player.documents.length > 0 ? (
+                            <>
+                              <FaFileAlt className="h-4 w-4 text-blue-500" />
+                              <span className="text-sm text-gray-900 dark:text-white">
+                                {player.documents.length} doc{player.documents.length !== 1 ? 's' : ''}
+                              </span>
+                              {player.documents.some(doc => doc.verification_status === 'verified') && (
+                                <FaCheck className="h-3 w-3 text-green-500" />
+                              )}
+                              {player.documents.some(doc => doc.verification_status === 'rejected') && (
+                                <FaExclamationTriangle className="h-3 w-3 text-red-500" />
+                              )}
+                            </>
+                          ) : (
+                            <span className="text-sm text-gray-400 dark:text-gray-500">
+                              No documents
+                            </span>
                           )}
                         </div>
                       </td>
@@ -799,12 +922,25 @@ function PlayersTabComponent({
                           <motion.button
                             whileHover={{ scale: 1.1 }}
                             whileTap={{ scale: 0.9 }}
-                            onClick={() => setEditPlayer(player)}
+                            onClick={() => setEditingAthleteId(player.id)}
                             className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/20 rounded-lg transition-all duration-200 group"
                             title="Edit Player"
                           >
                             <FaEdit className="w-3.5 h-3.5 group-hover:scale-110 transition-transform duration-200" />
                           </motion.button>
+
+                          {/* Document Review Button - Only for Super Admin */}
+                          {user?.role === 'super_admin' && (
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={() => setDocumentReviewPlayer(player)}
+                              className="p-2 text-purple-600 hover:text-purple-700 hover:bg-purple-50 dark:hover:bg-purple-900/20 rounded-lg transition-all duration-200 group"
+                              title="Review Documents"
+                            >
+                              <FaClipboardCheck className="w-3.5 h-3.5 group-hover:scale-110 transition-transform duration-200" />
+                            </motion.button>
+                          )}
 
                           {/* Copy ID Button */}
                           <motion.button
@@ -892,13 +1028,12 @@ function PlayersTabComponent({
         schools={schools}
       />
 
-      {editPlayer && (
-        <EditPlayerModal
-          key={editPlayer.id}
+      {editingAthleteId && (
+        <EditAthleteModal
           isOpen={true}
-          player={editPlayer}
+          athleteId={editingAthleteId}
           onClose={handleCloseEditModal}
-          onUpdated={handlePlayerUpdated}
+          onUpdated={handleAthleteUpdated}
           schools={schools}
         />
       )}
@@ -1071,6 +1206,19 @@ function PlayersTabComponent({
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Document Review Modal */}
+      <DocumentReviewModal
+        isOpen={!!documentReviewPlayer}
+        onClose={handleCloseDocumentReview}
+        athlete={documentReviewPlayer}
+        onDocumentUpdated={(athleteId, reviewData) => {
+          console.log('Document verification updated:', athleteId, reviewData);
+          // Refresh the athletes list to show updated verification status
+          if (refetchData) refetchData();
+          setDocumentReviewPlayer(null);
+        }}
+      />
     </>
   );
 }

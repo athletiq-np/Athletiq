@@ -46,6 +46,12 @@ import {
 // Import unified routes
 import AppRoutes from '@/routes/AppRoutes';
 
+// Import auth debug utility
+import '@/utils/authDebug';
+import '@/utils/testAuth';
+import '@/utils/authStatusChecker';
+import '@/utils/authStatusChecker';
+
 // Loading component
 const PageLoader = ({ message = 'Loading...' }) => (
   <div className="flex items-center justify-center h-screen bg-gray-50">

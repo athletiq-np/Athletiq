@@ -1,9 +1,16 @@
 import React, { useState } from 'react';
+import { FaTimes, FaUpload, FaCheck, FaEye, FaTrash } from 'react-icons/fa';
 import { registerPlayer } from '@/api/playerApi';
 
 const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], user }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [currentTab, setCurrentTab] = useState('basic');
+  
+  // Document upload states
+  const [photoFile, setPhotoFile] = useState(null);
+  const [birthCertFile, setBirthCertFile] = useState(null);
+  const [documents, setDocuments] = useState([]);
+  const [documentVerificationStatus, setDocumentVerificationStatus] = useState({});
   
   // Tab configuration
   const tabs = [
@@ -75,6 +82,60 @@ const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], use
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Document management functions
+  const handleDocumentUpload = (e) => {
+    const files = Array.from(e.target.files);
+    const newDocuments = files.map(file => ({
+      id: Date.now() + Math.random(),
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file: file
+    }));
+    
+    setDocuments(prev => [...prev, ...newDocuments]);
+    
+    // Initialize verification status for new documents
+    const newVerificationStatus = {};
+    newDocuments.forEach(doc => {
+      newVerificationStatus[doc.id] = 'pending';
+    });
+    setDocumentVerificationStatus(prev => ({ ...prev, ...newVerificationStatus }));
+  };
+
+  const removeDocument = (documentId) => {
+    setDocuments(prev => prev.filter(doc => doc.id !== documentId));
+    setDocumentVerificationStatus(prev => {
+      const updated = { ...prev };
+      delete updated[documentId];
+      return updated;
+    });
+  };
+
+  const toggleVerificationStatus = (documentId) => {
+    setDocumentVerificationStatus(prev => {
+      const currentStatus = prev[documentId] || 'pending';
+      const nextStatus = currentStatus === 'pending' ? 'verified' : 
+                        currentStatus === 'verified' ? 'rejected' : 'pending';
+      return { ...prev, [documentId]: nextStatus };
+    });
+  };
+
+  const previewDocument = (document) => {
+    if (document.file) {
+      const url = URL.createObjectURL(document.file);
+      window.open(url, '_blank');
+    }
+  };
+
+  const formatFileSize = (bytes) => {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  };
+
   const handleKeyDown = (e) => {
     // Prevent Enter key from triggering any form submission
     if (e.key === 'Enter') {
@@ -136,15 +197,17 @@ const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], use
       birth_certificate_date: '',
       birth_certificate_office: '',
     });
+    // Reset document states
+    setPhotoFile(null);
+    setBirthCertFile(null);
+    setDocuments([]);
+    setDocumentVerificationStatus({});
     setCurrentTab('basic');
     setError('');
   };
 
   const validateRequiredDocuments = () => {
-    // Check if at least birth certificate information is provided
-    if (!formData.birth_certificate_no && !formData.birth_certificate_url) {
-      return 'Please provide either birth certificate number or birth certificate document URL.';
-    }
+    // Documents are now optional - no validation required
     return null;
   };
 
@@ -173,7 +236,7 @@ const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], use
       }
       
       if (!formData.full_name) {
-        setError('Please enter the player\'s full name.');
+        setError('Please enter the athlete\'s full name.');
         setIsLoading(false);
         return;
       }
@@ -203,12 +266,12 @@ const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], use
       }
       
       if (!formData.relationship_to_player) {
-        setError('Please select relationship to player.');
+        setError('Please select relationship to athlete.');
         setIsLoading(false);
         return;
       }
       
-      // Validate documents section
+      // Validate documents section (now optional)
       const documentError = validateRequiredDocuments();
       if (documentError) {
         setError(documentError);
@@ -246,11 +309,31 @@ const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], use
         }
       });
 
-      console.log('Submitting player data:', Object.fromEntries(formDataToSend));
+      // Add file uploads
+      if (photoFile) {
+        formDataToSend.append('profile_photo', photoFile);
+      }
+      
+      if (birthCertFile) {
+        formDataToSend.append('birth_certificate', birthCertFile);
+      }
+
+      // Add additional documents
+      documents.forEach((doc, index) => {
+        formDataToSend.append(`additional_document_${index}`, doc.file);
+        formDataToSend.append(`additional_document_${index}_name`, doc.name);
+        formDataToSend.append(`additional_document_${index}_verification_status`, documentVerificationStatus[doc.id] || 'pending');
+      });
+
+      // Add document verification metadata
+      formDataToSend.append('document_verification_status', JSON.stringify(documentVerificationStatus));
+      formDataToSend.append('total_additional_documents', documents.length);
+
+      console.log('Submitting athlete data:', Object.fromEntries(formDataToSend));
       const response = await registerPlayer(formDataToSend);
       
       // Success
-      console.log('Player added successfully:', response);
+      console.log('Athlete added successfully:', response);
       resetForm();
       setIsOpen(false);
       
@@ -258,7 +341,7 @@ const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], use
       if (response?.message) {
         alert(response.message);
       } else {
-        alert('Player added successfully!');
+        alert('Athlete added successfully!');
       }
       
       // Trigger table refresh with a slight delay to ensure backend is updated
@@ -269,12 +352,12 @@ const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], use
       }
       
     } catch (err) {
-      console.error('Error adding player:', err);
+      console.error('Error adding athlete:', err);
       
       const errorMessage = err.response?.data?.message || 
                           err.response?.data?.error || 
                           err.message || 
-                          'Failed to add player. Please try again.';
+                          'Failed to add athlete. Please try again.';
       setError(errorMessage);
     } finally {
       setIsLoading(false);
@@ -295,7 +378,7 @@ const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], use
           <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white max-h-[80vh] overflow-y-auto">
             <div className="mt-3">
               <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-medium text-gray-900">Add New Player</h3>
+                <h3 className="text-lg font-medium text-gray-900">Add New Athlete</h3>
                 <button
                   onClick={() => setIsOpen(false)}
                   className="text-gray-400 hover:text-gray-600"
@@ -842,36 +925,185 @@ const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], use
 
                 {/* Documents Tab */}
                 {currentTab === 'documents' && (
-                  <div className="space-y-4">
+                  <div className="space-y-6">
                     <div className="flex items-center justify-between">
                       <h3 className="text-lg font-medium text-gray-900">Document Information</h3>
-                      <div className="text-sm text-red-600 font-medium">
-                        * At least one birth certificate field is required
+                      <div className="text-sm text-green-600 font-medium">
+                        * Documents are optional for athlete registration
                       </div>
                     </div>
                     
-                    <div>
-                      <label htmlFor="profile_photo_url" className="block text-sm font-medium text-gray-700">
-                        Profile Photo URL
-                      </label>
-                      <input
-                        type="url"
-                        id="profile_photo_url"
-                        name="profile_photo_url"
-                        value={formData.profile_photo_url}
-                        onChange={handleChange}
-                        placeholder="https://example.com/photo.jpg"
-                        className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
-                      />
+                    {/* Primary Documents */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Profile Photo
+                        </label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
+                          <input
+                            type="file"
+                            onChange={(e) => setPhotoFile(e.target.files[0])}
+                            accept="image/*"
+                            className="hidden"
+                            id="photo-upload"
+                          />
+                          <label htmlFor="photo-upload" className="cursor-pointer">
+                            <FaUpload className="mx-auto text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-600">
+                              {photoFile ? photoFile.name : "Click to upload photo"}
+                            </p>
+                          </label>
+                          {photoFile && (
+                            <button
+                              type="button"
+                              onClick={() => setPhotoFile(null)}
+                              className="mt-2 text-red-500 text-sm hover:text-red-700"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Birth Certificate
+                        </label>
+                        <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-500 transition-colors">
+                          <input
+                            type="file"
+                            onChange={(e) => setBirthCertFile(e.target.files[0])}
+                            accept="image/*,application/pdf"
+                            className="hidden"
+                            id="birth-cert-upload"
+                          />
+                          <label htmlFor="birth-cert-upload" className="cursor-pointer">
+                            <FaUpload className="mx-auto text-gray-400 mb-2" />
+                            <p className="text-sm text-gray-600">
+                              {birthCertFile ? birthCertFile.name : "Click to upload certificate"}
+                            </p>
+                          </label>
+                          {birthCertFile && (
+                            <button
+                              type="button"
+                              onClick={() => setBirthCertFile(null)}
+                              className="mt-2 text-red-500 text-sm hover:text-red-700"
+                            >
+                              Remove
+                            </button>
+                          )}
+                        </div>
+                      </div>
                     </div>
 
-                    <div className="border border-yellow-200 rounded-md p-4 bg-yellow-50">
-                      <h4 className="text-md font-medium text-yellow-800 mb-3">Birth Certificate Information *</h4>
-                      <p className="text-sm text-yellow-700 mb-4">
-                        Please provide either the birth certificate document URL or at least the certificate number.
-                      </p>
+                    {/* Additional Documents */}
+                    <div>
+                      <div className="flex items-center justify-between mb-4">
+                        <label className="text-sm font-medium text-gray-700">
+                          Additional Documents
+                        </label>
+                        <div>
+                          <input
+                            type="file"
+                            onChange={handleDocumentUpload}
+                            accept="image/*,application/pdf,.doc,.docx"
+                            multiple
+                            className="hidden"
+                            id="additional-docs-upload"
+                          />
+                          <label
+                            htmlFor="additional-docs-upload"
+                            className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 cursor-pointer transition-colors"
+                          >
+                            <FaUpload className="mr-2" />
+                            Upload Documents
+                          </label>
+                        </div>
+                      </div>
+
+                      {/* Document List */}
+                      {documents.length > 0 && (
+                        <div className="space-y-3">
+                          {documents.map((doc) => (
+                            <div key={doc.id} className="flex items-center justify-between p-3 bg-gray-50 border rounded-lg">
+                              <div className="flex items-center space-x-3">
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-900">{doc.name}</p>
+                                  <p className="text-sm text-gray-500">{formatFileSize(doc.size)}</p>
+                                </div>
+                              </div>
+                              
+                              <div className="flex items-center space-x-2">
+                                {/* Verification Status Toggle */}
+                                <button
+                                  type="button"
+                                  onClick={() => toggleVerificationStatus(doc.id)}
+                                  className={`flex items-center px-3 py-1 rounded-full text-xs font-medium transition-colors ${
+                                    documentVerificationStatus[doc.id] === 'verified' 
+                                      ? 'bg-green-100 text-green-800' 
+                                      : documentVerificationStatus[doc.id] === 'rejected'
+                                      ? 'bg-red-100 text-red-800'
+                                      : 'bg-yellow-100 text-yellow-800'
+                                  }`}
+                                >
+                                  {documentVerificationStatus[doc.id] === 'verified' && <FaCheck className="mr-1" />}
+                                  {documentVerificationStatus[doc.id] === 'rejected' && <FaTimes className="mr-1" />}
+                                  {documentVerificationStatus[doc.id] === 'verified' ? 'Verified' : 
+                                   documentVerificationStatus[doc.id] === 'rejected' ? 'Rejected' : 'Pending'}
+                                </button>
+                                
+                                {/* Preview Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => previewDocument(doc)}
+                                  className="p-2 text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                  title="Preview document"
+                                >
+                                  <FaEye />
+                                </button>
+                                
+                                {/* Remove Button */}
+                                <button
+                                  type="button"
+                                  onClick={() => removeDocument(doc.id)}
+                                  className="p-2 text-red-600 hover:bg-red-50 rounded transition-colors"
+                                  title="Remove document"
+                                >
+                                  <FaTrash />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {documents.length === 0 && (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          No additional documents uploaded
+                        </p>
+                      )}
+                    </div>
+
+                    {/* Legacy Document URL Fields (Optional) */}
+                    <div className="border-t border-gray-200 pt-6">
+                      <h4 className="text-md font-medium text-gray-800 mb-4">Legacy Document Information (Optional)</h4>
                       
                       <div className="space-y-4">
+                        <div>
+                          <label htmlFor="profile_photo_url" className="block text-sm font-medium text-gray-700">
+                            Profile Photo URL
+                          </label>
+                          <input
+                            type="url"
+                            id="profile_photo_url"
+                            name="profile_photo_url"
+                            value={formData.profile_photo_url}
+                            onChange={handleChange}
+                            placeholder="https://example.com/photo.jpg"
+                            className="mt-1 block w-full rounded-md border border-gray-300 px-3 py-2 shadow-sm focus:border-blue-500 focus:ring-blue-500 focus:outline-none"
+                          />
+                        </div>
+
                         <div>
                           <label htmlFor="birth_certificate_url" className="block text-sm font-medium text-gray-700">
                             Birth Certificate Document URL
@@ -890,7 +1122,7 @@ const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], use
                         <div className="grid grid-cols-2 gap-4">
                           <div>
                             <label htmlFor="birth_certificate_no" className="block text-sm font-medium text-gray-700">
-                              Birth Certificate Number *
+                              Birth Certificate Number
                             </label>
                             <input
                               type="text"
@@ -974,7 +1206,7 @@ const AddPlayerButton = ({ onPlayerAdded, children, className, schools = [], use
                         data-submit-button="true"
                         className="px-4 py-2 text-sm font-medium text-white bg-green-600 border border-transparent rounded-md shadow-sm hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
                       >
-                        {isLoading ? 'Adding Player...' : 'Add Player'}
+                        {isLoading ? 'Adding Athlete...' : 'Add Athlete'}
                       </button>
                     )}
 

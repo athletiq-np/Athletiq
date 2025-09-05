@@ -4,6 +4,61 @@ import { motion, AnimatePresence } from 'framer-motion';
 
 const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
   if (!isOpen || !player) return null;
+  
+  // Ensure player data is properly populated with defaults
+  const enrichedPlayer = {
+    ...player,
+    // Basic Information
+    full_name: player.full_name || player.name || 'N/A',
+    full_name_nepali: player.full_name_nepali || '',
+    athlete_id: player.athlete_id || player.id || 'N/A',
+    email: player.email || '',
+    phone: player.phone || '',
+    date_of_birth: player.date_of_birth || '',
+    gender: player.gender || '',
+    nationality: player.nationality || '',
+    address: player.address || '',
+    
+    // Athletic Information
+    primary_sport: player.primary_sport || '',
+    registered_sports: player.registered_sports || [],
+    height_cm: player.height_cm || '',
+    weight_kg: player.weight_kg || '',
+    position: player.position || '',
+    
+    // School Information
+    school_id: player.school_id || (player.school ? player.school.id : ''),
+    school_name: player.school_name || (player.school ? player.school.name : ''),
+    school_code: player.school_code || (player.school ? player.school.school_code : ''),
+    grade: player.grade || '',
+    section: player.section || '',
+    
+    // Guardian Information
+    guardian_name: player.guardian_name || '',
+    guardian_phone: player.guardian_phone || '',
+    guardian_email: player.guardian_email || '',
+    relationship_to_player: player.relationship_to_player || '',
+    
+    // Status and Verification
+    is_active: typeof player.is_active === 'boolean' ? player.is_active : true,
+    verification_status: player.verification_status || '',
+    profile_completion: player.profile_completion || 0,
+    
+    // Additional Statistics
+    tournaments_participated: player.tournaments_participated || 0,
+    matches_played: player.matches_played || 0,
+    achievements: player.achievements || 0,
+    
+    // Document Information
+    profile_photo_url: player.profile_photo_url || '',
+    birth_certificate_url: player.birth_certificate_url || '',
+    birth_certificate_no: player.birth_certificate_no || '',
+    additional_documents_count: player.additional_documents_count || 0,
+    
+    // Timestamps
+    created_at: player.created_at || '',
+    updated_at: player.updated_at || ''
+  };
 
   const getSchoolName = (schoolId) => {
     if (!schoolId) return 'Not specified';
@@ -170,11 +225,11 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                     </div>
                     <div className="flex-1">
                       <h3 className="text-2xl font-bold text-gray-900 dark:text-white">
-                        {player.full_name || player.name || 'N/A'}
+                        {enrichedPlayer.full_name}
                       </h3>
                       <p className="text-gray-600 dark:text-gray-400 text-lg">
-                        {player.full_name_nepali && `${player.full_name_nepali} • `}
-                        ID: {player.athlete_id || player.id || 'N/A'}
+                        {enrichedPlayer.full_name_nepali && `${enrichedPlayer.full_name_nepali} • `}
+                        ID: {enrichedPlayer.athlete_id}
                       </p>
                       <div className="flex items-center space-x-4 mt-2">
                         {getStatusBadge(player.is_active ? 'active' : 'inactive')}
@@ -202,7 +257,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <FaEnvelope className="text-blue-500 mr-4 w-5 h-5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Email</p>
-                          <p className="text-gray-900 dark:text-white font-medium">{player.email || 'Not provided'}</p>
+                          <p className="text-gray-900 dark:text-white font-medium">{enrichedPlayer.email || 'Not provided'}</p>
                         </div>
                       </div>
 
@@ -210,7 +265,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <FaPhone className="text-green-500 mr-4 w-5 h-5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Phone</p>
-                          <p className="text-gray-900 dark:text-white font-medium">{player.phone || 'Not provided'}</p>
+                          <p className="text-gray-900 dark:text-white font-medium">{enrichedPlayer.phone || 'Not provided'}</p>
                         </div>
                       </div>
 
@@ -229,7 +284,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <FaVenusMars className="text-pink-500 mr-4 w-5 h-5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Gender</p>
-                          <p className="text-gray-900 dark:text-white font-medium capitalize">{player.gender || 'Not specified'}</p>
+                          <p className="text-gray-900 dark:text-white font-medium capitalize">{enrichedPlayer.gender || 'Not specified'}</p>
                         </div>
                       </div>
 
@@ -237,7 +292,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <FaFlag className="text-orange-500 mr-4 w-5 h-5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Nationality</p>
-                          <p className="text-gray-900 dark:text-white font-medium">{player.nationality || 'Not specified'}</p>
+                          <p className="text-gray-900 dark:text-white font-medium">{enrichedPlayer.nationality || 'Not specified'}</p>
                         </div>
                       </div>
 
@@ -245,7 +300,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <FaAddressBook className="text-indigo-500 mr-4 w-5 h-5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Address</p>
-                          <p className="text-gray-900 dark:text-white font-medium">{player.address || 'Not provided'}</p>
+                          <p className="text-gray-900 dark:text-white font-medium">{enrichedPlayer.address || 'Not provided'}</p>
                         </div>
                       </div>
                     </div>
@@ -276,10 +331,10 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <FaRunning className="text-green-500 mr-4 w-5 h-5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Primary Sport</p>
-                          <p className="text-gray-900 dark:text-white font-medium">{player.primary_sport || 'Not specified'}</p>
-                          {player.registered_sports && Array.isArray(player.registered_sports) && player.registered_sports.length > 0 && (
+                          <p className="text-gray-900 dark:text-white font-medium">{enrichedPlayer.primary_sport || 'Not specified'}</p>
+                          {enrichedPlayer.registered_sports && Array.isArray(enrichedPlayer.registered_sports) && enrichedPlayer.registered_sports.length > 0 && (
                             <p className="text-xs text-gray-500 dark:text-gray-400">
-                              +{player.registered_sports.length} additional sports
+                              +{enrichedPlayer.registered_sports.length} additional sports
                             </p>
                           )}
                         </div>
@@ -289,7 +344,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <FaMapMarkerAlt className="text-purple-500 mr-4 w-5 h-5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Position</p>
-                          <p className="text-gray-900 dark:text-white font-medium">{player.position || 'Not specified'}</p>
+                          <p className="text-gray-900 dark:text-white font-medium">{enrichedPlayer.position || 'Not specified'}</p>
                         </div>
                       </div>
 
@@ -298,7 +353,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Height</p>
                           <p className="text-gray-900 dark:text-white font-medium">
-                            {player.height_cm ? `${player.height_cm} cm` : 'Not specified'}
+                            {enrichedPlayer.height_cm ? `${enrichedPlayer.height_cm} cm` : 'Not specified'}
                           </p>
                         </div>
                       </div>
@@ -308,7 +363,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Weight</p>
                           <p className="text-gray-900 dark:text-white font-medium">
-                            {player.weight_kg ? `${player.weight_kg} kg` : 'Not specified'}
+                            {enrichedPlayer.weight_kg ? `${enrichedPlayer.weight_kg} kg` : 'Not specified'}
                           </p>
                         </div>
                       </div>
@@ -339,7 +394,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <FaUser className="text-blue-500 mr-4 w-5 h-5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Guardian Name</p>
-                          <p className="text-gray-900 dark:text-white font-medium">{player.guardian_name || 'Not provided'}</p>
+                          <p className="text-gray-900 dark:text-white font-medium">{enrichedPlayer.guardian_name || 'Not provided'}</p>
                         </div>
                       </div>
 
@@ -347,7 +402,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <FaPhone className="text-green-500 mr-4 w-5 h-5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Guardian Phone</p>
-                          <p className="text-gray-900 dark:text-white font-medium">{player.guardian_phone || 'Not provided'}</p>
+                          <p className="text-gray-900 dark:text-white font-medium">{enrichedPlayer.guardian_phone || 'Not provided'}</p>
                         </div>
                       </div>
                     </div>
@@ -357,7 +412,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <FaEnvelope className="text-purple-500 mr-4 w-5 h-5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Guardian Email</p>
-                          <p className="text-gray-900 dark:text-white font-medium">{player.guardian_email || 'Not provided'}</p>
+                          <p className="text-gray-900 dark:text-white font-medium">{enrichedPlayer.guardian_email || 'Not provided'}</p>
                         </div>
                       </div>
 
@@ -365,7 +420,7 @@ const ViewPlayerModal = ({ isOpen, onClose, player, schools = [] }) => {
                         <FaUser className="text-orange-500 mr-4 w-5 h-5" />
                         <div className="flex-1">
                           <p className="text-sm font-medium text-gray-500 dark:text-gray-400">Relationship</p>
-                          <p className="text-gray-900 dark:text-white font-medium">{player.relationship_to_player || 'Not specified'}</p>
+                          <p className="text-gray-900 dark:text-white font-medium">{enrichedPlayer.relationship_to_player || 'Not specified'}</p>
                         </div>
                       </div>
                     </div>

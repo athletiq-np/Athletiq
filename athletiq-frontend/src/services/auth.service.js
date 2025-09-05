@@ -238,7 +238,7 @@ class AuthService {
       const refreshToken = authStorage.getRefreshToken();
       
       if (!refreshToken) {
-        logger.warn('No refresh token available');
+        logger.warn('⚠️ WARN: No refresh token available for refresh');
         return { success: false, error: 'No refresh token' };
       }
 
@@ -254,7 +254,8 @@ class AuthService {
       });
 
       if (!response.ok) {
-        throw new Error(`Token refresh failed: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Token refresh failed: ${response.status} - ${errorData.detail || errorData.message || response.statusText}`);
       }
 
       const data = await response.json();

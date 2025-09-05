@@ -204,6 +204,7 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
   
   useEffect(() => {
     if (player) {
+      console.log('EditPlayerModal - Initializing form with player data:', player);
       setFormData({
         // Basic Information
         full_name: player.full_name || player.name || '',
@@ -214,7 +215,7 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
         nationality: player.nationality || 'Nepali',
         citizenship_no: player.citizenship_no || '',
         
-        // School Information
+        // School Information - ensure proper integer conversion
         school_id: player.school_id || player.school?.id || player.school?.school_id || '',
         grade: player.grade || '',
         section: player.section || '',
@@ -232,7 +233,7 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
         guardian_phone: player.guardian_phone || '',
         guardian_email: player.guardian_email || '',
         
-        // Physical Information
+        // Physical Information - ensure proper number conversion
         height_cm: player.height_cm ? String(player.height_cm) : '',
         weight_kg: player.weight_kg ? String(player.weight_kg) : '',
         blood_group: player.blood_group || '',
@@ -254,6 +255,7 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
         // Status Information
         verification_status: player.verification_status || 'pending'
       });
+      console.log('EditPlayerModal - Form initialized with school_id:', player.school_id || player.school?.id || player.school?.school_id);
     }
   }, [player]); // Simplified dependency
 
@@ -309,15 +311,20 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
     }
 
     return '';
-  }, [validationRules, fieldDisplayNames]);
+  }, []);
 
   // Validate all fields - memoized to prevent re-creation
   const validateForm = useCallback(() => {
+    console.log('validateForm called with current formData:', formData);
     const newErrors = {};
     Object.keys(validationRules).forEach(field => {
       const error = validateField(field, formData[field]);
-      if (error) newErrors[field] = error;
+      if (error) {
+        console.log(`Validation error for ${field}: ${error} (value: "${formData[field]}")`);
+        newErrors[field] = error;
+      }
     });
+    console.log('Final validation errors:', newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   }, [validateField, formData]); // Include formData dependency for proper validation
@@ -335,18 +342,32 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
       }
     }
     
+    console.log(`Form field changed: ${name} = "${processedValue}" (type: ${type})`);
+    
     setFormData(prev => ({
       ...prev,
       [name]: processedValue
     }));
 
+    // Clear error for this field immediately when user types
     if (errors[name]) {
+      console.log(`Clearing error for field: ${name}`);
       setErrors(prev => ({
         ...prev,
         [name]: ''
       }));
     }
-  }, [errors]);
+    
+    // Validate the field in real-time
+    const fieldError = validateField(name, processedValue);
+    if (fieldError && fieldError !== errors[name]) {
+      console.log(`Setting new error for field ${name}: ${fieldError}`);
+      setErrors(prev => ({
+        ...prev,
+        [name]: fieldError
+      }));
+    }
+  }, [errors, validateField]);
 
   const handleBlur = useCallback((e) => {
     const { name, value } = e.target;
@@ -360,16 +381,22 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
   const handleSubmit = async (e) => {
     e.preventDefault();
     console.log('EditPlayerModal handleSubmit called');
+    console.log('Current form data:', formData);
+    console.log('Current errors state:', errors);
     
     // Validate form before submission
-    if (!validateForm()) {
-      console.log('Form validation failed');
+    const isValid = validateForm();
+    console.log('Form validation result:', isValid);
+    
+    if (!isValid) {
+      console.log('Form validation failed, errors:', errors);
       toast.error('Please fix the errors in the form before submitting');
       return;
     }
 
-    console.log('Form validation passed, submitting...');
+    console.log('Form validation passed, proceeding with submission...');
     setLoading(true);
+    
     try {
       // Prepare and validate data before sending
       const cleanedData = prepareDataForSubmission(formData);
@@ -377,7 +404,8 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
       
       // Use adminApi to update the player
       console.log('Updating player with ID:', player.id);
-      await adminApi.updateAthlete(player.id, cleanedData);
+      const response = await adminApi.updateAthlete(player.id, cleanedData);
+      console.log('Update response:', response);
       
       toast.success('Player updated successfully!');
       
@@ -392,24 +420,26 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
       onClose();
     } catch (error) {
       console.error('Error updating player:', error);
+      console.error('Error response:', error.response);
       
       // Parse Django validation errors
       let errorMessage = 'Failed to update player. Please try again.';
       const newErrors = {};
       
-      console.log('Error response:', error.response);
-      console.log('Error data:', error.response?.data);
-      
       if (error.response?.data) {
         const responseData = error.response.data;
+        console.log('Response data:', responseData);
         
         // Handle Django REST framework validation errors
         if (typeof responseData === 'object' && !responseData.message && !responseData.success) {
+          console.log('Processing field validation errors...');
           Object.keys(responseData).forEach(field => {
             if (Array.isArray(responseData[field])) {
               newErrors[field] = responseData[field][0];
+              console.log(`Field error: ${field} -> ${responseData[field][0]}`);
             } else if (typeof responseData[field] === 'string') {
               newErrors[field] = responseData[field];
+              console.log(`Field error: ${field} -> ${responseData[field]}`);
             }
           });
           
@@ -423,6 +453,7 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
           errorMessage = responseData.error;
         }
       } else if (error.message) {
+        console.log('Processing error message:', error.message);
         // Check for specific field validation errors
         if (error.message.includes('full_name')) {
           errorMessage = 'Full name is required and must be at least 2 characters';
@@ -446,6 +477,7 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
         }
       }
       
+      console.log('Final error message:', errorMessage);
       toast.error(errorMessage);
     } finally {
       setLoading(false);
@@ -455,6 +487,8 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
   // Function to clean and validate data before submission
   const prepareDataForSubmission = (data) => {
     const cleaned = { ...data };
+    
+    console.log('Original data before cleaning:', cleaned);
     
     // Convert numeric fields - send null if empty, otherwise convert to number
     const numericFields = ['height_cm', 'weight_kg'];
@@ -467,18 +501,21 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
       }
     });
     
-    // Convert integer fields
+    // Convert integer fields - critical for school_id to be integer
     const integerFields = ['school_id'];
     integerFields.forEach(field => {
       if (cleaned[field] === '' || cleaned[field] === null || cleaned[field] === undefined) {
-        cleaned[field] = null;
+        throw new Error(`${fieldDisplayNames[field] || field} is required`);
       } else {
-        const intValue = parseInt(cleaned[field]);
-        cleaned[field] = isNaN(intValue) ? null : intValue;
+        const intValue = parseInt(cleaned[field], 10);
+        if (isNaN(intValue)) {
+          throw new Error(`${fieldDisplayNames[field] || field} must be a valid number`);
+        }
+        cleaned[field] = intValue;
       }
     });
     
-    // Clean string fields - convert empty strings to null for optional fields
+    // Clean string fields - convert empty strings to null for optional fields, but keep required ones
     const optionalStringFields = [
       'full_name_nepali', 'citizenship_no', 'grade', 'section', 'address', 
       'province', 'district', 'municipality_or_rural_municipality', 'ward_no',
@@ -493,21 +530,25 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
       }
     });
     
-    // Ensure required fields are not empty
+    // Ensure required fields are not empty and properly trimmed
     const requiredFields = ['full_name', 'gender', 'date_of_birth'];
     requiredFields.forEach(field => {
-      if (!cleaned[field] || cleaned[field].trim() === '') {
+      if (!cleaned[field] || (typeof cleaned[field] === 'string' && cleaned[field].trim() === '')) {
         const displayName = fieldDisplayNames[field] || field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
         throw new Error(`${displayName} is required`);
+      }
+      // Trim string fields
+      if (typeof cleaned[field] === 'string') {
+        cleaned[field] = cleaned[field].trim();
       }
     });
     
     // Remove athlete_id from the data since it's read-only and shouldn't be updated
     delete cleaned.athlete_id;
     
-    // Validate school_id is provided
-    if (!cleaned.school_id) {
-      throw new Error('School selection is required');
+    // Validate school_id is provided as integer
+    if (!cleaned.school_id || typeof cleaned.school_id !== 'number') {
+      throw new Error('School selection is required and must be valid');
     }
     
     console.log('Cleaned data for submission:', cleaned);
@@ -647,10 +688,14 @@ const EditPlayerModal = ({ isOpen, onClose, onSubmit, onUpdated, player, schools
                 required: true,
                 options: [
                   { value: '', label: 'Select School' },
-                  ...schools.map(school => ({
-                    value: school.id || school.school_id,
-                    label: `${school.name} (${school.school_code || school.code || school.id || school.school_id})`
-                  }))
+                  ...schools.map(school => {
+                    const schoolId = school.id || school.school_id;
+                    const schoolCode = school.school_code || school.code || schoolId;
+                    return {
+                      value: schoolId,
+                      label: `${school.name} (${schoolCode})`
+                    };
+                  })
                 ]
               })}
 

@@ -7,15 +7,19 @@ from rest_framework.response import Response
 from django.db.models import Q, Count, Avg
 from django.http import HttpResponse
 from django.core.exceptions import ValidationError
+from django.utils import timezone
 import csv
 import json
 from datetime import datetime
 
-from .models import Athlete
+from .models import Athlete, AthleteDocument
 from .serializers import (
     AthleteListSerializer, AthleteDetailSerializer, 
     AthleteCreateSerializer, AthleteUpdateSerializer,
-    AthleteBulkCreateSerializer, AthleteExportSerializer
+    AthleteBulkCreateSerializer, AthleteExportSerializer,
+    AthleteDocumentSerializer, AthleteProfileImageUploadSerializer,
+    AthleteDocumentUploadSerializer, AthleteDocumentVerificationSerializer,
+    BulkDocumentVerificationSerializer
 )
 from core.pagination import StandardResultsSetPagination
 from core.utils.responses import success_response, error_response
@@ -143,14 +147,15 @@ class AthleteDetailView(generics.RetrieveUpdateDestroyAPIView):
     """
     Retrieve, update, or delete an athlete.
     """
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.IsAuthenticated]  # Require authentication for athlete operations
     
     def get_queryset(self):
         """Filter athletes based on user permissions."""
         user = self.request.user
         queryset = Athlete.objects.select_related('school', 'guardian')
         
-        if user.role == 'SchoolAdmin':
+        # Only apply role-based filtering if user is authenticated and has a role
+        if user.is_authenticated and hasattr(user, 'role') and user.role == 'SchoolAdmin':
             queryset = queryset.filter(school=user.school)
         
         return queryset
@@ -162,18 +167,33 @@ class AthleteDetailView(generics.RetrieveUpdateDestroyAPIView):
         return AthleteDetailSerializer
     
     def update(self, request, *args, **kwargs):
-        """Update athlete information."""
+        """Update athlete information (JSON data only - files handled by separate endpoints)."""
         partial = kwargs.pop('partial', False)
         instance = self.get_object()
+        
+        # Log the request data for debugging
+        print(f"Update request for athlete {instance.athlete_id}")
+        print(f"Request data keys: {list(request.data.keys())}")
+        
+        # This endpoint now handles JSON data only
+        if request.FILES:
+            return error_response(
+                message="File uploads not supported on this endpoint. Use dedicated upload endpoints.",
+                status_code=400
+            )
+        
         serializer = self.get_serializer(instance, data=request.data, partial=partial)
         serializer.is_valid(raise_exception=True)
         
         athlete = serializer.save()
         
+        # Recalculate profile completion
+        athlete.calculate_profile_completion()
+        
         response_serializer = AthleteDetailSerializer(athlete)
         return success_response(
             data=response_serializer.data,
-            message="Athlete updated successfully."
+            message="Athlete data updated successfully."
         )
     
     def destroy(self, request, *args, **kwargs):
@@ -1055,5 +1075,126 @@ def bulk_delete_athletes(request):
     except Exception as e:
         return Response(
             error_response(message=f"Failed to delete athletes: {str(e)}"),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def upload_athlete_profile_image(request, athlete_id):
+    """
+    Upload athlete profile image.
+    """
+    try:
+        user = request.user
+        queryset = Athlete.objects.all()
+        
+        # Role-based filtering
+        if hasattr(user, 'role') and user.role == 'SchoolAdmin':
+            queryset = queryset.filter(school=user.school)
+        
+        athlete = queryset.get(id=athlete_id)
+        
+        serializer = AthleteProfileImageUploadSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                error_response(message="Invalid file data", errors=serializer.errors),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Save the profile photo
+        profile_photo = serializer.validated_data['profile_photo']
+        athlete.profile_photo = profile_photo
+        
+        # Reset verification status when new image is uploaded
+        athlete.verification_status = 'pending'
+        athlete.save()
+        athlete.calculate_profile_completion()
+        
+        return Response(
+            success_response(
+                data={
+                    'athlete_id': athlete.athlete_id,
+                    'profile_photo_url': athlete.profile_image_url,
+                    'verification_status': athlete.verification_status,
+                    'profile_completion': athlete.profile_completion
+                },
+                message="Profile image uploaded successfully."
+            )
+        )
+        
+    except Athlete.DoesNotExist:
+        return Response(
+            error_response(message="Athlete not found."),
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            error_response(message=f"Profile image upload failed: {str(e)}"),
+            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+        )
+
+
+@api_view(['POST'])
+@permission_classes([permissions.IsAuthenticated])
+def upload_athlete_document_file(request, athlete_id):
+    """
+    Upload athlete document file.
+    """
+    try:
+        user = request.user
+        queryset = Athlete.objects.all()
+        
+        # Role-based filtering
+        if hasattr(user, 'role') and user.role == 'SchoolAdmin':
+            queryset = queryset.filter(school=user.school)
+        
+        athlete = queryset.get(id=athlete_id)
+        
+        serializer = AthleteDocumentUploadSerializer(data=request.data)
+        if not serializer.is_valid():
+            return Response(
+                error_response(message="Invalid document data", errors=serializer.errors),
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        # Create the document
+        document_data = serializer.validated_data
+        document = AthleteDocument.objects.create(
+            athlete=athlete,
+            file=document_data['document'],
+            document_type=document_data['document_type'],
+            title=document_data.get('title', ''),
+            description=document_data.get('description', '')
+        )
+        
+        # Reset athlete verification status
+        athlete.verification_status = 'pending'
+        athlete.save()
+        athlete.calculate_profile_completion()
+        
+        # Serialize the created document
+        document_serializer = AthleteDocumentSerializer(document, context={'request': request})
+        
+        return Response(
+            success_response(
+                data={
+                    'athlete_id': athlete.athlete_id,
+                    'document': document_serializer.data,
+                    'verification_status': athlete.verification_status,
+                    'profile_completion': athlete.profile_completion
+                },
+                message="Document uploaded successfully."
+            )
+        )
+        
+    except Athlete.DoesNotExist:
+        return Response(
+            error_response(message="Athlete not found."),
+            status=status.HTTP_404_NOT_FOUND
+        )
+    except Exception as e:
+        return Response(
+            error_response(message=f"Document upload failed: {str(e)}"),
             status=status.HTTP_500_INTERNAL_SERVER_ERROR
         )

@@ -3,12 +3,59 @@ Enhanced serializers for athlete models with comprehensive field support.
 """
 from rest_framework import serializers
 from django.core.validators import validate_email
-from .models import Athlete
+from django.core.files.uploadedfile import InMemoryUploadedFile, TemporaryUploadedFile
+from .models import Athlete, AthleteDocument
 from apps.schools.models import School
 from apps.guardians.models import Guardian
 from core.utils.validators import validate_phone_number
 from datetime import date, timedelta
 import re
+
+
+class AthleteDocumentSerializer(serializers.ModelSerializer):
+    """
+    Serializer for athlete documents.
+    """
+    file_url = serializers.ReadOnlyField()
+    file_extension = serializers.ReadOnlyField()
+    is_image = serializers.ReadOnlyField()
+    is_verified = serializers.ReadOnlyField()
+    verified_by_name = serializers.CharField(source='verified_by.full_name', read_only=True)
+    
+    class Meta:
+        model = AthleteDocument
+        fields = [
+            'id', 'athlete', 'document_type', 'file', 'original_filename',
+            'file_size', 'title', 'description', 'verification_status',
+            'verification_notes', 'verified_by', 'verified_by_name', 'verified_at',
+            'file_url', 'file_extension', 'is_image', 'is_verified',
+            'created_at', 'updated_at'
+        ]
+        read_only_fields = [
+            'id', 'file_size', 'original_filename', 'verified_by',
+            'verified_by_name', 'verified_at', 'file_url', 'file_extension',
+            'is_image', 'is_verified', 'created_at', 'updated_at'
+        ]
+    
+    def validate_file(self, value):
+        """Validate uploaded file."""
+        if not value:
+            raise serializers.ValidationError("File is required.")
+        
+        # Check file size (10MB limit)
+        max_size = 10 * 1024 * 1024
+        if value.size > max_size:
+            raise serializers.ValidationError("File size cannot exceed 10MB.")
+        
+        # Check file type
+        allowed_types = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx']
+        file_extension = value.name.split('.')[-1].lower()
+        if file_extension not in allowed_types:
+            raise serializers.ValidationError(
+                f"File type '{file_extension}' not allowed. Allowed types: {', '.join(allowed_types)}"
+            )
+        
+        return value
 
 
 class AthleteListSerializer(serializers.ModelSerializer):
@@ -37,13 +84,20 @@ class AthleteDetailSerializer(serializers.ModelSerializer):
     display_name = serializers.ReadOnlyField()
     is_verified = serializers.ReadOnlyField()
     can_participate = serializers.ReadOnlyField()
+    profile_image_url = serializers.ReadOnlyField()
+    birth_certificate_file_url = serializers.ReadOnlyField()
+    has_profile_photo = serializers.ReadOnlyField()
+    has_birth_certificate = serializers.ReadOnlyField()
+    documents = AthleteDocumentSerializer(many=True, read_only=True)
     
     class Meta:
         model = Athlete
         fields = '__all__'
         read_only_fields = [
             'id', 'athlete_id', 'profile_completion', 'created_at', 'updated_at',
-            'age', 'display_name', 'is_verified', 'can_participate'
+            'age', 'display_name', 'is_verified', 'can_participate',
+            'profile_image_url', 'birth_certificate_file_url', 'has_profile_photo',
+            'has_birth_certificate', 'documents'
         ]
 
 
@@ -200,6 +254,8 @@ class AthleteUpdateSerializer(serializers.ModelSerializer):
             'weight_kg', 'blood_group', 'registered_sports', 'primary_sport',
             'father_name', 'mother_name', 'medical_conditions', 'allergies',
             'emergency_contact', 'medical_notes', 'verification_status'
+            # NOTE: File fields (profile_photo, birth_certificate) removed
+            # Use dedicated upload endpoints instead
         ]
     
     def validate_date_of_birth(self, value):
@@ -238,6 +294,46 @@ class AthleteUpdateSerializer(serializers.ModelSerializer):
                 return value  # Return the original value (integer), not the school object
             except School.DoesNotExist:
                 raise serializers.ValidationError("Invalid school ID or school is not active.")
+        return value
+    
+    def validate_profile_photo(self, value):
+        """Validate profile photo."""
+        if not value:
+            return value
+        
+        # Check file size (5MB limit for images)
+        max_size = 5 * 1024 * 1024
+        if value.size > max_size:
+            raise serializers.ValidationError("Image size cannot exceed 5MB.")
+        
+        # Check image type
+        allowed_types = ['jpg', 'jpeg', 'png', 'gif']
+        file_extension = value.name.split('.')[-1].lower()
+        if file_extension not in allowed_types:
+            raise serializers.ValidationError(
+                f"Image type '{file_extension}' not allowed. Allowed types: {', '.join(allowed_types)}"
+            )
+        
+        return value
+    
+    def validate_birth_certificate(self, value):
+        """Validate birth certificate file."""
+        if not value:
+            return value
+        
+        # Check file size (10MB limit)
+        max_size = 10 * 1024 * 1024
+        if value.size > max_size:
+            raise serializers.ValidationError("File size cannot exceed 10MB.")
+        
+        # Check file type
+        allowed_types = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx']
+        file_extension = value.name.split('.')[-1].lower()
+        if file_extension not in allowed_types:
+            raise serializers.ValidationError(
+                f"File type '{file_extension}' not allowed. Allowed types: {', '.join(allowed_types)}"
+            )
+        
         return value
     
     def update(self, instance, validated_data):
@@ -481,3 +577,90 @@ class AthleteStatsSerializer(serializers.Serializer):
     school_distribution = serializers.ListField()
     completion_ranges = serializers.DictField()
     age_ranges = serializers.DictField()
+
+
+class AthleteProfileImageUploadSerializer(serializers.Serializer):
+    """
+    Serializer for athlete profile image upload.
+    """
+    profile_photo = serializers.ImageField(required=True)
+    
+    def validate_profile_photo(self, value):
+        """Validate profile photo."""
+        if not value:
+            raise serializers.ValidationError("Profile photo is required.")
+        
+        # Check file size (5MB limit for images)
+        max_size = 5 * 1024 * 1024
+        if value.size > max_size:
+            raise serializers.ValidationError("Image size cannot exceed 5MB.")
+        
+        # Check image type
+        allowed_types = ['jpg', 'jpeg', 'png', 'gif']
+        file_extension = value.name.split('.')[-1].lower()
+        if file_extension not in allowed_types:
+            raise serializers.ValidationError(
+                f"Image type '{file_extension}' not allowed. Allowed types: {', '.join(allowed_types)}"
+            )
+        
+        return value
+
+
+class AthleteDocumentUploadSerializer(serializers.Serializer):
+    """
+    Serializer for athlete document upload.
+    """
+    document = serializers.FileField(required=True)
+    document_type = serializers.ChoiceField(
+        choices=AthleteDocument.DOCUMENT_TYPE_CHOICES,
+        default='other'
+    )
+    title = serializers.CharField(max_length=255, required=False, allow_blank=True)
+    description = serializers.CharField(required=False, allow_blank=True)
+    
+    def validate_document(self, value):
+        """Validate document file."""
+        if not value:
+            raise serializers.ValidationError("Document is required.")
+        
+        # Check file size (10MB limit)
+        max_size = 10 * 1024 * 1024
+        if value.size > max_size:
+            raise serializers.ValidationError("File size cannot exceed 10MB.")
+        
+        # Check file type
+        allowed_types = ['pdf', 'jpg', 'jpeg', 'png', 'doc', 'docx']
+        file_extension = value.name.split('.')[-1].lower()
+        if file_extension not in allowed_types:
+            raise serializers.ValidationError(
+                f"File type '{file_extension}' not allowed. Allowed types: {', '.join(allowed_types)}"
+            )
+        
+        return value
+
+
+class AthleteDocumentVerificationSerializer(serializers.Serializer):
+    """
+    Serializer for document verification.
+    """
+    verification_status = serializers.ChoiceField(
+        choices=AthleteDocument.VERIFICATION_STATUS_CHOICES,
+        required=True
+    )
+    verification_notes = serializers.CharField(max_length=500, required=False, allow_blank=True)
+
+
+class BulkDocumentVerificationSerializer(serializers.Serializer):
+    """
+    Serializer for bulk document verification.
+    """
+    athlete_ids = serializers.ListField(
+        child=serializers.IntegerField(),
+        min_length=1,
+        max_length=100
+    )
+    verification_status = serializers.ChoiceField(
+        choices=AthleteDocument.VERIFICATION_STATUS_CHOICES,
+        required=True
+    )
+    verification_notes = serializers.CharField(max_length=500, required=False, allow_blank=True)

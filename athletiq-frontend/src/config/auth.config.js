@@ -26,7 +26,7 @@ export const AUTH_STORAGE = {
 export const AUTH_ENDPOINTS = {
   LOGIN: '/auth/unified/login',
   LOGOUT: '/auth/unified/logout', 
-  REFRESH: '/auth/refresh',
+  REFRESH: '/auth/unified/token-refresh',
   VERIFY: '/auth/unified/verify',
   USER_TYPE: '/auth/unified/user-type',
   REGISTER: '/auth/register',

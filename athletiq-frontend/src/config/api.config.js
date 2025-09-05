@@ -9,7 +9,7 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: '/auth/login',
     REGISTER: '/auth/register',
-    REFRESH: '/auth/refresh',
+    REFRESH: '/auth/unified/token-refresh',
     VERIFY: '/auth/verify',
     LOGOUT: '/auth/logout',
     PROFILE: '/auth/profile',

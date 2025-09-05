@@ -73,9 +73,12 @@ class ApiClient {
       const refreshToken = authStorage.getRefreshToken();
       
       if (!refreshToken) {
+        logger.warn('⚠️ WARN: No refresh token available for refresh');
         return { success: false, error: 'No refresh token' };
       }
 
+      logger.info('🔄 Attempting to refresh token...');
+      
       const response = await fetch(`${this.baseURL}/auth/unified/token-refresh`, {
         method: 'POST',
         headers: {
@@ -87,7 +90,8 @@ class ApiClient {
       });
 
       if (!response.ok) {
-        throw new Error(`Token refresh failed: ${response.status}`);
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Token refresh failed: ${response.status} - ${errorData.detail || errorData.message || response.statusText}`);
       }
 
       const data = await response.json();
@@ -102,7 +106,7 @@ class ApiClient {
 
     } catch (error) {
       logger.error('❌ Token refresh failed:', error);
-      // Clear invalid tokens
+      // Clear invalid tokens on refresh failure
       authStorage.clearAll();
       return { success: false, error: error.message };
     }
@@ -167,6 +171,9 @@ class ApiClient {
     // Check if body is FormData to avoid setting Content-Type
     const isFormData = options.body instanceof FormData;
     
+    // Determine if this is an upload request
+    const isUploadRequest = isFormData || endpoint.includes('upload');
+    
     const config = {
       headers: {
         // Only set Content-Type if not FormData
@@ -189,6 +196,13 @@ class ApiClient {
           return this.addToRequestQueue({ url: endpoint, options });
         }
 
+        // For upload requests, provide clearer error messaging
+        if (isUploadRequest) {
+          logger.warn('⚠️ WARN: No refresh token available for upload request');
+        } else {
+          logger.error('❌ ERROR: Authentication failed for non-upload request, redirecting to login');
+        }
+
         // Attempt token refresh
         const refreshResult = await this.refreshToken();
         
@@ -200,8 +214,12 @@ class ApiClient {
           };
           return await fetch(url, config);
         } else {
-          // Refresh failed, redirect to login
-          window.location.href = '/login';
+          // Refresh failed, redirect to login for non-upload requests
+          if (!isUploadRequest) {
+            setTimeout(() => {
+              window.location.href = '/login';
+            }, 100);
+          }
           throw new Error('Authentication failed');
         }
       }
@@ -209,7 +227,7 @@ class ApiClient {
       return response;
 
     } catch (error) {
-      logger.error('API request failed:', error);
+      logger.error('❌ ERROR: API request failed:', error);
       throw error;
     }
   }
@@ -252,11 +270,22 @@ class ApiClient {
   }
 
   async put(endpoint, data, options = {}) {
-    const response = await this.makeRequest(endpoint, {
+    // Handle FormData vs JSON data
+    const isFormData = data instanceof FormData;
+    const requestOptions = {
       method: 'PUT',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
       ...options,
-    });
+    };
+
+    // Don't set Content-Type for FormData - let browser set it with boundary
+    if (isFormData) {
+      // Remove any Content-Type header for FormData to let browser set it automatically
+      const { 'Content-Type': _, ...headersWithoutContentType } = options.headers || {};
+      requestOptions.headers = headersWithoutContentType;
+    }
+
+    const response = await this.makeRequest(endpoint, requestOptions);
     
     // Parse response and return in axios-compatible format
     const responseData = await this.handleResponse(response);
@@ -264,11 +293,22 @@ class ApiClient {
   }
 
   async patch(endpoint, data, options = {}) {
-    const response = await this.makeRequest(endpoint, {
+    // Handle FormData vs JSON data
+    const isFormData = data instanceof FormData;
+    const requestOptions = {
       method: 'PATCH',
-      body: data ? JSON.stringify(data) : undefined,
+      body: isFormData ? data : (data ? JSON.stringify(data) : undefined),
       ...options,
-    });
+    };
+
+    // Don't set Content-Type for FormData - let browser set it with boundary
+    if (isFormData) {
+      // Remove any Content-Type header for FormData to let browser set it automatically
+      const { 'Content-Type': _, ...headersWithoutContentType } = options.headers || {};
+      requestOptions.headers = headersWithoutContentType;
+    }
+
+    const response = await this.makeRequest(endpoint, requestOptions);
     
     // Parse response and return in axios-compatible format
     const responseData = await this.handleResponse(response);

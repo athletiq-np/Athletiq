@@ -27,6 +27,11 @@ urlpatterns = [
     path('<int:athlete_id>/documents/upload/', views.upload_athlete_document, name='athlete-document-upload'),
     path('<int:athlete_id>/documents/verify/', views.verify_athlete_document, name='athlete-document-verify'),
     
+    # File upload endpoints
+    path('<int:athlete_id>/upload-profile-image/', views.upload_athlete_profile_image, name='athlete-profile-image-upload'),
+    path('<int:athlete_id>/upload-document/', views.upload_athlete_document, name='athlete-document-file-upload'),
+    path('<int:athlete_id>/documents/verify/', views.verify_athlete_document, name='athlete-document-file-verify'),
+    
     # Analytics and statistics
     path('statistics/', views.athlete_statistics, name='athlete-statistics'),
     

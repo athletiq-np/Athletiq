@@ -52,15 +52,21 @@ class JWTAuthenticationMiddleware:
                 algorithms=['HS256']
             )
             
-            # Get user from token
-            user_id = decoded_token.get('user_id')
+            # Get user from token - try both user_id and id fields
+            user_id = decoded_token.get('user_id') or decoded_token.get('id')
             if user_id:
                 try:
-                    user = User.objects.get(user_id=user_id)
+                    # Try to find user by user_id field first, then by pk
+                    try:
+                        user = User.objects.get(user_id=user_id)
+                    except User.DoesNotExist:
+                        user = User.objects.get(pk=user_id)
+                    
                     if user.is_active:
                         request.user = user
                         # Add token payload to request for additional info
                         request.token_payload = decoded_token
+                        logger.debug(f"JWT auth successful for user {user_id}")
                 except User.DoesNotExist:
                     logger.warning(f"User {user_id} from token not found")
                     
@@ -68,6 +74,7 @@ class JWTAuthenticationMiddleware:
             logger.warning(f"Invalid JWT token: {e}")
         except Exception as e:
             logger.error(f"Error processing JWT token: {e}")
+            logger.error(f"Token payload: {decoded_token if 'decoded_token' in locals() else 'Could not decode'}")
 
 
 class RateLimitByUserMiddleware:

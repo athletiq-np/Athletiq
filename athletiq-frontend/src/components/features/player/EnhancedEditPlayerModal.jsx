@@ -1,10 +1,10 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { FaTimes, FaUser, FaEdit, FaExclamationTriangle, FaSpinner, FaCheck, FaUpload, FaImage, FaFileAlt, FaTrash, FaDownload } from 'react-icons/fa';
+import { FaTimes, FaUser, FaEdit, FaExclamationTriangle, FaSpinner, FaCheck } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import { adminApi } from '@/api/adminApi';
 
 // Enhanced validation schema - based on Django model fields
-const ATHLETE_VALIDATION_SCHEMA = {
+const VALIDATION_SCHEMA = {
   // Required fields (no blank=True, null=True in Django model)
   full_name: {
     required: true,
@@ -27,7 +27,7 @@ const ATHLETE_VALIDATION_SCHEMA = {
     type: 'number',
     label: 'School'
   },
-
+  
   // Optional fields (blank=True, null=True in Django model)
   guardian_phone: {
     pattern: /^[0-9+\-\s()]{10,15}$/,
@@ -53,14 +53,14 @@ const ATHLETE_VALIDATION_SCHEMA = {
     pattern: /^[0-9]{2}-[0-9]{2}-[0-9]{2}-[0-9]{5}$/,
     label: 'Citizenship Number'
   }
-  // Note: relationship_to_athlete, allergies, medical_conditions are NOT in validation schema
+  // Note: relationship_to_player, allergies, medical_conditions are NOT in validation schema
   // because they are optional fields in Django model (blank=True, null=True)
 };
 
 // Field validation function
-const validateField = (name, value, schema = ATHLETE_VALIDATION_SCHEMA) => {
+const validateField = (name, value, schema = VALIDATION_SCHEMA) => {
   const rules = schema[name];
-
+  
   // If field is not in validation schema, it's optional and doesn't need validation
   if (!rules) return null;
 
@@ -75,15 +75,11 @@ const validateField = (name, value, schema = ATHLETE_VALIDATION_SCHEMA) => {
   // Skip other validations if empty and not required
   if (!value || value.toString().trim() === '') return null;
 
-  const trimmedValue = value.toString().trim();
-
   // Length validation
-  if (rules.minLength && trimmedValue.length < rules.minLength) {
-    console.log(`Length validation failed for ${name}: trimmed length ${trimmedValue.length} < required ${rules.minLength}`);
+  if (rules.minLength && value.length < rules.minLength) {
     return `${rules.label} must be at least ${rules.minLength} characters`;
   }
-  if (rules.maxLength && trimmedValue.length > rules.maxLength) {
-    console.log(`Length validation failed for ${name}: trimmed length ${trimmedValue.length} > max ${rules.maxLength}`);
+  if (rules.maxLength && value.length > rules.maxLength) {
     return `${rules.label} must be no more than ${rules.maxLength} characters`;
   }
 
@@ -122,192 +118,23 @@ const validateField = (name, value, schema = ATHLETE_VALIDATION_SCHEMA) => {
   return null;
 };
 
-// File Upload Component
-const FileUploadField = ({
-  name,
-  label,
-  accept = "*/*",
-  multiple = false,
-  currentFiles = [],
-  onFileSelect,
-  onFileRemove,
-  uploading = false,
-  type = 'document' // 'image' or 'document'
-}) => {
-  const [dragOver, setDragOver] = useState(false);
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOver(true);
-  };
-
-  const handleDragLeave = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    // Only set dragOver to false if we're leaving the drop zone entirely
-    if (!e.currentTarget.contains(e.relatedTarget)) {
-      setDragOver(false);
-    }
-  };
-
-  const handleDrop = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    setDragOver(false);
-    console.log('Drop event triggered:', e.dataTransfer.files);
-    const files = Array.from(e.dataTransfer.files);
-    console.log('Files from drop:', files);
-    onFileSelect(files);
-  };
-
-  const handleFileInput = (e) => {
-    console.log('File input change triggered:', e.target.files);
-    const files = Array.from(e.target.files);
-    console.log('Converted to array:', files);
-    onFileSelect(files);
-    // Clear the input so the same file can be selected again
-    e.target.value = '';
-  };
-
-  return (
-    <div className="space-y-2">
-      <label className="block text-sm font-medium text-gray-700">
-        {label}
-      </label>
-
-      {/* Upload Area */}
-      <div
-        className={`border-2 border-dashed rounded-lg p-4 text-center transition-colors ${dragOver
-          ? 'border-blue-500 bg-blue-50'
-          : 'border-gray-300 hover:border-gray-400'
-          }`}
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-      >
-        <input
-          type="file"
-          accept={accept}
-          multiple={multiple}
-          onChange={handleFileInput}
-          className="hidden"
-          id={`file-${name}`}
-        />
-
-        <div className="flex flex-col items-center space-y-2">
-          {type === 'image' ? (
-            <FaImage className="h-8 w-8 text-gray-400" />
-          ) : (
-            <FaFileAlt className="h-8 w-8 text-gray-400" />
-          )}
-
-          <div>
-            <label
-              htmlFor={`file-${name}`}
-              className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
-              onClick={(e) => {
-                // Fallback click handler
-                console.log('Label clicked for:', name);
-                const input = document.getElementById(`file-${name}`);
-                if (input) {
-                  input.click();
-                }
-              }}
-            >
-              Choose files
-            </label>
-            <span className="text-gray-500"> or drag and drop</span>
-          </div>
-
-          <p className="text-xs text-gray-500">
-            {type === 'image'
-              ? 'PNG, JPG, JPEG up to 5MB'
-              : 'PDF, DOC, DOCX, JPG, PNG up to 10MB'
-            }
-          </p>
-        </div>
-      </div>
-
-      {/* Current Files */}
-      {currentFiles.length > 0 && (
-        <div className="space-y-2">
-          <p className="text-sm font-medium text-gray-700">Current Files:</p>
-          <div className="space-y-2">
-            {currentFiles.map((file, index) => (
-              <div
-                key={index}
-                className="flex items-center justify-between p-2 bg-gray-50 rounded border"
-              >
-                <div className="flex items-center space-x-2">
-                  {type === 'image' ? (
-                    <FaImage className="h-4 w-4 text-blue-500" />
-                  ) : (
-                    <FaFileAlt className="h-4 w-4 text-blue-500" />
-                  )}
-                  <span className="text-sm text-gray-700 truncate">
-                    {file.name || file.originalName || `File ${index + 1}`}
-                  </span>
-                  {file.size && (
-                    <span className="text-xs text-gray-500">
-                      ({(file.size / 1024 / 1024).toFixed(2)} MB)
-                    </span>
-                  )}
-                </div>
-
-                <div className="flex items-center space-x-2">
-                  {file.url && (
-                    <button
-                      type="button"
-                      onClick={() => window.open(file.url, '_blank')}
-                      className="text-blue-600 hover:text-blue-700"
-                      title="View file"
-                    >
-                      <FaDownload className="h-3 w-3" />
-                    </button>
-                  )}
-                  <button
-                    type="button"
-                    onClick={() => onFileRemove(index)}
-                    className="text-red-600 hover:text-red-700"
-                    title="Remove file"
-                  >
-                    <FaTrash className="h-3 w-3" />
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* Upload Progress */}
-      {uploading && (
-        <div className="flex items-center space-x-2 text-blue-600">
-          <FaSpinner className="animate-spin h-4 w-4" />
-          <span className="text-sm">Uploading...</span>
-        </div>
-      )}
-    </div>
-  );
-};
-
 // Form field component
-const FormField = ({
-  name,
-  label,
-  type = 'text',
+const FormField = ({ 
+  name, 
+  label, 
+  type = 'text', 
   required = false,
   options = [],
-  value,
-  onChange,
+  value, 
+  onChange, 
   error,
-  ...props
+  ...props 
 }) => {
-  const baseInputClass = `w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${error
-    ? 'border-red-500 focus:ring-red-500 bg-red-50'
-    : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
-    }`;
+  const baseInputClass = `w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 transition-all duration-200 ${
+    error 
+      ? 'border-red-500 focus:ring-red-500 bg-red-50' 
+      : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+  }`;
 
   return (
     <div className="space-y-1">
@@ -315,7 +142,7 @@ const FormField = ({
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
       </label>
-
+      
       {type === 'select' ? (
         <select
           name={name}
@@ -349,7 +176,7 @@ const FormField = ({
           {...props}
         />
       )}
-
+      
       {error && (
         <div className="flex items-center text-red-600 text-sm mt-1">
           <FaExclamationTriangle className="w-3 h-3 mr-1" />
@@ -360,112 +187,83 @@ const FormField = ({
   );
 };
 
-// Main Enhanced Edit Athlete Modal
-const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] }) => {
+// Main Enhanced Edit Player Modal
+const EnhancedEditPlayerModal = ({ isOpen, playerId, onClose, onUpdated, schools = [] }) => {
   const [loading, setLoading] = useState(false);
-  const [loadingAthlete, setLoadingAthlete] = useState(false);
-  const [athlete, setAthlete] = useState(null);
+  const [loadingPlayer, setLoadingPlayer] = useState(false);
+  const [player, setPlayer] = useState(null);
   const [formData, setFormData] = useState({});
   const [errors, setErrors] = useState({});
   const [touched, setTouched] = useState({});
 
-  // File upload states
-  const [profileImageFile, setProfileImageFile] = useState(null);
-  const [birthCertificateFile, setBirthCertificateFile] = useState(null);
-  const [existingProfileImage, setExistingProfileImage] = useState(null);
-  const [existingBirthCertificate, setExistingBirthCertificate] = useState(null);
-
-  // Load athlete data
+  // Load player data
   useEffect(() => {
-    if (isOpen && athleteId) {
-      loadAthleteData();
+    if (isOpen && playerId) {
+      loadPlayerData();
     }
-  }, [isOpen, athleteId]);
+  }, [isOpen, playerId]);
 
-  const loadAthleteData = async () => {
-    setLoadingAthlete(true);
+  const loadPlayerData = async () => {
+    setLoadingPlayer(true);
     try {
-      // Fetch athlete data from API
+      // Fetch player data from API
       const response = await adminApi.getAthletes({ limit: 1000 });
-      const athleteData = response.results?.find(p => p.id === athleteId) || response.data?.find(p => p.id === athleteId);
-
-      if (!athleteData) {
-        throw new Error('Athlete not found');
+      const playerData = response.results?.find(p => p.id === playerId) || response.data?.find(p => p.id === playerId);
+      
+      if (!playerData) {
+        throw new Error('Player not found');
       }
 
-      setAthlete(athleteData);
-
+      setPlayer(playerData);
+      
       // Initialize form data
       setFormData({
-        full_name: athleteData.full_name || '',
-        full_name_nepali: athleteData.full_name_nepali || '',
-        gender: athleteData.gender || 'Male',
-        date_of_birth: athleteData.date_of_birth ? athleteData.date_of_birth.split('T')[0] : '',
-        nationality: athleteData.nationality || 'Nepali',
-        citizenship_no: athleteData.citizenship_no || '',
-        school_id: athleteData.school_id || athleteData.school?.id || athleteData.school?.school_id || '',
-        grade: athleteData.grade || '',
-        section: athleteData.section || '',
-        address: athleteData.address || '',
-        province: athleteData.province || '',
-        district: athleteData.district || '',
-        municipality_or_rural_municipality: athleteData.municipality_or_rural_municipality || '',
-        ward_no: athleteData.ward_no || '',
-        guardian_name: athleteData.guardian_name || '',
-        relationship_to_player: athleteData.relationship_to_player || '',
-        guardian_phone: athleteData.guardian_phone || '',
-        guardian_email: athleteData.guardian_email || '',
-        height_cm: athleteData.height_cm || '',
-        weight_kg: athleteData.weight_kg || '',
-        blood_group: athleteData.blood_group || '',
-        primary_sport: athleteData.primary_sport || '',
-        father_name: athleteData.father_name || '',
-        mother_name: athleteData.mother_name || '',
-        medical_conditions: athleteData.medical_conditions || '',
-        allergies: athleteData.allergies || '',
-        emergency_contact: athleteData.emergency_contact || '',
-        medical_notes: athleteData.medical_notes || ''
+        full_name: playerData.full_name || '',
+        full_name_nepali: playerData.full_name_nepali || '',
+        gender: playerData.gender || 'Male',
+        date_of_birth: playerData.date_of_birth ? playerData.date_of_birth.split('T')[0] : '',
+        nationality: playerData.nationality || 'Nepali',
+        citizenship_no: playerData.citizenship_no || '',
+        school_id: playerData.school_id || playerData.school?.id || playerData.school?.school_id || '',
+        grade: playerData.grade || '',
+        section: playerData.section || '',
+        address: playerData.address || '',
+        province: playerData.province || '',
+        district: playerData.district || '',
+        municipality_or_rural_municipality: playerData.municipality_or_rural_municipality || '',
+        ward_no: playerData.ward_no || '',
+        guardian_name: playerData.guardian_name || '',
+        relationship_to_player: playerData.relationship_to_player || '',
+        guardian_phone: playerData.guardian_phone || '',
+        guardian_email: playerData.guardian_email || '',
+        height_cm: playerData.height_cm || '',
+        weight_kg: playerData.weight_kg || '',
+        blood_group: playerData.blood_group || '',
+        primary_sport: playerData.primary_sport || '',
+        father_name: playerData.father_name || '',
+        mother_name: playerData.mother_name || '',
+        medical_conditions: playerData.medical_conditions || '',
+        allergies: playerData.allergies || '',
+        emergency_contact: playerData.emergency_contact || '',
+        medical_notes: playerData.medical_notes || ''
       });
-
+      
       // Clear any previous errors and touched state
       setErrors({});
       setTouched({});
-
-      // Set existing files
-      if (athleteData.profile_photo_url || athleteData.profile_image_url) {
-        setExistingProfileImage({
-          url: athleteData.profile_photo_url || athleteData.profile_image_url,
-          name: 'Profile Photo'
-        });
-      } else {
-        setExistingProfileImage(null);
-      }
-
-      if (athleteData.birth_certificate_url || athleteData.birth_certificate_file_url) {
-        setExistingBirthCertificate({
-          url: athleteData.birth_certificate_url || athleteData.birth_certificate_file_url,
-          name: 'Birth Certificate'
-        });
-      } else {
-        setExistingBirthCertificate(null);
-      }
-
-      // Clear new file selections
-      setProfileImageFile(null);
-      setBirthCertificateFile(null);
     } catch (error) {
-      console.error('Error loading athlete:', error);
-      toast.error('Failed to load athlete data');
+      console.error('Error loading player:', error);
+      toast.error('Failed to load player data');
       onClose();
     } finally {
-      setLoadingAthlete(false);
+      setLoadingPlayer(false);
     }
   };
 
   // Handle input changes
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-
+    
     setFormData(prev => ({
       ...prev,
       [name]: value
@@ -479,106 +277,28 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
 
     // Validate field
     const error = validateField(name, value);
-    console.log(`Setting error for ${name}:`, error, `(type: ${typeof error})`);
-    setErrors(prev => {
-      const newErrors = { ...prev, [name]: error };
-      console.log(`New error state:`, newErrors);
-      return newErrors;
-    });
+    setErrors(prev => ({
+      ...prev,
+      [name]: error
+    }));
   }, []);
 
   // Validate all fields
   const validateForm = useCallback(() => {
     const newErrors = {};
-    const fieldsToValidate = Object.keys(ATHLETE_VALIDATION_SCHEMA);
-
+    const fieldsToValidate = Object.keys(VALIDATION_SCHEMA);
+    
     fieldsToValidate.forEach(field => {
       const error = validateField(field, formData[field]);
-      newErrors[field] = error; // Set to null if no error, or the error message if there is one
+      if (error) {
+        newErrors[field] = error;
+      }
     });
 
-    console.log('Form validation results:', newErrors);
+    // Clear any errors for fields not in validation schema
     setErrors(newErrors);
-
-    // Return true if no errors (all values are null)
-    return Object.values(newErrors).every(error => !error);
+    return Object.keys(newErrors).length === 0;
   }, [formData]);
-
-  // File upload handlers
-  const handleProfileImageSelect = (files) => {
-    console.log('Profile image selection triggered with files:', files);
-
-    if (files.length === 0) {
-      console.log('No files selected');
-      return;
-    }
-
-    const file = files[0];
-    console.log('Selected file:', file);
-
-    // Validate file type
-    if (!file.type.startsWith('image/')) {
-      toast.error('Please select a valid image file');
-      return;
-    }
-
-    // Validate file size (5MB)
-    if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size must be less than 5MB');
-      return;
-    }
-
-    setProfileImageFile(file);
-    toast.success('Profile image selected. It will be uploaded when you save the form.');
-  };
-
-  const handleProfileImageRemove = () => {
-    setProfileImageFile(null);
-    setExistingProfileImage(null);
-    toast.success('Profile image removed');
-  };
-
-  const handleBirthCertificateSelect = (files) => {
-    console.log('Birth certificate selection triggered with files:', files);
-
-    if (files.length === 0) {
-      console.log('No files selected');
-      return;
-    }
-
-    const file = files[0];
-    console.log('Selected file:', file);
-
-    const allowedTypes = [
-      'application/pdf',
-      'application/msword',
-      'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-      'image/jpeg',
-      'image/jpg',
-      'image/png'
-    ];
-
-    // Validate file type
-    if (!allowedTypes.includes(file.type)) {
-      toast.error('Please select a valid document file (PDF, DOC, DOCX, JPG, PNG)');
-      return;
-    }
-
-    // Validate file size (10MB)
-    if (file.size > 10 * 1024 * 1024) {
-      toast.error('File size must be less than 10MB');
-      return;
-    }
-
-    setBirthCertificateFile(file);
-    toast.success('Birth certificate selected. It will be uploaded when you save the form.');
-  };
-
-  const handleBirthCertificateRemove = () => {
-    setBirthCertificateFile(null);
-    setExistingBirthCertificate(null);
-    toast.success('Birth certificate removed');
-  };
 
   // Prepare data for submission
   const prepareSubmissionData = (data) => {
@@ -620,24 +340,10 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-
+    
     console.log('Form submission - Current formData:', formData);
     console.log('Form submission - Current errors before validation:', errors);
-
-    // Check authentication status before proceeding
-    const token = localStorage.getItem('athletiq_token');
-    const userData = localStorage.getItem('athletiq_user');
-    console.log('Authentication check:', {
-      hasToken: !!token,
-      hasUserData: !!userData,
-      tokenLength: token ? token.length : 0
-    });
-
-    if (!token) {
-      toast.error('You are not logged in. Please log in and try again.');
-      return;
-    }
-
+    
     if (!validateForm()) {
       console.log('Form validation failed - Current errors:', errors);
       toast.error('Please fix the errors in the form');
@@ -649,71 +355,19 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
     try {
       const cleanedData = prepareSubmissionData(formData);
       console.log('Submitting cleaned data:', cleanedData);
-
-      // Create FormData for multipart form submission (to handle files)
-      const submitFormData = new FormData();
-
-      // Add all form fields
-      Object.keys(cleanedData).forEach(key => {
-        if (cleanedData[key] !== null && cleanedData[key] !== undefined) {
-          submitFormData.append(key, cleanedData[key]);
-        }
-      });
-
-      // Add files if selected
-      if (profileImageFile) {
-        submitFormData.append('profile_photo', profileImageFile);
-        console.log('Adding profile photo to submission:', profileImageFile.name);
-      }
-
-      if (birthCertificateFile) {
-        submitFormData.append('birth_certificate', birthCertificateFile);
-        console.log('Adding birth certificate to submission:', birthCertificateFile.name);
-      }
-
-      // Log FormData contents for debugging
-      console.log('FormData contents:');
-      for (let [key, value] of submitFormData.entries()) {
-        console.log(key, value);
-      }
-
-      // Submit everything in one request
-      const updateResult = await adminApi.updateAthlete(athleteId, submitFormData);
-      console.log('✅ Update successful:', updateResult);
-
-      toast.success('Athlete updated successfully!');
-      console.log('🔄 Calling onUpdated...');
+      await adminApi.updateAthlete(playerId, cleanedData);
+      
+      toast.success('Player updated successfully!');
       onUpdated();
-      console.log('🔄 Calling onClose...');
       onClose();
-      console.log('✅ Success flow completed');
     } catch (error) {
-      console.error('❌ Error updating athlete:', error);
-      console.error('Error type:', typeof error);
-      console.error('Error constructor:', error.constructor.name);
-
-      // Handle authentication errors specifically - only on actual 401 errors
-      // TEMPORARILY DISABLED FOR DEBUGGING
-      if (false && (error.response?.status === 401 || 
-          (error.message.includes('session has expired') && error.message.includes('401')))) {
-        console.log('Authentication error detected (401):', error.message);
-        toast.error('Your session has expired. Please log in again.');
-        // Clear invalid tokens
-        localStorage.removeItem('athletiq_token');
-        localStorage.removeItem('athletiq_refresh_token');
-        localStorage.removeItem('athletiq_user');
-        // Redirect to login after a short delay
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
-        return;
-      }
-
+      console.error('Error updating player:', error);
+      
       // Handle API validation errors
       if (error.response?.data) {
         const apiErrors = error.response.data;
         const newErrors = {};
-
+        
         Object.keys(apiErrors).forEach(field => {
           if (Array.isArray(apiErrors[field])) {
             newErrors[field] = apiErrors[field][0];
@@ -721,15 +375,15 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
             newErrors[field] = apiErrors[field];
           }
         });
-
+        
         if (Object.keys(newErrors).length > 0) {
           setErrors(prev => ({ ...prev, ...newErrors }));
           toast.error('Please fix the highlighted errors');
         } else {
-          toast.error(apiErrors.message || 'Failed to update athlete');
+          toast.error(apiErrors.message || 'Failed to update player');
         }
       } else {
-        toast.error(error.message || 'Failed to update athlete. Please try again.');
+        toast.error('Failed to update player. Please try again.');
       }
     } finally {
       setLoading(false);
@@ -746,10 +400,10 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
           <div className="flex items-center">
             <FaEdit className="mr-3 text-xl" />
             <div>
-              <h2 className="text-xl font-bold">Edit Athlete</h2>
-              {athlete && (
+              <h2 className="text-xl font-bold">Edit Player</h2>
+              {player && (
                 <p className="text-blue-100 text-sm">
-                  {athlete.full_name} ({athlete.athlete_id})
+                  {player.full_name} ({player.athlete_id})
                 </p>
               )}
             </div>
@@ -763,16 +417,16 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
         </div>
 
         {/* Loading state */}
-        {loadingAthlete ? (
+        {loadingPlayer ? (
           <div className="p-8 text-center">
             <FaSpinner className="animate-spin text-4xl text-blue-600 mx-auto mb-4" />
-            <p>Loading athlete data...</p>
+            <p>Loading player data...</p>
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="overflow-y-auto max-h-[calc(90vh-80px)]">
             <div className="p-6 space-y-8">
               {/* Validation Summary */}
-              {Object.values(errors).some(error => error) && (
+              {Object.keys(errors).length > 0 && (
                 <div className="bg-red-50 border-l-4 border-red-400 p-4 rounded-lg">
                   <div className="flex">
                     <FaExclamationTriangle className="text-red-400 mt-0.5 mr-3" />
@@ -781,9 +435,9 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
                         Please fix the following errors:
                       </h3>
                       <ul className="mt-2 text-sm text-red-700 list-disc list-inside">
-                        {Object.entries(errors).filter(([field, error]) => error).map(([field, error]) => (
+                        {Object.entries(errors).map(([field, error]) => (
                           <li key={field}>
-                            <strong>{ATHLETE_VALIDATION_SCHEMA[field]?.label || field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {error}
+                            <strong>{VALIDATION_SCHEMA[field]?.label || field.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}:</strong> {error}
                           </li>
                         ))}
                       </ul>
@@ -906,7 +560,7 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
                   />
                   <FormField
                     name="relationship_to_player"
-                    label="Relationship to Athlete"
+                    label="Relationship to Player"
                     type="select"
                     value={formData.relationship_to_player || ''}
                     onChange={handleChange}
@@ -1020,7 +674,7 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
                     error={errors.mother_name}
                   />
                 </div>
-
+                
                 <div className="mt-4 space-y-4">
                   <FormField
                     name="medical_conditions"
@@ -1040,86 +694,15 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
                   />
                 </div>
               </div>
-
-              {/* Profile Image Upload */}
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <FaImage className="mr-2 text-blue-600" />
-                  Profile Image
-                </h3>
-
-                <FileUploadField
-                  name="profile_image"
-                  label="Upload Profile Photo"
-                  accept="image/*"
-                  multiple={false}
-                  type="image"
-                  currentFiles={[
-                    ...(existingProfileImage ? [existingProfileImage] : []),
-                    ...(profileImageFile ? [{
-                      name: profileImageFile.name,
-                      size: profileImageFile.size,
-                      url: URL.createObjectURL(profileImageFile),
-                      isNew: true
-                    }] : [])
-                  ]}
-                  onFileSelect={handleProfileImageSelect}
-                  onFileRemove={handleProfileImageRemove}
-                  uploading={false}
-                />
-                {(profileImageFile || existingProfileImage) && (
-                  <div className="mt-2 text-sm text-green-600">
-                    ✓ {profileImageFile ? 'New image selected' : 'Current image available'}
-                  </div>
-                )}
-              </div>
-
-              {/* Birth Certificate Upload */}
-              <div className="bg-gray-50 p-6 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                  <FaFileAlt className="mr-2 text-blue-600" />
-                  Birth Certificate
-                </h3>
-
-                <FileUploadField
-                  name="birth_certificate"
-                  label="Upload Birth Certificate"
-                  accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,image/jpeg,image/png"
-                  multiple={false}
-                  type="document"
-                  currentFiles={[
-                    ...(existingBirthCertificate ? [existingBirthCertificate] : []),
-                    ...(birthCertificateFile ? [{
-                      name: birthCertificateFile.name,
-                      size: birthCertificateFile.size,
-                      url: URL.createObjectURL(birthCertificateFile),
-                      isNew: true
-                    }] : [])
-                  ]}
-                  onFileSelect={handleBirthCertificateSelect}
-                  onFileRemove={handleBirthCertificateRemove}
-                  uploading={false}
-                />
-                {(birthCertificateFile || existingBirthCertificate) && (
-                  <div className="mt-2 text-sm text-green-600">
-                    ✓ {birthCertificateFile ? 'New document selected' : 'Current document available'}
-                  </div>
-                )}
-                <div className="mt-2 text-sm text-gray-600">
-                  <p>• Upload birth certificate for verification</p>
-                  <p>• Supported formats: PDF, DOC, DOCX, JPG, PNG</p>
-                  <p>• Maximum file size: 10MB</p>
-                </div>
-              </div>
             </div>
 
             {/* Footer */}
             <div className="bg-gray-50 px-6 py-4 flex justify-between items-center border-t">
               <div className="text-sm text-gray-600">
-                {Object.values(errors).filter(error => error).length > 0 ? (
+                {Object.keys(errors).length > 0 ? (
                   <span className="text-red-600 flex items-center">
                     <FaExclamationTriangle className="mr-1" />
-                    {Object.values(errors).filter(error => error).length} error{Object.values(errors).filter(error => error).length !== 1 ? 's' : ''} found
+                    {Object.keys(errors).length} error{Object.keys(errors).length !== 1 ? 's' : ''} found
                   </span>
                 ) : (
                   <span className="text-green-600 flex items-center">
@@ -1128,7 +711,7 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
                   </span>
                 )}
               </div>
-
+              
               <div className="flex space-x-3">
                 <button
                   type="button"
@@ -1139,7 +722,7 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
                 </button>
                 <button
                   type="submit"
-                  disabled={loading || Object.values(errors).some(error => error)}
+                  disabled={loading || Object.keys(errors).length > 0}
                   className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center"
                 >
                   {loading ? (
@@ -1150,7 +733,7 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
                   ) : (
                     <>
                       <FaCheck className="mr-2" />
-                      Update Athlete
+                      Update Player
                     </>
                   )}
                 </button>
@@ -1163,4 +746,4 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
   );
 };
 
-export default EditAthleteModal;
+export default EnhancedEditPlayerModal;
