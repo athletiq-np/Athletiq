@@ -378,6 +378,46 @@ def admin_organizations_list_view(request):
         return error_response(str(e))
 
 
+@api_view(['GET', 'PUT', 'DELETE'])
+@permission_classes([IsSuperAdmin])
+def admin_organization_detail_view(request, organization_id):
+    """
+    SuperAdmin view to get, update, or delete a specific organization.
+    """
+    try:
+        organization = get_object_or_404(Organization, id=organization_id)
+        
+        if request.method == 'GET':
+            serializer = OrganizationSerializer(organization)
+            return success_response(
+                data=serializer.data,
+                message='Organization retrieved successfully'
+            )
+        
+        elif request.method == 'PUT':
+            serializer = OrganizationUpdateSerializer(organization, data=request.data, partial=True)
+            if serializer.is_valid():
+                serializer.save()
+                return success_response(
+                    data=OrganizationSerializer(organization).data,
+                    message='Organization updated successfully'
+                )
+            else:
+                return validation_error_response(serializer.errors)
+        
+        elif request.method == 'DELETE':
+            # Soft delete by setting is_active to False
+            organization.is_active = False
+            organization.save()
+            return success_response(
+                data={'id': organization.id},
+                message='Organization deleted successfully'
+            )
+        
+    except Exception as e:
+        return error_response(str(e))
+
+
 @api_view(['POST'])
 @permission_classes([IsSuperAdmin])
 def admin_verify_organization_view(request, organization_id):

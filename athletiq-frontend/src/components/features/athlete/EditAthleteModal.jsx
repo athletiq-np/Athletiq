@@ -649,39 +649,72 @@ const EditAthleteModal = ({ isOpen, athleteId, onClose, onUpdated, schools = [] 
     try {
       const cleanedData = prepareSubmissionData(formData);
       console.log('Submitting cleaned data:', cleanedData);
-
-      // Create FormData for multipart form submission (to handle files)
-      const submitFormData = new FormData();
-
-      // Add all form fields
-      Object.keys(cleanedData).forEach(key => {
-        if (cleanedData[key] !== null && cleanedData[key] !== undefined) {
-          submitFormData.append(key, cleanedData[key]);
-        }
-      });
-
-      // Add files if selected
+      
+      // Log selected files for debugging
       if (profileImageFile) {
-        submitFormData.append('profile_photo', profileImageFile);
-        console.log('Adding profile photo to submission:', profileImageFile.name);
+        console.log('Profile image selected:', profileImageFile.name);
       }
-
       if (birthCertificateFile) {
-        submitFormData.append('birth_certificate', birthCertificateFile);
-        console.log('Adding birth certificate to submission:', birthCertificateFile.name);
+        console.log('Birth certificate selected:', birthCertificateFile.name);
       }
 
-      // Log FormData contents for debugging
-      console.log('FormData contents:');
-      for (let [key, value] of submitFormData.entries()) {
-        console.log(key, value);
+      // Step 1: Update athlete data (JSON only)
+      console.log('📝 Updating athlete data...');
+      const updateResult = await adminApi.updateAthleteData(athleteId, cleanedData);
+      console.log('✅ Athlete data updated successfully:', updateResult);
+      
+      // Step 2: Handle file uploads (parallel, non-blocking)
+      const fileUploadResults = [];
+      
+      if (profileImageFile) {
+        console.log('📷 Uploading profile image...');
+        const profileFormData = new FormData();
+        profileFormData.append('profile_photo', profileImageFile);
+        
+        fileUploadResults.push(
+          adminApi.uploadAthleteProfileImage(athleteId, profileFormData)
+            .then(result => ({ type: 'profile', success: true, result }))
+            .catch(error => ({ type: 'profile', success: false, error: error.message }))
+        );
       }
-
-      // Submit everything in one request
-      const updateResult = await adminApi.updateAthlete(athleteId, submitFormData);
-      console.log('✅ Update successful:', updateResult);
-
-      toast.success('Athlete updated successfully!');
+      
+      if (birthCertificateFile) {
+        console.log('📄 Uploading birth certificate...');
+        const docFormData = new FormData();
+        docFormData.append('document', birthCertificateFile);
+        docFormData.append('document_type', 'birth_certificate');
+        docFormData.append('title', 'Birth Certificate');
+        docFormData.append('description', 'Birth certificate document');
+        
+        fileUploadResults.push(
+          adminApi.uploadAthleteDocument(athleteId, docFormData)
+            .then(result => ({ type: 'document', success: true, result }))
+            .catch(error => ({ type: 'document', success: false, error: error.message }))
+        );
+      }
+      
+      // Step 3: Process file upload results
+      if (fileUploadResults.length > 0) {
+        console.log('📁 Processing file uploads...');
+        const results = await Promise.allSettled(fileUploadResults);
+        const uploadResults = results.map(r => r.value || r.reason);
+        
+        const failures = uploadResults.filter(r => !r.success);
+        const successes = uploadResults.filter(r => r.success);
+        
+        console.log('📊 File upload results:', { successes: successes.length, failures: failures.length });
+        
+        if (failures.length > 0) {
+          console.warn('⚠️ Some file uploads failed:', failures);
+          const failedTypes = failures.map(f => f.type).join(', ');
+          toast.warning(`Athlete data updated successfully, but ${failedTypes} upload(s) failed. Please try uploading the files again.`);
+        } else {
+          toast.success('Athlete data and files updated successfully!');
+        }
+      } else {
+        toast.success('Athlete data updated successfully!');
+      }
+      
       console.log('🔄 Calling onUpdated...');
       onUpdated();
       console.log('🔄 Calling onClose...');

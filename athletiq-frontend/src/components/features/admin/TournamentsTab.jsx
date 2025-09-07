@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FaPlus, FaTrophy, FaCalendarPlus, FaCog, FaEye } from "react-icons/fa";
+import { FaPlus, FaTrophy, FaCalendarPlus, FaCog, FaEye, FaSearch, FaSpinner, FaEdit, FaTrash } from "react-icons/fa";
 import ViewTournamentModal from "@features/tournament/ViewTournamentModal";
 
 // Import tournament creation step components
@@ -145,142 +145,236 @@ export default function TournamentsTab({ tournaments = [], refetchData }) {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-2xl font-bold text-athletiq-navy flex items-center gap-2">
-          <FaTrophy className="text-yellow-500" />
-          Tournaments
-        </h2>
+    <div className="tournaments-tab">
+      <div>
+        <div className="space-y-6">
+          {/* Enhanced Header with Modern Styling */}
+          <div className="relative">
+            {/* Background gradient */}
+            <div className="absolute inset-0 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded-2xl"></div>
 
-        <div className="flex gap-3 flex-wrap items-center">
-          {/* Modern Create Tournament Button */}
+            <div className="relative p-8">
+              <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+                <div className="flex items-center gap-6">
+                  <div className="flex items-center gap-4">
+                    <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg">
+                      <FaTrophy className="w-8 h-8 text-white" />
+                    </div>
+                    <div>
+                      <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Tournament Management</h2>
+                      <p className="text-gray-600 dark:text-gray-300 mt-1">Organize and manage competitive events</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-white/20 dark:border-gray-700/30">
+                      <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                        {tournaments.length}
+                      </span>
+                      <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">
+                        {tournaments.length === 1 ? 'Tournament' : 'Tournaments'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Action buttons */}
+                <div className="flex items-center gap-3">
+                  <motion.button
+                    whileHover={{ scale: 1.02 }}
+                    whileTap={{ scale: 0.98 }}
+                    onClick={() => setActiveView('create')}
+                    className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+                  >
+                    <FaPlus className="w-4 h-4" />
+                    Create Tournament
+                  </motion.button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Search and Filter Section */}
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 p-6 shadow-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+              {/* Search */}
+              <div className="lg:col-span-2 relative">
+                <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+                <input
+                  type="text"
+                  placeholder="Search tournaments..."
+                  value={searchText}
+                  onChange={(e) => setSearchText(e.target.value)}
+                  className="w-full pl-12 pr-4 py-3 bg-white/90 dark:bg-gray-700/90 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              {/* Sport Filter */}
+              <select
+                value={selectedSport}
+                onChange={(e) => setSelectedSport(e.target.value)}
+                className="px-4 py-3 bg-white/90 dark:bg-gray-700/90 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 text-gray-900 dark:text-white"
+              >
+                <option value="">All Sports</option>
+                {allSports.map((sport) => (
+                  <option key={sport} value={sport}>{sport}</option>
+                ))}
+              </select>
+
+              {/* Results count */}
+              <div className="flex items-center justify-center px-4 py-3 bg-gray-50/80 dark:bg-gray-700/50 rounded-xl lg:col-span-2">
+                <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+                  {filtered.length} of {tournaments.length}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Table */}
+          <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead>
+                  <tr className="border-b border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-700/30">
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Tournament</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Date</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Location</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Sport</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Status</th>
+                    <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200/50 dark:divide-gray-700/50">
+                  {filtered.length > 0 ? (
+                    filtered.map((tournament, index) => (
+                      <motion.tr
+                        key={tournament.id}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: index * 0.05 }}
+                        className="group hover:bg-gray-50/80 dark:hover:bg-gray-700/50 transition-all duration-200"
+                        onClick={() => setViewTournament(tournament)}
+                      >
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-3">
+                            <div className="relative flex-shrink-0">
+                              <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-200">
+                                <FaTrophy className="w-5 h-5 text-white" />
+                              </div>
+                            </div>
+                            <div>
+                              <div className="font-semibold text-gray-900 dark:text-white">{tournament.name}</div>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">{tournament.code || 'No code'}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="space-y-1">
+                            <div className="text-sm text-gray-700 dark:text-gray-300">{new Date(tournament.start_date).toLocaleDateString()}</div>
+                            {tournament.end_date && (
+                              <div className="text-xs text-gray-500 dark:text-gray-400">to {new Date(tournament.end_date).toLocaleDateString()}</div>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-700 dark:text-gray-300">
+                          {tournament.location || 'N/A'}
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+                            {tournament.sport || 'Multiple'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span 
+                            className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                              tournament.status === 'completed' 
+                                ? 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300' 
+                                : tournament.status === 'ongoing'
+                                ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                                : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                            }`}
+                          >
+                            {tournament.status || 'upcoming'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center justify-end gap-2">
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setViewTournament(tournament);
+                              }}
+                              className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200 group"
+                              title="View Tournament"
+                            >
+                              <FaEye className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Add edit functionality here
+                              }}
+                              className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-all duration-200 group"
+                              title="Edit Tournament"
+                            >
+                              <FaEdit className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                            </motion.button>
+                            <motion.button
+                              whileHover={{ scale: 1.1 }}
+                              whileTap={{ scale: 0.9 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                // Add delete functionality here
+                              }}
+                              className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all duration-200 group"
+                              title="Delete Tournament"
+                            >
+                              <FaTrash className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                            </motion.button>
+                          </div>
+                        </td>
+                      </motion.tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan="6" className="px-6 py-16">
+                        <div className="text-center">
+                          <FaTrophy className="mx-auto h-12 w-12 text-gray-400" />
+                          <h3 className="mt-2 text-sm font-medium text-gray-900 dark:text-white">No tournaments found</h3>
+                          <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">Try adjusting your search criteria or create a new tournament</p>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+            
           <motion.button
-            onClick={() => setActiveView('create')}
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-blue-600 to-purple-600 
-                     text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+            onClick={() => setActiveView('create')}
+            className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-500 to-purple-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
           >
             <FaPlus className="w-4 h-4" />
             Create Tournament
           </motion.button>
-          
-          <input
-            type="text"
-            placeholder="Search by name..."
-            className="border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={searchText}
-            onChange={(e) => setSearchText(e.target.value)}
-          />
-          <select
-            className="border rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            value={selectedSport}
-            onChange={(e) => setSelectedSport(e.target.value)}
-          >
-            <option value="">All Sports</option>
-            {allSports.map((sport) => (
-              <option key={sport} value={sport}>{sport}</option>
-            ))}
-          </select>
-          <span className="text-sm text-gray-500 self-center">{filtered.length} shown</span>
-        </div>
-      </div>
-
-      {/* Tournaments Table */}
-      <div className="overflow-hidden bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/20">
-        <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Tournament</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Date</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Location</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Sport</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Status</th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filtered.length > 0 ? (
-                filtered.map((tournament) => (
-                  <tr 
-                    key={tournament.id}
-                    className="hover:bg-gray-50 dark:hover:bg-gray-700/50 cursor-pointer"
-                    onClick={() => setViewTournament(tournament)}
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="text-sm font-semibold text-gray-900 dark:text-white">
-                        {tournament.name}
-                      </div>
-                      <div className="text-xs text-gray-500 dark:text-gray-400">
-                        {tournament.code || 'No code'}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                      {new Date(tournament.start_date).toLocaleDateString()}
-                      {tournament.end_date && ` - ${new Date(tournament.end_date).toLocaleDateString()}`}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 dark:text-gray-300">
-                      {tournament.location || 'N/A'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className="px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-                        {tournament.sport || 'Multiple'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span 
-                        className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                          tournament.status === 'completed' 
-                            ? 'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-300' 
-                            : tournament.status === 'ongoing'
-                            ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
-                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
-                        }`}
-                      >
-                        {tournament.status || 'upcoming'}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-3">
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setViewTournament(tournament);
-                          }}
-                          className="text-blue-600 hover:text-blue-900 dark:text-blue-400 dark:hover:text-blue-300"
-                          title="View details"
-                        >
-                          <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td colSpan="6" className="px-6 py-12 text-center text-sm text-gray-500 dark:text-gray-400">
-                    <div className="flex flex-col items-center justify-center space-y-2">
-                      <FaTrophy className="h-12 w-12 text-gray-300 dark:text-gray-600" />
-                      <p>No tournaments found matching your search</p>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </tbody>
-          </table>
         </div>
       </div>
 
       {/* View Modal */}
-      <ViewTournamentModal
-        open={!!viewTournament}
-        tournament={viewTournament}
-        onClose={() => setViewTournament(null)}
-      />
+      {viewTournament && (
+        <ViewTournamentModal
+          open={true}
+          tournament={viewTournament}
+          onClose={() => setViewTournament(null)}
+        />
+      )}
     </div>
   );
 }

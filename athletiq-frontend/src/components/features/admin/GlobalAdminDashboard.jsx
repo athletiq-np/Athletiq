@@ -185,8 +185,8 @@ export default function GlobalAdminDashboard() {
               return { data: { data: [] } };
             }),
             fetchWithRetry('/organizations/admin/list/').catch(err => {
-              console.warn('Organizations endpoint not available:', err.message);
-              // Don't set error - just return empty data and we'll use sample data in development
+              console.warn('Organizations admin endpoint not available:', err.message);
+              setErrors(prev => ({ ...prev, organizations: 'Organizations endpoint not available' }));
               return { data: { data: [] } };
             }),
             fetchWithRetry('/guardian/admin/list/').catch(err => {
@@ -315,14 +315,14 @@ export default function GlobalAdminDashboard() {
         monthlyGrowth: summaryData.monthly_growth ?? 0
       };
 
-      // Update loading states based on data availability
+      // Update loading states - set to false when data fetch is complete
       const updateLoading = {
-        players: playersData.length > 0,
-        schools: schoolsData.length > 0,
-        organizations: organizationsData.length > 0,
-        guardians: guardiansData.length > 0,
-        tournaments: tournamentsData.length > 0,
-        dashboard: true
+        players: false,
+        schools: false,
+        organizations: false,
+        guardians: false,
+        tournaments: false,
+        dashboard: false
       };
       
       // Update state with new data - ensure we're using the processed data
@@ -504,8 +504,7 @@ export default function GlobalAdminDashboard() {
       // Update loading states
       setIsLoading(prev => ({
         ...prev,
-        ...updateLoading,
-        dashboard: false
+        ...updateLoading
       }));
 
       // Set recent activities with proper typing
@@ -962,9 +961,7 @@ export default function GlobalAdminDashboard() {
                     </div>
                     <OrganizationsTab 
                       key="organizations-tab"
-                      organizations={organizations} 
                       refetchData={fetchDashboardData}
-                      loading={isLoading.organizations}
                     />
                   </div>
                 )}

@@ -9,6 +9,113 @@ import { handleApiError, formatSuccessResponse, formatErrorResponse } from '@/ut
  * Following the same pattern as guardian and admin APIs
  */
 export const organizationAPI = {
+  // Admin endpoints for managing all organizations
+  admin: {
+    // Get all organizations (admin only)
+    getAllOrganizations: async (params = {}) => {
+      try {
+        const response = await apiClient.get('/organizations/admin/list/', { params });
+        return formatSuccessResponse(response.data);
+      } catch (error) {
+        return formatErrorResponse(handleApiError(error));
+      }
+    },
+
+    // Get organization by ID (admin only)
+    getOrganizationById: async (organizationId) => {
+      try {
+        const response = await apiClient.get(`/organizations/admin/${organizationId}/`);
+        return formatSuccessResponse(response.data);
+      } catch (error) {
+        return formatErrorResponse(handleApiError(error));
+      }
+    },
+
+    // Create organization (admin only)
+    createOrganization: async (organizationData) => {
+      try {
+        const response = await apiClient.post('/organizations/register/', organizationData);
+        return formatSuccessResponse(response.data);
+      } catch (error) {
+        return formatErrorResponse(handleApiError(error));
+      }
+    },
+
+    // Update organization (admin only)
+    updateOrganization: async (organizationId, organizationData) => {
+      try {
+        const response = await apiClient.put(`/organizations/admin/${organizationId}/`, organizationData);
+        return formatSuccessResponse(response.data);
+      } catch (error) {
+        return formatErrorResponse(handleApiError(error));
+      }
+    },
+
+    // Delete organization (admin only)
+    deleteOrganization: async (organizationId) => {
+      try {
+        const response = await apiClient.delete(`/organizations/admin/${organizationId}/`);
+        return formatSuccessResponse(response.data);
+      } catch (error) {
+        return formatErrorResponse(handleApiError(error));
+      }
+    },
+
+    // Verify/Reject organization (admin only)
+    verifyOrganization: async (organizationId, action) => {
+      try {
+        const response = await apiClient.post(`/organizations/admin/${organizationId}/verify/`, {
+          action // 'verify' or 'reject'
+        });
+        return formatSuccessResponse(response.data);
+      } catch (error) {
+        return formatErrorResponse(handleApiError(error));
+      }
+    },
+
+    // Bulk actions (admin only) - using individual API calls since bulk endpoint doesn't exist
+    bulkUpdateStatus: async (organizationIds, status) => {
+      try {
+        const action = status === 'verified' ? 'verify' : 'reject';
+        const promises = organizationIds.map(id => 
+          apiClient.post(`/organizations/admin/${id}/verify/`, { action })
+        );
+        
+        const results = await Promise.allSettled(promises);
+        const successCount = results.filter(r => r.status === 'fulfilled').length;
+        
+        return formatSuccessResponse({
+          updated: successCount,
+          total: organizationIds.length,
+          status: status
+        });
+      } catch (error) {
+        return formatErrorResponse(handleApiError(error));
+      }
+    },
+
+    // Search organizations (admin only) - using list endpoint with search param
+    searchOrganizations: async (query, params = {}) => {
+      try {
+        const response = await apiClient.get('/organizations/admin/list/', {
+          params: { search: query, ...params }
+        });
+        return formatSuccessResponse(response.data);
+      } catch (error) {
+        return formatErrorResponse(handleApiError(error));
+      }
+    },
+
+    // Get organization statistics (admin only)
+    getOrganizationStats: async () => {
+      try {
+        const response = await apiClient.get('/organizations/statistics/');
+        return formatSuccessResponse(response.data);
+      } catch (error) {
+        return formatErrorResponse(handleApiError(error));
+      }
+    }
+  },
   // Dashboard and overview
   getDashboard: async () => {
     try {

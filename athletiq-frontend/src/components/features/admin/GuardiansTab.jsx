@@ -1,37 +1,68 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useEffect, useCallback } from "react";
+import { motion } from "framer-motion";
 import {
-  FaUserShield, FaPlus, FaEdit, FaTrash, FaEye, FaSearch, FaFilter,
-  FaPhone, FaEnvelope, FaMapMarkerAlt, FaCheck, FaTimes,
-  FaExclamationTriangle, FaDownload, FaUpload, FaUsers, FaBaby
+  FaSearch, FaEye, FaEdit, FaTrash, FaUserShield, FaDownload, FaSpinner, FaPlus, FaSort,
+  FaCheck, FaPhone, FaEnvelope, FaBaby
 } from 'react-icons/fa';
-import { toast } from 'react-toastify';
-import apiClient from '@/utils/apiClient';
-import AddGuardianButton from './AddGuardianButton';
 
-const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = null }) => {
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterStatus, setFilterStatus] = useState('all');
-  const [filterVerification, setFilterVerification] = useState('all');
-  const [sortBy, setSortBy] = useState('full_name');
-  const [sortOrder, setSortOrder] = useState('asc');
+import { toast } from 'react-toastify';
+// Import DataExportModal from the DataExportUtility module
+import DataExportModal from '@/components/features/admin/DataExportUtility';
+
+function GuardiansTabComponent({
+  guardians = [],
+  schools = [],
+  user,
+  refetchData,
+  loading = false,
+  error = null
+}) {
+  const [searchText, setSearchText] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [verificationFilter, setVerificationFilter] = useState("");
+  const [sortBy, setSortBy] = useState("full_name");
+  const [sortOrder, setSortOrder] = useState("asc");
   const [selectedGuardians, setSelectedGuardians] = useState([]);
-  const [showEditModal, setShowEditModal] = useState(false);
-  const [selectedGuardian, setSelectedGuardian] = useState(null);
-  const [actionLoading, setActionLoading] = useState(false);
+  const [viewGuardian, setViewGuardian] = useState(null);
+  const [editingGuardianId, setEditingGuardianId] = useState(null);
+  const [documentReviewGuardian, setDocumentReviewGuardian] = useState(null);
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [bulkActionLoading, setBulkActionLoading] = useState(false);
+
+  const [filteredGuardians, setFilteredGuardians] = useState([]);
 
   // Filter and sort guardians
-  const filteredGuardians = guardians
-    .filter(guardian => {
-      const matchesSearch = guardian.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           guardian.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           guardian.phone?.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesStatus = filterStatus === 'all' || guardian.is_active === (filterStatus === 'active');
-      const matchesVerification = filterVerification === 'all' || 
-                                 guardian.verification_status === filterVerification;
-      return matchesSearch && matchesStatus && matchesVerification;
-    })
-    .sort((a, b) => {
+  useEffect(() => {
+    let filtered = [...guardians];
+
+    // Apply search filter
+    if (searchText.trim()) {
+      const searchLower = searchText.toLowerCase().trim();
+      filtered = filtered.filter(guardian =>
+        guardian.full_name?.toLowerCase().includes(searchLower) ||
+        guardian.email?.toLowerCase().includes(searchLower) ||
+        guardian.phone?.toLowerCase().includes(searchLower)
+      );
+    }
+
+    // Apply status filter
+    if (statusFilter) {
+      filtered = filtered.filter(guardian => {
+        if (statusFilter === 'active') return guardian.is_active;
+        if (statusFilter === 'inactive') return !guardian.is_active;
+        return true;
+      });
+    }
+
+    // Apply verification filter
+    if (verificationFilter) {
+      filtered = filtered.filter(guardian => 
+        guardian.verification_status === verificationFilter
+      );
+    }
+
+    // Apply sorting
+    filtered.sort((a, b) => {
       let aValue = a[sortBy] || '';
       let bValue = b[sortBy] || '';
       
@@ -40,422 +71,379 @@ const GuardiansTab = ({ guardians = [], refetchData, loading = false, error = nu
         bValue = bValue.toLowerCase();
       }
       
-      if (sortOrder === 'asc') {
-        return aValue < bValue ? -1 : aValue > bValue ? 1 : 0;
-      } else {
-        return aValue > bValue ? -1 : aValue < bValue ? 1 : 0;
-      }
+      const comparison = aValue > bValue ? 1 : aValue < bValue ? -1 : 0;
+      return sortOrder === 'asc' ? comparison : -comparison;
     });
 
-  const handleSort = (field) => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
-    } else {
-      setSortBy(field);
-      setSortOrder('asc');
-    }
-  };
+    setFilteredGuardians(filtered);
+  }, [guardians, searchText, statusFilter, verificationFilter, sortBy, sortOrder]);
 
-  const handleSelectGuardian = (guardianId) => {
-    setSelectedGuardians(prev => 
-      prev.includes(guardianId) 
-        ? prev.filter(id => id !== guardianId)
-        : [...prev, guardianId]
+  // Handle guardian selection
+  const handleGuardianSelect = useCallback((guardianId, checked) => {
+    setSelectedGuardians(prev =>
+      checked
+        ? [...prev, guardianId]
+        : prev.filter(id => id !== guardianId)
     );
-  };
+  }, []);
 
-  const handleSelectAll = () => {
-    if (selectedGuardians.length === filteredGuardians.length) {
-      setSelectedGuardians([]);
-    } else {
-      setSelectedGuardians(filteredGuardians.map(guardian => guardian.guardian_id || guardian.id));
-    }
-  };
+  const handleSelectAll = useCallback((checked) => {
+    setSelectedGuardians(checked ? filteredGuardians.map(g => g.id) : []);
+  }, [filteredGuardians]);
 
-  const handleEdit = (guardian) => {
-    setSelectedGuardian(guardian);
-    setShowEditModal(true);
-  };
-
-  const handleDelete = async (guardianId) => {
-    if (!window.confirm('Are you sure you want to delete this guardian? This action cannot be undone.')) return;
-
-    setActionLoading(true);
-    try {
-      await apiClient.delete(`/guardians/${guardianId}/`);
-      toast.success('Guardian deleted successfully!');
-      refetchData();
-    } catch (error) {
-      console.error('Error deleting guardian:', error);
-      toast.error('Failed to delete guardian');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const handleBulkAction = async (action) => {
-    if (selectedGuardians.length === 0) return;
-
-    setActionLoading(true);
-    try {
-      switch (action) {
-        case 'verify':
-          await Promise.all(
-            selectedGuardians.map(id => 
-              apiClient.patch(`/guardians/${id}/`, { verification_status: 'verified' })
-            )
-          );
-          toast.success('Guardians verified successfully!');
-          break;
-        case 'suspend':
-          await Promise.all(
-            selectedGuardians.map(id => 
-              apiClient.patch(`/guardians/${id}/`, { is_active: false })
-            )
-          );
-          toast.success('Guardians suspended successfully!');
-          break;
-        case 'activate':
-          await Promise.all(
-            selectedGuardians.map(id => 
-              apiClient.patch(`/guardians/${id}/`, { is_active: true })
-            )
-          );
-          toast.success('Guardians activated successfully!');
-          break;
-        case 'delete':
-          if (!window.confirm('Are you sure you want to delete the selected guardians? This action cannot be undone.')) return;
-          await Promise.all(
-            selectedGuardians.map(id => 
-              apiClient.delete(`/guardians/${id}/`)
-            )
-          );
-          toast.success('Guardians deleted successfully!');
-          break;
-      }
-      setSelectedGuardians([]);
-      refetchData();
-    } catch (error) {
-      console.error('Error performing bulk action:', error);
-      toast.error('Failed to perform bulk action');
-    } finally {
-      setActionLoading(false);
-    }
-  };
-
-  const getVerificationBadge = (status) => {
-    const statusConfig = {
-      verified: { color: 'green', icon: FaCheck, text: 'Verified' },
-      pending: { color: 'yellow', icon: FaExclamationTriangle, text: 'Pending' },
-      rejected: { color: 'red', icon: FaTimes, text: 'Rejected' },
-      incomplete: { color: 'gray', icon: FaExclamationTriangle, text: 'Incomplete' }
-    };
-
-    const config = statusConfig[status] || statusConfig.pending;
-    const Icon = config.icon;
-
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${config.color}-100 text-${config.color}-800 dark:bg-${config.color}-900 dark:text-${config.color}-200`}>
-        <Icon className="w-3 h-3 mr-1" />
-        {config.text}
-      </span>
-    );
-  };
-
-  const getActiveBadge = (isActive) => {
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-        isActive 
-          ? 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-200'
-          : 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200'
-      }`}>
-        {isActive ? (
-          <>
-            <FaCheck className="w-3 h-3 mr-1" />
-            Active
-          </>
-        ) : (
-          <>
-            <FaTimes className="w-3 h-3 mr-1" />
-            Inactive
-          </>
-        )}
-      </span>
-    );
-  };
-
-  const formatDate = (dateString) => {
-    if (!dateString) return '-';
-    return new Date(dateString).toLocaleDateString();
-  };
-
+  // Loading state
   if (loading) {
     return (
-      <div className="flex justify-center items-center h-64">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-athletiq-green"></div>
+      <div className="flex items-center justify-center py-12">
+        <FaSpinner className="animate-spin h-8 w-8 text-purple-500" />
+        <span className="ml-3 text-gray-600">Loading guardians...</span>
       </div>
     );
   }
 
+  // Error state
   if (error) {
     return (
-      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-6 text-center">
-        <FaExclamationTriangle className="mx-auto text-red-500 text-4xl mb-4" />
-        <h3 className="text-lg font-semibold text-red-800 dark:text-red-200 mb-2">
-          Error Loading Guardians
-        </h3>
-        <p className="text-red-600 dark:text-red-300">{error}</p>
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex">
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-red-800">Error loading guardians</h3>
+            <div className="mt-2 text-sm text-red-700">{error}</div>
+          </div>
+        </div>
       </div>
     );
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header with Search and Filters */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div className="flex-1">
-            <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
-              Guardians Management
-            </h2>
-            <p className="text-sm text-gray-600 dark:text-gray-400">
-              {filteredGuardians.length} guardians found
-            </p>
-          </div>
+    <div className="space-y-8">
+      {/* Enhanced Header with Search and Actions */}
+      <div className="relative">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded-2xl"></div>
 
-          <div className="flex flex-col sm:flex-row gap-3">
-            {/* Search */}
-            <div className="relative">
-              <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search guardians..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:ring-2 focus:ring-athletiq-green focus:border-transparent"
-              />
-            </div>
+        <div className="relative p-8">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-gradient-to-r from-purple-500 to-indigo-600 rounded-2xl shadow-lg">
+                  <FaUserShield className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Guardian Management</h2>
+                  <p className="text-gray-600 dark:text-gray-300 mt-1">Manage and monitor all registered guardians</p>
+                </div>
+              </div>
 
-            {/* Filters */}
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-athletiq-green focus:border-transparent"
-            >
-              <option value="all">All Statuses</option>
-              <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
-            </select>
-
-            <select
-              value={filterVerification}
-              onChange={(e) => setFilterVerification(e.target.value)}
-              className="px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-athletiq-green focus:border-transparent"
-            >
-              <option value="all">All Verifications</option>
-              <option value="verified">Verified</option>
-              <option value="pending">Pending</option>
-              <option value="rejected">Rejected</option>
-            </select>
-
-            <AddGuardianButton onSuccess={refetchData} />
-          </div>
-        </div>
-
-        {/* Bulk Actions */}
-        {selectedGuardians.length > 0 && (
-          <div className="mt-4 p-4 bg-blue-50 dark:bg-blue-900/20 rounded-lg border border-blue-200 dark:border-blue-800">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium text-blue-800 dark:text-blue-200">
-                {selectedGuardians.length} guardians selected
-              </span>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => handleBulkAction('verify')}
-                  disabled={actionLoading}
-                  className="px-3 py-1 bg-green-600 hover:bg-green-700 text-white text-sm rounded transition-colors disabled:opacity-50"
-                >
-                  Verify
-                </button>
-                <button
-                  onClick={() => handleBulkAction('activate')}
-                  disabled={actionLoading}
-                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded transition-colors disabled:opacity-50"
-                >
-                  Activate
-                </button>
-                <button
-                  onClick={() => handleBulkAction('suspend')}
-                  disabled={actionLoading}
-                  className="px-3 py-1 bg-yellow-600 hover:bg-yellow-700 text-white text-sm rounded transition-colors disabled:opacity-50"
-                >
-                  Suspend
-                </button>
-                <button
-                  onClick={() => handleBulkAction('delete')}
-                  disabled={actionLoading}
-                  className="px-3 py-1 bg-red-600 hover:bg-red-700 text-white text-sm rounded transition-colors disabled:opacity-50"
-                >
-                  Delete
-                </button>
+              <div className="flex items-center gap-3">
+                <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-white/20 dark:border-gray-700/30">
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {guardians.length}
+                  </span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">
+                    {guardians.length === 1 ? 'Guardian' : 'Guardians'}
+                  </span>
+                </div>
               </div>
             </div>
+
+            {/* Action buttons */}
+            <div className="flex items-center gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setIsExportModalOpen(true)}
+                className="flex items-center gap-2 px-4 py-3 bg-white/80 dark:bg-gray-700/80 backdrop-blur-sm text-gray-700 dark:text-gray-200 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-white dark:hover:bg-gray-700 transition-all duration-200 shadow-lg"
+              >
+                <FaDownload className="w-4 h-4" />
+                Export
+              </motion.button>
+
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                <FaPlus className="w-4 h-4" />
+                Add Guardian
+              </motion.button>
+            </div>
           </div>
-        )}
+        </div>
       </div>
 
-      {/* Guardians Table */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
+      {/* Enhanced Search and Filter Section */}
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 p-6 shadow-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          {/* Search */}
+          <div className="lg:col-span-2 relative">
+            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search guardians..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-white/90 dark:bg-gray-700/90 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 dark:focus:ring-purple-400 transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white"
+            />
+          </div>
+
+          {/* Status Filter */}
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value)}
+            className="px-4 py-3 bg-white/90 dark:bg-gray-700/90 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-gray-900 dark:text-white"
+          >
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+
+          {/* Verification Filter */}
+          <select
+            value={verificationFilter}
+            onChange={(e) => setVerificationFilter(e.target.value)}
+            className="px-4 py-3 bg-white/90 dark:bg-gray-700/90 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-gray-900 dark:text-white"
+          >
+            <option value="">All Verification</option>
+            <option value="verified">Verified</option>
+            <option value="pending">Pending</option>
+            <option value="rejected">Rejected</option>
+          </select>
+
+          {/* Sort Options */}
+          <div className="flex gap-2">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="flex-1 px-3 py-3 bg-white/90 dark:bg-gray-700/90 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-purple-500 transition-all duration-200 text-gray-900 dark:text-white text-sm"
+            >
+              <option value="full_name">Name</option>
+              <option value="email">Email</option>
+              <option value="created_at">Date</option>
+              <option value="verification_status">Status</option>
+            </select>
+
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="px-3 py-3 bg-white/90 dark:bg-gray-700/90 border border-gray-200 dark:border-gray-600 rounded-xl hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200"
+            >
+              <FaSort className="w-4 h-4 text-gray-600 dark:text-gray-300" />
+            </button>
+          </div>
+
+          {/* Results count */}
+          <div className="flex items-center justify-center px-4 py-3 bg-gray-50/80 dark:bg-gray-700/50 rounded-xl">
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              {filteredGuardians.length} of {guardians.length}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* Bulk Actions Bar */}
+      {selectedGuardians.length > 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-700 rounded-2xl p-4"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-sm font-medium text-purple-800 dark:text-purple-200">
+                {selectedGuardians.length} guardians selected
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors duration-200 text-sm font-medium"
+              >
+                Verify Selected
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition-colors duration-200 text-sm font-medium"
+              >
+                Export Selected
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors duration-200 text-sm font-medium"
+              >
+                Delete Selected
+              </motion.button>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Enhanced Table */}
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 shadow-lg overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 dark:bg-gray-700">
-              <tr>
-                <th className="px-6 py-3 text-left">
+            <thead>
+              <tr className="border-b border-gray-200/50 dark:border-gray-700/50 bg-gray-50/50 dark:bg-gray-700/30">
+                <th className="p-4">
                   <input
                     type="checkbox"
                     checked={selectedGuardians.length === filteredGuardians.length && filteredGuardians.length > 0}
-                    onChange={handleSelectAll}
-                    className="rounded border-gray-300 text-athletiq-green focus:ring-athletiq-green"
+                    onChange={(e) => handleSelectAll(e.target.checked)}
+                    className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
                   />
                 </th>
-                <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                  onClick={() => handleSort('full_name')}
-                >
-                  Guardian
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Contact
-                </th>
-                <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                  onClick={() => handleSort('verification_status')}
-                >
-                  Verification
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Athletes
-                </th>
-                <th
-                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:bg-gray-100 dark:hover:bg-gray-600"
-                  onClick={() => handleSort('created_at')}
-                >
-                  Joined
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
-                  Actions
-                </th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Guardian</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Contact</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Children</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Status</th>
+                <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900 dark:text-white">Verification</th>
+                <th className="px-6 py-4 text-right text-sm font-semibold text-gray-900 dark:text-white">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-              {filteredGuardians.map((guardian) => (
-                <tr key={guardian.guardian_id || guardian.id} className="hover:bg-gray-50 dark:hover:bg-gray-700/50">
-                  <td className="px-6 py-4">
-                    <input
-                      type="checkbox"
-                      checked={selectedGuardians.includes(guardian.guardian_id || guardian.id)}
-                      onChange={() => handleSelectGuardian(guardian.guardian_id || guardian.id)}
-                      className="rounded border-gray-300 text-athletiq-green focus:ring-athletiq-green"
-                    />
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 h-10 w-10">
-                        {guardian.profile_picture ? (
-                          <img
-                            className="h-10 w-10 rounded-full object-cover"
-                            src={guardian.profile_picture}
-                            alt={guardian.full_name}
-                          />
-                        ) : (
-                          <div className="h-10 w-10 rounded-full bg-gradient-to-r from-athletiq-green to-green-500 flex items-center justify-center">
-                            <FaUserShield className="h-5 w-5 text-white" />
+            <tbody className="divide-y divide-gray-200/50 dark:divide-gray-700/50">
+              {filteredGuardians.length > 0 ? (
+                filteredGuardians.map((guardian, index) => (
+                  <motion.tr
+                    key={guardian.id}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: index * 0.05 }}
+                    className="group hover:bg-gray-50/80 dark:hover:bg-gray-700/50 transition-all duration-200"
+                  >
+                    <td className="p-4">
+                      <input
+                        type="checkbox"
+                        checked={selectedGuardians.includes(guardian.id)}
+                        onChange={(e) => handleGuardianSelect(guardian.id, e.target.checked)}
+                        className="w-4 h-4 text-purple-600 border-gray-300 rounded focus:ring-purple-500"
+                      />
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="relative flex-shrink-0">
+                          <div className="w-10 h-10 bg-gradient-to-r from-purple-500 to-indigo-500 rounded-full flex items-center justify-center shadow-lg group-hover:scale-105 transition-transform duration-200">
+                            <FaUserShield className="w-5 h-5 text-white" />
+                          </div>
+                        </div>
+                        <div>
+                          <div className="font-semibold text-gray-900 dark:text-white">
+                            {guardian.full_name}
+                          </div>
+                          <div className="text-sm text-gray-500 dark:text-gray-400">
+                            ID: {guardian.id}
+                          </div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="space-y-1">
+                        <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                          <FaEnvelope className="w-3 h-3 text-gray-400" />
+                          {guardian.email}
+                        </div>
+                        {guardian.phone && (
+                          <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                            <FaPhone className="w-3 h-3 text-gray-400" />
+                            {guardian.phone}
                           </div>
                         )}
                       </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900 dark:text-white">
-                          {guardian.full_name}
-                        </div>
-                        <div className="text-sm text-gray-500 dark:text-gray-400">
-                          {guardian.occupation || 'No occupation listed'}
-                        </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2 text-sm text-gray-700 dark:text-gray-300">
+                        <FaBaby className="w-3 h-3 text-gray-400" />
+                        {guardian.children?.length || 0} children
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900 dark:text-white">
-                      <div className="flex items-center gap-1 mb-1">
-                        <FaEnvelope className="w-3 h-3" />
-                        {guardian.email}
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                        guardian.is_active
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                      }`}>
+                        {guardian.is_active ? 'Active' : 'Inactive'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-medium ${
+                        guardian.verification_status === 'verified'
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+                          : guardian.verification_status === 'pending'
+                          ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+                          : 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+                      }`}>
+                        {guardian.verification_status || 'pending'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setViewGuardian(guardian)}
+                          className="p-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:hover:bg-blue-900/30 rounded-lg transition-all duration-200 group"
+                          title="View Guardian"
+                        >
+                          <FaEye className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                        </motion.button>
+
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          onClick={() => setEditingGuardianId(guardian.id)}
+                          className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 dark:hover:bg-green-900/30 rounded-lg transition-all duration-200 group"
+                          title="Edit Guardian"
+                        >
+                          <FaEdit className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                        </motion.button>
+
+                        <motion.button
+                          whileHover={{ scale: 1.1 }}
+                          whileTap={{ scale: 0.9 }}
+                          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 dark:hover:bg-red-900/30 rounded-lg transition-all duration-200 group"
+                          title="Delete Guardian"
+                        >
+                          <FaTrash className="w-4 h-4 group-hover:scale-110 transition-transform duration-200" />
+                        </motion.button>
                       </div>
-                      <div className="flex items-center gap-1">
-                        <FaPhone className="w-3 h-3" />
-                        {guardian.phone || '-'}
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {getVerificationBadge(guardian.verification_status)}
-                    <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                      Email: {guardian.email_verified ? '✓' : '✗'}
-                      {guardian.phone && ` | Phone: ${guardian.phone_verified ? '✓' : '✗'}`}
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    {getActiveBadge(guardian.is_active !== false)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center text-sm text-gray-900 dark:text-white">
-                      <FaBaby className="w-4 h-4 mr-1" />
-                      {guardian.athletes_count || 0} athletes
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-500 dark:text-gray-400">
-                    {formatDate(guardian.created_at)}
-                  </td>
-                  <td className="px-6 py-4 text-right text-sm font-medium">
-                    <div className="flex items-center justify-end gap-2">
-                      <button
-                        onClick={() => handleEdit(guardian)}
-                        className="text-athletiq-green hover:text-athletiq-green-dark transition-colors"
-                        title="Edit Guardian"
-                      >
-                        <FaEdit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(guardian.guardian_id || guardian.id)}
-                        disabled={actionLoading}
-                        className="text-red-600 hover:text-red-700 transition-colors disabled:opacity-50"
-                        title="Delete Guardian"
-                      >
-                        <FaTrash className="w-4 h-4" />
-                      </button>
+                    </td>
+                  </motion.tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="7" className="px-6 py-16">
+                    <div className="text-center">
+                      <FaUserShield className="mx-auto h-12 w-12 text-gray-400" />
+                      <h3 className="mt-2 text-sm font-medium text-gray-900">No guardians found</h3>
+                      <p className="mt-1 text-sm text-gray-500">No guardians match your current search criteria</p>
                     </div>
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
-
-        {filteredGuardians.length === 0 && (
-          <div className="text-center py-12">
-            <FaUserShield className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No Guardians Found
-            </h3>
-            <p className="text-gray-500 dark:text-gray-400">
-              Get started by adding your first guardian.
-            </p>
-          </div>
-        )}
       </div>
+
+      {/* Modals */}
+      {isExportModalOpen && (
+        <DataExportModal
+          isOpen={isExportModalOpen}
+          onClose={() => setIsExportModalOpen(false)}
+          data={selectedGuardians.length > 0 ? 
+            filteredGuardians.filter(g => selectedGuardians.includes(g.id)) : 
+            filteredGuardians
+          }
+          filename="guardians"
+          title="Export Guardians"
+        />
+      )}
     </div>
   );
-};
+}
 
-export default GuardiansTab;
+// Export the memoized component directly
+// Export component directly
+export default GuardiansTabComponent;

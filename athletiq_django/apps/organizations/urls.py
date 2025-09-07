@@ -34,5 +34,6 @@ urlpatterns = [
     
     # SuperAdmin organization management
     path('admin/list/', views.admin_organizations_list_view, name='admin-list'),
+    path('admin/<int:organization_id>/', views.admin_organization_detail_view, name='admin-detail'),
     path('admin/<int:organization_id>/verify/', views.admin_verify_organization_view, name='admin-verify'),
 ]

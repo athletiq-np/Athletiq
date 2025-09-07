@@ -40,101 +40,50 @@ export const adminApi = {
     }
   },
 
-  async updateAthlete(athleteId, data) {
+  // Separate method for athlete data updates (JSON only)
+  async updateAthleteData(athleteId, data) {
     try {
-      // Check if data is FormData (for file uploads) or regular object
-      const isFormData = data instanceof FormData;
+      console.log('Updating athlete data (JSON only):', data);
       
-      console.log('Updating athlete with data type:', isFormData ? 'FormData' : 'JSON');
-      if (isFormData) {
-        console.log('FormData entries:');
-        for (let [key, value] of data.entries()) {
-          console.log(`${key}:`, value);
-        }
+      // This method only handles JSON data - no FormData
+      if (data instanceof FormData) {
+        throw new Error('FormData not supported. Use updateAthleteData for JSON data only.');
       }
       
-      // Check authentication before making request
-      const token = localStorage.getItem('athletiq_token');
-      if (!token) {
-        throw new Error('Authentication token not found. Please log in again.');
-      }
+      const response = await apiClient.put(`/athletes/${athleteId}/`, data, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
       
-      // Try using apiClient first
-      try {
-        // Set appropriate headers for FormData
-        const config = {};
-        if (isFormData) {
-          // Don't set Content-Type for FormData - let browser handle it with boundary
-          config.headers = {};
-        } else {
-          config.headers = {
-            'Content-Type': 'application/json'
-          };
-        }
-        
-        const response = await apiClient.put(`/athletes/${athleteId}/`, data, config);
-        return response.data;
-      } catch (apiClientError) {
-        console.warn('ApiClient failed, trying direct fetch:', apiClientError.message);
-        
-        // Fallback to direct fetch with localStorage token (same as file upload methods)
-        const apiUrl = process.env.REACT_APP_API_URL || 'http://localhost:8000';
-        const fullUrl = `${apiUrl}/api/athletes/${athleteId}/`;
-        console.log('Fallback fetch URL:', fullUrl);
-        
-        const response = await fetch(fullUrl, {
-          method: 'PUT',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Accept': 'application/json',
-            ...(isFormData ? {} : { 'Content-Type': 'application/json' })
-          },
-          credentials: 'include',
-          body: isFormData ? data : JSON.stringify(data),
-        });
-
-        if (!response.ok) {
-          const errorData = await response.json().catch(() => ({}));
-          console.error('Update failed with error data:', errorData);
-          
-          // Handle authentication errors specifically
-          if (response.status === 401) {
-            throw new Error('Your session has expired. Please log in again to continue.');
-          }
-          
-          let errorMessage = `Update failed: ${response.status}`;
-          if (errorData.message) {
-            errorMessage += ` - ${errorData.message}`;
-          } else if (errorData.errors) {
-            const validationErrors = Object.entries(errorData.errors)
-              .map(([field, errors]) => `${field}: ${Array.isArray(errors) ? errors.join(', ') : errors}`)
-              .join('; ');
-            errorMessage += ` - ${validationErrors}`;
-          } else if (errorData.detail) {
-            errorMessage += ` - ${errorData.detail}`;
-          } else {
-            errorMessage += ` - ${response.statusText}`;
-          }
-          
-          throw new Error(errorMessage);
-        }
-
-        const result = await response.json();
-        console.log('✅ Fallback fetch successful:', result);
-        return result;
-      }
+      console.log('✅ Athlete data updated successfully:', response.data);
+      return response.data;
     } catch (error) {
-      console.error('Update athlete error:', error);
+      console.error('❌ Update athlete data error:', error);
+      throw new Error(`Failed to update athlete data: ${error.response?.data?.message || error.message}`);
+    }
+  },
+
+  // Legacy method - kept for backward compatibility but now delegates to separate methods
+  async updateAthlete(athleteId, data) {
+    // If it's FormData, this is likely an old call - redirect to data-only update
+    if (data instanceof FormData) {
+      console.warn('⚠️ updateAthlete called with FormData. Consider using updateAthleteData + file upload methods.');
       
-      // Don't wrap authentication errors - pass them through as-is
-      if (error.message.includes('session has expired') || 
-          error.message.includes('Authentication failed') || 
-          error.message.includes('log in again')) {
-        throw error;
+      // Extract non-file data from FormData
+      const jsonData = {};
+      for (let [key, value] of data.entries()) {
+        // Skip file fields
+        if (key !== 'profile_photo' && key !== 'birth_certificate') {
+          jsonData[key] = value;
+        }
       }
       
-      throw new Error(`Failed to update athlete: ${error.message}`);
+      return this.updateAthleteData(athleteId, jsonData);
     }
+    
+    // For JSON data, use the new method
+    return this.updateAthleteData(athleteId, data);
   },
 
   async deleteAthlete(athleteId) {

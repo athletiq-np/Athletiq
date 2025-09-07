@@ -399,41 +399,87 @@ export default function SchoolsTab({ schools: initialSchools = [], refetchData: 
   }
 
   return (
-    <div className="space-y-6 w-full">
-      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 w-full">
-        <div className="w-full sm:flex-1 max-w-2xl">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search schools by name or code..."
-              value={searchText}
-              onChange={(e) => setSearchText(e.target.value)}
-              className="w-full px-4 py-2 pl-10 text-sm border rounded-lg shadow-sm focus:ring-2 focus:ring-athletiq-blue focus:border-athletiq-blue dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 dark:focus:ring-blue-500 dark:focus:border-blue-500"
-            />
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <FaSearch className="h-4 w-4 text-gray-400" />
+    <div className="space-y-6">
+      {/* Header Section */}
+      <div className="relative">
+        {/* Background gradient */}
+        <div className="absolute inset-0 bg-gradient-to-r from-purple-50 via-indigo-50 to-blue-50 dark:from-gray-800 dark:via-gray-700 dark:to-gray-800 rounded-2xl"></div>
+        
+        <div className="relative p-8">
+          <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+            <div className="flex items-center gap-6">
+              <div className="flex items-center gap-4">
+                <div className="p-3 bg-gradient-to-r from-blue-500 to-purple-600 rounded-2xl shadow-lg">
+                  <FaSchool className="w-8 h-8 text-white" />
+                </div>
+                <div>
+                  <h2 className="text-3xl font-bold text-gray-900 dark:text-white">Schools Management</h2>
+                  <p className="text-gray-600 dark:text-gray-300 mt-1">Manage and monitor all registered schools</p>
+                </div>
+              </div>
+              
+              <div className="flex items-center gap-3">
+                <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-lg border border-white/20 dark:border-gray-700/30">
+                  <span className="text-2xl font-bold text-gray-900 dark:text-white">
+                    {schools.length}
+                  </span>
+                  <span className="text-sm text-gray-600 dark:text-gray-300 ml-2">
+                    {schools.length === 1 ? 'School' : 'Schools'}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            {/* Action Buttons */}
+            <div className="flex items-center gap-3">
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={handleAddSchool}
+                className="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-200"
+              >
+                <FaPlus className="w-4 h-4" />
+                Add School
+              </motion.button>
+              <motion.button
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => setIsBulkModalOpen(true)}
+                className="flex items-center gap-2 px-6 py-3 bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm text-gray-700 dark:text-gray-200 rounded-xl font-semibold shadow-lg hover:shadow-xl border border-gray-200/50 dark:border-gray-700/50 transition-all duration-200"
+              >
+                <FaUpload className="w-4 h-4" />
+                Bulk Upload
+              </motion.button>
             </div>
           </div>
         </div>
-        <div className="flex gap-2 w-full sm:w-auto">
-          <button 
-            onClick={handleAddSchool} 
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-athletiq-green hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 dark:focus:ring-offset-gray-800 w-full sm:w-auto justify-center whitespace-nowrap"
-          >
-            <FaPlus className="-ml-1 mr-2 h-4 w-4" />
-            Add School
-          </button>
-          <button 
-            onClick={() => setIsBulkModalOpen(true)} 
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-athletiq-blue dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:hover:bg-gray-600 dark:focus:ring-offset-gray-800 w-full sm:w-auto justify-center whitespace-nowrap"
-          >
-            <FaUpload className="-ml-1 mr-2 h-4 w-4" />
-            Bulk Upload
-          </button>
+      </div>
+      
+      {/* Search and Filter Section */}
+      <div className="bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 p-6 shadow-lg">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+          {/* Search Input */}
+          <div className="lg:col-span-2 relative">
+            <FaSearch className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400 dark:text-gray-500 w-4 h-4" />
+            <input
+              type="text"
+              placeholder="Search schools..."
+              value={searchText}
+              onChange={(e) => setSearchText(e.target.value)}
+              className="w-full pl-12 pr-4 py-3 bg-white/90 dark:bg-gray-700/90 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-blue-500 dark:focus:ring-blue-400 transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white"
+            />
+          </div>
+          
+          {/* Results Count */}
+          <div className="flex items-center justify-center px-4 py-3 bg-gray-50/80 dark:bg-gray-700/50 rounded-xl lg:col-span-2">
+            <span className="text-sm font-medium text-gray-600 dark:text-gray-300">
+              {filteredSchools.length} of {schools.length}
+            </span>
+          </div>
         </div>
       </div>
 
-      <div className="overflow-hidden bg-white dark:bg-gray-800 rounded-lg shadow dark:shadow-gray-900/20">
+      <div className="overflow-hidden bg-white/80 dark:bg-gray-800/80 backdrop-blur-sm rounded-2xl border border-gray-200/50 dark:border-gray-700/50 p-6 shadow-lg">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
             <thead className="bg-gray-50 dark:bg-gray-700">
