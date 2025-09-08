@@ -235,7 +235,15 @@ export default function GlobalAdminDashboard() {
           // Handle different response formats
           if (Array.isArray(response.data)) return response.data;
           if (response.data?.data) {
+            // If the nested data is already an array, return it directly
             if (Array.isArray(response.data.data)) return response.data.data;
+            // If nested data is an object, attempt to unwrap a single array-bearing property (e.g., { organizations: [...] })
+            if (typeof response.data.data === 'object' && response.data.data !== null) {
+              const arrayValues = Object.values(response.data.data).filter(v => Array.isArray(v));
+              if (arrayValues.length === 1) {
+                return arrayValues[0];
+              }
+            }
             return [response.data.data];
           }
           if (response.data?.results) {
@@ -286,6 +294,10 @@ export default function GlobalAdminDashboard() {
       
       const playersData = extractData(playersRes, 'players');
       let organizationsData = extractData(organizationsRes, 'organizations');
+      // Additional safeguard: if we still have a wrapper object with an organizations array, unwrap it
+      if (organizationsData.length === 1 && organizationsData[0] && Array.isArray(organizationsData[0].organizations)) {
+        organizationsData = organizationsData[0].organizations;
+      }
       let guardiansData = extractData(guardiansRes, 'guardians');
       const tournamentsData = extractData(tournamentsRes, 'tournaments');
 
